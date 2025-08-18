@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>デッキメーカー（世界観設定機能追加版）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .deck-list-item:hover {
+            background-color: #2d3748;
+        }
+        /* スクロールバーのスタイル */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+        .deck-section {
+            min-height: 150px;
+        }
+        
+        /* --- レアリティ演出の強化 --- */
+        @keyframes legendary-glow {
+            0%, 100% { box-shadow: 0 0 10px #f59e0b, 0 0 5px #fde047 inset; }
+            50% { box-shadow: 0 0 20px #f59e0b, 0 0 10px #fde047 inset; }
+        }
+
+        .rarity-legendary {
+            border: 2px solid #f59e0b;
+            animation: legendary-glow 2.5s ease-in-out infinite;
+        }
+
+        @keyframes mythic-glow {
+            0% { border-color: #ef4444; box-shadow: 0 0 15px #ef4444; }
+            25% { border-color: #f472b6; box-shadow: 0 0 20px #f472b6; }
+            50% { border-color: #a855f7; box-shadow: 0 0 15px #a855f7; }
+            75% { border-color: #f472b6; box-shadow: 0 0 20px #f472b6; }
+            100% { border-color: #ef4444; box-shadow: 0 0 15px #ef4444; }
+        }
+        
+        @keyframes mythic-shimmer {
+            from { left: -80%; }
+            to { left: 130%; }
+        }
+
+        .rarity-mythic {
+            position: relative;
+            overflow: hidden;
+            animation: mythic-glow 4s linear infinite;
+        }
+        
+        .rarity-mythic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -80%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: skewX(-25deg);
+            animation: mythic-shimmer 5s infinite;
+            z-index: 1; 
+        }
+        .card-content-wrapper {
+            position: relative;
+            z-index: 2;
+        }
+
+        .tag-pill {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .tag-pill:hover {
+            background-color: #4a5568;
+        }
+        .card-text-box::-webkit-scrollbar-thumb {
+            background: #2d3748;
+        }
+        .card-text-box::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        .form-checkbox {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            display: inline-block;
+            vertical-align: middle;
+            background-origin: border-box;
+            user-select: none;
+            flex-shrink: 0;
+            height: 1rem;
+            width: 1rem;
+            color: #4f46e5;
+            background-color: #fff;
+            border-color: #6b7280;
+            border-width: 1px;
+            border-radius: 0.25rem;
+        }
+        .form-checkbox:checked {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+            border-color: transparent;
+            background-color: currentColor;
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Hidden file inputs -->
+    <input type="file" id="deck-import-input" class="hidden" accept=".json">
+    <input type="file" id="card-image-input" class="hidden" accept="image/*">
+
+    <!-- メインコンテンツ -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- ヘッダー -->
+        <header class="bg-gray-900 shadow-lg p-4 flex justify-between items-center z-20 flex-wrap">
+            <h1 class="text-2xl font-bold text-white mb-2 sm:mb-0">デッキメーカー</h1>
+            <div class="flex items-center space-x-2 flex-wrap">
+                <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">使用方法</button>
+                <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
+                <button id="importDeckBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">デッキ読込</button>
+                <button id="exportAllBtn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">全データ書出</button>
+                <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    新しいカードを追加
+                </button>
+                <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    新しいデッキを作成
+                </button>
+            </div>
+        </header>
+
+        <!-- メインエリア -->
+        <main class="flex-grow flex p-4 gap-4 overflow-hidden flex-col md:flex-row">
+            
+            <!-- 左パネル: デッキリストとデッキエディタ -->
+            <div class="w-full md:w-2/5 flex flex-col gap-4">
+                <!-- デッキリスト -->
+                <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex-shrink-0">
+                    <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">デッキリスト</h2>
+                    <div id="deckList" class="max-h-48 overflow-y-auto">
+                        <!-- デッキがここに追加されます -->
+                    </div>
+                </div>
+                <!-- デッキエディタ -->
+                <div id="deckEditor" class="bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col flex-grow overflow-hidden">
+                    <div id="deckEditorContent" class="hidden h-full flex flex-col">
+                        <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-3 flex-shrink-0 flex-wrap">
+                            <input id="deckNameInput" type="text" class="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 mb-2 md:mb-0" value="新規デッキ">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button id="testDrawBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">テストドロー</button>
+                                <button id="exportDeckBtn" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">エクスポート</button>
+                                <button id="exportImageBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">画像として出力</button>
+                                <button id="saveDeckBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                                <button id="deleteDeckBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">削除</button>
+                            </div>
+                        </div>
+                        <textarea id="deckDescriptionInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm flex-shrink-0" placeholder="デッキの説明..."></textarea>
+                        
+                        <!-- 世界選択 -->
+                        <div class="mb-4 flex-shrink-0">
+                             <label class="text-sm font-semibold text-gray-300 mb-2 block">使用する世界 (2つまで)</label>
+                             <div class="grid grid-cols-2 gap-4">
+                                 <select id="deckWorld1" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                                 <select id="deckWorld2" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                             </div>
+                        </div>
+
+                        <div class="flex-grow overflow-y-auto pr-2">
+                            <!-- デッキセクション -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-amber-400 mb-2">コア</h3>
+                                <div id="coreDeck" class="p-2 bg-gray-900/50 rounded-lg deck-section flex gap-4 items-start"></div>
+                            </div>
+                            <div class="mt-4">
+                                <h3 class="text-lg font-semibold text-sky-400 mb-2">メインデッキ (<span id="mainDeckCount">0</span>/40枚)</h3>
+                                <div id="mainDeck" class="p-2 bg-gray-900/50 rounded-lg grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 deck-section"></div>
+                            </div>
+                            <div class="mt-4">
+                                <h3 class="text-lg font-semibold text-fuchsia-400 mb-2">ストラクトデッキ (<span id="structDeckCount">0</span>/20枚)</h3>
+                                <div id="structDeck" class="p-2 bg-gray-900/50 rounded-lg grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 deck-section"></div>
+                            </div>
+                            
+                            <!-- デッキ分析セクション -->
+                            <div id="deckAnalysisSection" class="mt-6 space-y-6">
+                                <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-2">デッキ分析</h2>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- カード種類分布 -->
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-rose-400 mb-2">カード種類分布</h3>
+                                        <div class="p-2 bg-gray-900/50 rounded-lg flex justify-center items-center" style="height: 200px;">
+                                            <canvas id="typeDistributionCanvas"></canvas>
+                                        </div>
+                                    </div>
+                                    <!-- デッキサマリー -->
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-violet-400 mb-2">デッキサマリー</h3>
+                                        <div id="deckSummary" class="p-4 bg-gray-900/50 rounded-lg space-y-2 text-sm">
+                                            <!-- サマリーがここに表示されます -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                     <!-- トップタグ -->
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-emerald-400 mb-2">トップタグ</h3>
+                                        <div id="tagSummary" class="p-4 bg-gray-900/50 rounded-lg space-y-2">
+                                            <!-- タグ集計がここに表示されます -->
+                                        </div>
+                                    </div>
+                                     <!-- トップ役割 -->
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-yellow-400 mb-2">トップ役割</h3>
+                                        <div id="roleSummary" class="p-4 bg-gray-900/50 rounded-lg space-y-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- コストカーブセクション -->
+                            <div class="mt-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="text-lg font-semibold text-lime-400">コストカーブ (プレイコスト)</h3>
+                                </div>
+                                <div class="p-2 bg-gray-900/50 rounded-lg">
+                                    <canvas id="costCurveCanvas"></canvas>
+                                </div>
+                            </div>
+                             <!-- 資源コスト集計セクション -->
+                             <div class="mt-6">
+                                <h3 class="text-lg font-semibold text-cyan-400 mb-2">資源コスト集計 (固定コスト合計)</h3>
+                                <div id="resourceSummary" class="p-2 bg-gray-900/50 rounded-lg space-y-2">
+                                    <!-- 集計結果がここに表示されます -->
+                                </div>
+                            </div>
+                             <!-- 資源収支分析セクション -->
+                             <div class="mt-6">
+                                <h3 class="text-lg font-semibold text-teal-400 mb-2">資源収支分析 (生産 vs 消費)</h3>
+                                <div id="resourceBalanceSummary" class="p-4 bg-gray-900/50 rounded-lg space-y-4">
+                                    <!-- 分析結果がここに表示されます -->
+                                </div>
+                             </div>
+                        </div>
+
+                    </div>
+                    <div id="deckEditorPlaceholder" class="flex items-center justify-center h-full">
+                        <p class="text-gray-400 text-xl">デッキを選択するか、新しく作成してください</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右パネル: カードライブラリ -->
+            <div class="w-full md:w-3/5 flex flex-col">
+                <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col flex-grow h-full">
+                    <h2 class="text-xl font-bold mb-2 border-b border-gray-700 pb-2">カードライブラリ</h2>
+                     
+                    <!-- Filter Section -->
+                    <div class="mb-4 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                            <select id="worldFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                            <select id="typeFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                            <select id="rarityFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                            <select id="tagFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                            <select id="resourceFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                        </div>
+                        <div class="flex justify-between items-center gap-4">
+                            <div class="flex-grow">
+                                <label class="text-xs text-gray-400">よく使われるタグ:</label>
+                                <div id="popularTags" class="flex flex-wrap gap-2 mt-1"></div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <label for="sortBy" class="text-xs text-gray-400">並べ替え:</label>
+                                <select id="sortBy" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm mt-1"></select>
+                            </div>
+                        </div>
+                        <input type="text" id="cardSearch" placeholder="キーワードで検索..." class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <div id="searchOptions" class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-300 pt-1">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="searchField" value="name" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500" checked>
+                                <span>カード名</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="searchField" value="description" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500" checked>
+                                <span>効果</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="searchField" value="world" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500">
+                                <span>世界</span>
+                            </label>
+                             <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="searchField" value="tags" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500">
+                                <span>タグ</span>
+                            </label>
+                             <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="searchField" value="roles" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500">
+                                <span>役割</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="searchField" value="flavor" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500">
+                                <span>フレーバー</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="cardLibrary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-grow content-start"></div>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+    
+    <!-- 使用方法モーダル -->
+    <div id="usageModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-3xl mx-auto border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">使用方法</h2>
+            <div class="space-y-6 text-gray-300 max-h-[75vh] overflow-y-auto pr-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-400 mb-2">【1】 カードの作成と編集</h3>
+                    <p class="mb-3">まず、デッキに入れるカードを作成します。右上の「新しいカードを追加」ボタンから始めます。</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>カード情報の入力:</strong> カード名、タイプ、レアリティは必須項目です。世界、タグなどを入力してオリジナルのカードをデザインします。</li>
+                        <li><strong>役割、生成資源:</strong>
+                             <ul class="list-['-_'] list-inside ml-4 mt-1 space-y-2">
+                                <li><strong>役割:</strong> 「アタッカー」「除去」「ドローソース」など、そのカードがデッキ内でどのような戦略的な役割を果たすかをカンマ区切りで入力します。カード下部に表示され、デッキ分析にも役立ちます。</li>
+                                <li><strong>生成資源:</strong> カードがプレイされた時などに、プレイヤーにもたらす資源の量を入力します。ランプ（資源加速）戦略などのカードをデザインする際に使用します。**マイナスの値を入力すると、その資源を消費する効果として扱われます。**</li>
+                            </ul>
+                        </li>
+                        <li><strong>コストの設定:</strong>
+                            <ul class="list-['-_'] list-inside ml-4 mt-1 space-y-1">
+                                <li><strong>固定コスト (プレイ/アクト):</strong> 特定の資源コストを指定します。</li>
+                                <li><strong>選択コスト (プレイ/アクト):</strong> いずれか一方を支払えばよいコストです。例: コスト1で[人/自]を選択した場合、「<span style="color:#d97706;">1</span>/<span style="color:#22c55e;">1</span>」と表示されます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>カードの削除:</strong> ライブラリのカード左上にあるゴミ箱アイコン (&#128465;) をクリックすると、そのカードを完全に削除できます。</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-green-400 mb-2">【2】 デッキの構築</h3>
+                    <ul class="list-disc list-inside space-y-2">
+                         <li><strong>カードの追加:</strong> ライブラリのカードを左クリックでメインデッキ/ストラクトデッキに追加できます。</li>
+                         <li><strong>枚数制限:</strong>
+                            <ul class="list-['-_'] list-inside ml-4 mt-1 space-y-1">
+                                 <li>メインデッキの通常カードは4枚までです。</li>
+                                 <li>ストラクトカードには同名カードの枚数制限はありません。</li>
+                                 <li>伝説・神話カードは1枚までです。</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                 <div>
+                    <h3 class="text-lg font-semibold text-yellow-400 mb-2">【3】 テストと分析</h3>
+                    <p class="mb-3">デッキが完成したら、その性能を評価できます。</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>デッキ分析:</strong> 新しく追加された「デッキ分析」セクションでは、カードの種別分布、平均コスト、デッキ内の主要なタグや役割などを確認できます。</li>
+                        <li><strong>画像として出力:</strong> デッキエディタ上部の「画像として出力」ボタンで、デッキリスト全体を一枚の画像としてダウンロードできます。</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-purple-400 mb-2">【4】 世界観の設定</h3>
+                    <p class="mb-3">ヘッダーの「世界観」ボタンから、ゲームの世界設定を管理できます。</p>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>カードを作成すると、そのカードが属する「世界」が自動的にリストに追加されます。(「ニュートラル」は除外されます)</li>
+                        <li>世界観モーダルで各世界の「編集」ボタンを押すと、その世界の詳細な説明文や、世界を象徴する「代表カード」を設定できます。</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end">
+                <button type="button" id="closeUsageModal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- カード作成モーダル -->
+    <div id="cardModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-2xl mx-auto border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6">カード作成・編集</h2>
+            <form id="cardForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <input type="hidden" id="cardId">
+                <input type="hidden" id="cardImageDataBase64">
+                
+                <!-- 左列 -->
+                <div class="space-y-4">
+                    <input type="text" id="cardName" placeholder="カード名" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <div class="grid grid-cols-2 gap-4">
+                        <select id="cardType" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            <option value="" disabled selected>カードタイプを選択</option>
+                            <option value="コア">コア</option>
+                            <option value="ユニット">ユニット</option>
+                            <option value="タクト">タクト</option>
+                            <option value="ストラクト">ストラクト</option>
+                        </select>
+                        <select id="cardRarity" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                            <option value="通常">通常</option>
+                            <option value="伝説">伝説</option>
+                            <option value="神話">神話</option>
+                        </select>
+                    </div>
+                    <input type="text" id="cardWorld" placeholder="世界 (例: 帝国, ニュートラル)" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="cardTags" placeholder="タグをカンマ(,)区切りで入力" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="cardRoles" placeholder="役割 (例: アタッカー, 除去)" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div>
+                        <label for="cardImageFileLabel" class="block text-sm font-medium text-gray-300 mb-2">カード画像</label>
+                        <button type="button" id="cardImageFileLabel" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 bg-gray-700 p-2 rounded-lg text-white">ファイルを選択</button>
+                        <img id="imagePreview" src="" class="mt-4 rounded-lg max-h-40 hidden" alt="画像プレビュー"/>
+                    </div>
+                    <textarea id="cardDescription" placeholder="カードテキスト・能力" rows="4" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <textarea id="cardFlavorText" placeholder="フレーバーテキスト" rows="2" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                
+                <!-- 右列 -->
+                <div class="space-y-4">
+                    <!-- 生成資源 -->
+                    <div id="generatesContainer">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">生成資源</label>
+                        <div class="grid grid-cols-4 gap-3">
+                            <input type="number" id="generatesHuman" placeholder="人" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesNature" placeholder="自" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesMineral" placeholder="鉱" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesGold" placeholder="金" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesElectric" placeholder="電" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesFuel" placeholder="燃" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesMagic" placeholder="魔" class="p-2 text-center bg-gray-700 rounded-lg">
+                        </div>
+                    </div>
+                    <!-- プレイコスト -->
+                    <div id="playCostContainer">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">固定プレイコスト</label>
+                        <div class="grid grid-cols-4 gap-3">
+                            <input type="number" id="playCostHuman" placeholder="人" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            <input type="number" id="playCostNature" placeholder="自" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            <input type="number" id="playCostMineral" placeholder="鉱" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            <input type="number" id="playCostGold" placeholder="金" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            <input type="number" id="playCostElectric" placeholder="電" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            <input type="number" id="playCostFuel" placeholder="燃" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            <input type="number" id="playCostMagic" placeholder="魔" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                        </div>
+                    </div>
+                    <!-- 選択プレイコスト -->
+                    <div id="choicePlayCostContainerWrapper">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-300">選択プレイコスト</label>
+                            <button type="button" id="addChoicePlayCostBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-1 px-3 rounded-lg text-xs transition-colors">追加</button>
+                        </div>
+                        <div id="choicePlayCostContainer" class="space-y-2"></div>
+                    </div>
+                    
+                    <!-- ユニット専用設定 -->
+                    <div id="unitStatsContainer" class="hidden space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="cardAttack" placeholder="攻撃力" class="p-3 bg-gray-700 rounded-lg">
+                            <input type="number" id="cardDefense" placeholder="体力" class="p-3 bg-gray-700 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">固定アクトコスト</label>
+                            <div class="grid grid-cols-4 gap-3">
+                                <input type="number" id="actCostHuman" placeholder="人" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="actCostNature" placeholder="自" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="actCostMineral" placeholder="鉱" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="actCostGold" placeholder="金" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="actCostElectric" placeholder="電" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="actCostFuel" placeholder="燃" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="actCostMagic" placeholder="魔" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                            </div>
+                        </div>
+                        <div id="choiceActCostContainerWrapper">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-gray-300">選択アクトコスト</label>
+                                <button type="button" id="addChoiceActCostBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-1 px-3 rounded-lg text-xs transition-colors">追加</button>
+                            </div>
+                            <div id="choiceActCostContainer" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- コア専用設定 -->
+                    <div id="coreStatsContainer" class="hidden space-y-4">
+                        <div>
+                           <label class="block text-sm font-medium text-gray-300 mb-2">初期資源</label>
+                           <div class="grid grid-cols-4 gap-3">
+                                <input type="number" id="initialResourceHuman" placeholder="人" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="initialResourceNature" placeholder="自" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="initialResourceMineral" placeholder="鉱" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="initialResourceGold" placeholder="金" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="initialResourceElectric" placeholder="電" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="initialResourceFuel" placeholder="燃" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                                <input type="number" id="initialResourceMagic" placeholder="魔" class="p-2 text-center bg-gray-700 rounded-lg" min="0">
+                           </div>
+                        </div>
+                         <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="coreLife" placeholder="ライフ" class="p-3 bg-gray-700 rounded-lg">
+                            <input type="number" id="coreHandLimit" placeholder="手札上限" class="p-3 bg-gray-700 rounded-lg">
+                         </div>
+                         <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="coreInitialHand" placeholder="初期手札" class="p-3 bg-gray-700 rounded-lg">
+                            <input type="number" id="coreDrawPerTurn" placeholder="ターン毎ドロー" class="p-3 bg-gray-700 rounded-lg">
+                        </div>
+                        <input type="text" id="coreDefeatCondition" placeholder="敗北条件" class="p-3 w-full bg-gray-700 rounded-lg">
+                    </div>
+                </div>
+
+                <!-- ボタン -->
+                <div class="md:col-span-2 mt-4 flex justify-end space-x-4">
+                    <button type="button" id="cancelCard" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">キャンセル</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- テストドローモーダル -->
+    <div id="testDrawModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-5xl mx-auto border border-gray-700 flex flex-col" style="height: 85vh;">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h2 class="text-2xl font-bold">テストドロー</h2>
+                <div id="drawDeckInfo" class="text-lg"></div>
+                <button type="button" id="closeDrawModalBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+            
+            <div id="initialDrawSetup" class="flex items-center justify-center gap-4 my-4">
+                <label for="drawCountInput" class="text-lg">初期ドロー枚数:</label>
+                <input type="number" id="drawCountInput" value="7" class="p-2 text-center bg-gray-700 rounded-lg w-24 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                <button id="startDrawBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">ドロー開始</button>
+            </div>
+
+            <div id="drawInterface" class="hidden flex-grow flex flex-col min-h-0">
+                <div id="handDisplayArea" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4 overflow-y-auto flex-grow p-2 bg-gray-900/50 rounded-lg content-start"></div>
+                <div class="flex justify-center mt-4">
+                    <button id="drawOneMoreBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">1枚引く</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 世界観モーダル -->
+    <div id="worldLoreModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-5xl mx-auto border border-gray-700">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                <h2 class="text-2xl font-bold">世界観</h2>
+                <button type="button" id="closeWorldLoreModal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+            <div id="worldLoreList" class="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
+                <!-- 世界観リストがここに表示されます -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 世界編集モーダル -->
+    <div id="editWorldModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-900 rounded-lg shadow-2xl p-8 w-full max-w-2xl mx-auto border border-gray-700">
+            <h2 class="text-2xl font-bold mb-6">世界設定の編集</h2>
+            <form id="editWorldForm">
+                <input type="hidden" id="editWorldName">
+                <div class="space-y-4">
+                    <div>
+                        <label for="worldDescription" class="block text-sm font-medium text-gray-300 mb-2">世界の詳細</label>
+                        <textarea id="worldDescription" rows="6" class="p-3 w-full bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                    </div>
+                    <div>
+                        <label for="representativeCard" class="block text-sm font-medium text-gray-300 mb-2">代表カード</label>
+                        <select id="representativeCard" class="p-3 w-full bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <!-- カードオプションがここに表示されます -->
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button type="button" id="cancelEditWorld" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">キャンセル</button>
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- ★★★ サイト編集者向け設定 ★★★ ---
+        // GitHub Pagesなどで公開した deck_data.json ファイルの完全なURLをここに貼り付けてください。
+        // 例: 'https://your-username.github.io/your-repo-name/deck_data.json'
+        // このURLが空の場合、アプリはローカルの編集データ（もしあれば）で起動します。
+        const dataFileUrl = ''; // ← ここにURLを貼り付け
+        // --- ★★★ 設定ここまで ★★★ ---
+
+
+        // --- グローバル変数と状態管理 ---
+        let allCards = [];
+        let allDecks = [];
+        let allWorlds = [];
+        let currentDeck = null; 
+        let costChart = null;
+        let typeDistributionChart = null;
+        let testDeck = [];
+
+        const costTypes = {
+            human: { label: '人', colorHex: '#d97706' }, // Amber-600
+            nature: { label: '自', colorHex: '#22c55e' },
+            mineral: { label: '鉱', colorHex: '#9ca3af' }, // Gray-400
+            gold: { label: '金', colorHex: '#facc15' },   // Yellow-400
+            electric: { label: '電', colorHex: '#60a5fa' }, // Blue-400
+            fuel: { label: '燃', colorHex: '#f97316' },
+            magic: { label: '魔', colorHex: '#c084fc' },  // Purple-400
+        };
+        const DECK_LIMITS = {
+            MAIN: 40,
+            STRUCT: 20,
+        };
+        const NEUTRAL_WORLD_NAME = 'ニュートラル';
+        
+        // --- DOM要素のキャッシュ ---
+        const getEl = (id) => document.getElementById(id);
+        const cardLibrary = getEl('cardLibrary');
+        const cardModal = getEl('cardModal');
+        const usageModal = getEl('usageModal');
+        const testDrawModal = getEl('testDrawModal');
+        const worldLoreModal = getEl('worldLoreModal');
+        const editWorldModal = getEl('editWorldModal');
+        const cardForm = getEl('cardForm');
+        const editWorldForm = getEl('editWorldForm');
+        const deckList = getEl('deckList');
+        const deckEditorContent = getEl('deckEditorContent');
+        const deckEditorPlaceholder = getEl('deckEditorPlaceholder');
+        const deckNameInput = getEl('deckNameInput');
+        const deckDescriptionInput = getEl('deckDescriptionInput');
+        const deckWorld1 = getEl('deckWorld1');
+        const deckWorld2 = getEl('deckWorld2');
+        const coreDeckEl = getEl('coreDeck');
+        const mainDeckEl = getEl('mainDeck');
+        const structDeckEl = getEl('structDeck');
+        const mainDeckCount = getEl('mainDeckCount');
+        const structDeckCount = getEl('structDeckCount');
+        const cardSearch = getEl('cardSearch');
+        const imagePreview = getEl('imagePreview');
+        const cardImageDataBase64 = getEl('cardImageDataBase64');
+        const worldFilter = getEl('worldFilter');
+        const typeFilter = getEl('typeFilter');
+        const rarityFilter = getEl('rarityFilter');
+        const tagFilter = getEl('tagFilter');
+        const resourceFilter = getEl('resourceFilter');
+        const sortBy = getEl('sortBy');
+        const popularTags = getEl('popularTags');
+        const costCurveCanvas = getEl('costCurveCanvas');
+        const typeDistributionCanvas = getEl('typeDistributionCanvas');
+        const cardTypeSelect = getEl('cardType');
+        const searchOptions = document.querySelectorAll('#searchOptions input[name="searchField"]');
+        
+        // --- UI更新の集中管理 ---
+        function refreshAllUI() {
+            allDecks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
+            initializeWorldsData();
+            updateAndRenderFilters();
+            renderCardLibrary();
+            renderDeckList();
+
+            if (currentDeck) {
+                const updatedDeckData = allDecks.find(d => d.id === currentDeck.id);
+                if (updatedDeckData) {
+                    currentDeck = JSON.parse(JSON.stringify(updatedDeckData));
+                    renderDeckContents();
+                } else {
+                    currentDeck = null;
+                    deckEditorContent.classList.add('hidden');
+                    deckEditorPlaceholder.classList.remove('hidden');
+                }
+            }
+        }
+
+        // --- データ読み込み ---
+        async function loadDataFromFile() {
+            const localCards = localStorage.getItem('deckBuilderCards_temp');
+            const localDecks = localStorage.getItem('deckBuilderDecks_temp');
+            const localWorlds = localStorage.getItem('deckBuilderWorlds_temp');
+
+            if (dataFileUrl) {
+                try {
+                    const response = await fetch(`${dataFileUrl}?t=${new Date().getTime()}`);
+                    if (!response.ok) {
+                        console.warn(`${dataFileUrl} が見つかりませんでした。`);
+                        alert(`データファイルの読み込みに失敗しました。\nURLが正しいか確認してください:\n${dataFileUrl}`);
+                        if (localCards || localDecks || localWorlds) {
+                            loadDataFromLocalStorage();
+                            return;
+                        }
+                        allCards = []; allDecks = []; allWorlds = [];
+                    } else {
+                        const data = await response.json();
+                        allCards = data.cards || [];
+                        allDecks = data.decks || [];
+                        allWorlds = data.worlds || [];
+                        saveCardsToLocalStorage();
+                        saveDecksToLocalStorage();
+                        saveWorldsToLocalStorage();
+                    }
+                } catch (e) {
+                    console.error("データファイルの読み込みまたは解析エラー:", e);
+                    alert(`${dataFileUrl}の読み込みに失敗しました。\nURLが正しいか、ファイルがJSON形式か確認してください。`);
+                    if (localCards || localDecks || localWorlds) {
+                        loadDataFromLocalStorage();
+                        return;
+                    }
+                    allCards = []; allDecks = []; allWorlds = [];
+                }
+            } else {
+                loadDataFromLocalStorage();
+            }
+            
+            allCards.forEach(card => {
+                if (!card.costs) card.costs = {};
+                if (!card.costs.play) card.costs.play = {};
+                if (!card.costs.act) card.costs.act = {};
+                if (!card.costs.choice) card.costs.choice = [];
+                if (!card.costs.choiceAct) card.costs.choiceAct = [];
+                if (!card.generates) card.generates = {};
+            });
+
+            refreshAllUI();
+        }
+
+        function loadDataFromLocalStorage() {
+            const localCards = localStorage.getItem('deckBuilderCards_temp');
+            const localDecks = localStorage.getItem('deckBuilderDecks_temp');
+            const localWorlds = localStorage.getItem('deckBuilderWorlds_temp');
+            
+            allCards = localCards ? JSON.parse(localCards) : [];
+            allDecks = localDecks ? JSON.parse(localDecks) : [];
+            allWorlds = localWorlds ? JSON.parse(localWorlds) : [];
+            
+            if (!localCards && !localDecks && !localWorlds) {
+                 console.log("外部URLの指定がなく、ローカルデータも存在しないため、空の状態で開始します。");
+            } else {
+                 console.log("外部URLの指定がないため、ローカルに保存されたデータで起動しました。");
+            }
+        }
+
+        // --- データ保存 (ブラウザ内) ---
+        function saveCardsToLocalStorage() {
+            localStorage.setItem('deckBuilderCards_temp', JSON.stringify(allCards));
+        }
+        function saveDecksToLocalStorage() {
+            localStorage.setItem('deckBuilderDecks_temp', JSON.stringify(allDecks));
+        }
+        function saveWorldsToLocalStorage() { 
+            localStorage.setItem('deckBuilderWorlds_temp', JSON.stringify(allWorlds));
+        }
+        
+        // --- フィルターとソートのオプション更新 ---
+        function updateAndRenderFilters() {
+            const tagCounts = {};
+            const worlds = new Set([NEUTRAL_WORLD_NAME]);
+            allCards.forEach(card => {
+                (card.tags || []).forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+                if (card.world) worlds.add(card.world);
+            });
+
+            const sortedUniqueTags = Object.keys(tagCounts).sort();
+            tagFilter.innerHTML = `<option value="">すべてのタグ</option>` + sortedUniqueTags.map(t => `<option value="${t}">${t} (${tagCounts[t]})</option>`).join('');
+            
+            const sortedWorlds = [...worlds].sort();
+            const worldOptions = sortedWorlds.map(w => `<option value="${w}">${w}</option>`).join('');
+            deckWorld1.innerHTML = `<option value="">世界1を選択</option>` + worldOptions;
+            deckWorld2.innerHTML = `<option value="">世界2を選択</option>` + worldOptions;
+            worldFilter.innerHTML = `<option value="">すべての世界</option>` + worldOptions;
+            
+            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="ストラクト">ストラクト</option>`;
+            rarityFilter.innerHTML = `<option value="">すべてのレアリティ</option><option value="通常">通常</option><option value="伝説">伝説</option><option value="神話">神話</option>`;
+            
+            let resourceOptionsHTML = `<option value="">すべての資源(固定コスト)</option>`;
+            Object.keys(costTypes).forEach(key => resourceOptionsHTML += `<option value="${key}">${costTypes[key].label} を含む</option>`);
+            resourceFilter.innerHTML = resourceOptionsHTML;
+
+            const popularSortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
+            popularTags.innerHTML = '';
+            popularSortedTags.slice(0, 10).forEach(([tag]) => {
+                const tagEl = document.createElement('span');
+                tagEl.className = 'tag-pill bg-gray-600 text-xs font-semibold px-2 py-1 rounded-full';
+                tagEl.textContent = tag;
+                tagEl.onclick = () => { tagFilter.value = tag; renderCardLibrary(); };
+                popularTags.appendChild(tagEl);
+            });
+            
+            sortBy.innerHTML = `<option value="name_asc">カード名順</option><option value="attack_desc">攻撃力 (高い順)</option><option value="attack_asc">攻撃力 (低い順)</option><option value="defense_desc">体力 (高い順)</option><option value="defense_asc">体力 (低い順)</option><option value="total_cost_desc">プレイコスト総量 (高い順)</option><option value="total_cost_asc">プレイコスト総量 (低い順)</option>`;
+        }
+        
+        // --- コスト表示エレメント作成 ---
+        function createCostDisplay(costs, forSection = 'play') {
+            const costContainer = document.createElement('div');
+            costContainer.className = 'flex items-center gap-1.5 text-base font-bold flex-wrap justify-end';
+            const fixedCosts = costs?.[forSection] || {};
+            const choiceCosts = (forSection === 'play' ? costs?.choice : costs?.choiceAct) || [];
+            let hasAnyCost = false;
+
+            Object.entries(fixedCosts).forEach(([key, value]) => {
+                if (value > 0) {
+                    const costEl = document.createElement('span');
+                    costEl.textContent = value;
+                    costEl.style.color = costTypes[key].colorHex;
+                    costContainer.appendChild(costEl);
+                    hasAnyCost = true;
+                }
+            });
+
+            choiceCosts.forEach(choice => {
+                if (choice.amount > 0 && choice.types?.length === 2) {
+                    const choiceEl = document.createElement('span');
+                    choiceEl.className = 'flex items-baseline gap-x-0';
+                    const [type1, type2] = choice.types;
+                    choiceEl.innerHTML = `
+                        <span style="color:${costTypes[type1].colorHex}">${choice.amount}</span>
+                        <span class="text-gray-400 text-sm mx-px">/</span>
+                        <span style="color:${costTypes[type2].colorHex}">${choice.amount}</span>`;
+                    costContainer.appendChild(choiceEl);
+                    hasAnyCost = true;
+                }
+            });
+
+            if (!hasAnyCost && Object.keys(fixedCosts).length > 0) {
+                const costEl = document.createElement('span');
+                costEl.textContent = '0';
+                costEl.style.color = '#FFFFFF';
+                costContainer.appendChild(costEl);
+            }
+            return costContainer;
+        }
+
+        // --- 画像処理 ---
+        function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > height) {
+                            if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                        } else {
+                            if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- カード描画 ---
+        function createCardElement(card, context) {
+            const cardEl = document.createElement('div');
+            cardEl.dataset.cardId = card.id;
+
+            const theme = {
+                'コア': { bg: 'bg-slate-200', text: 'text-slate-800', heading: 'text-black', subtleText: 'text-slate-600', accent1: 'text-blue-700', accent2: 'text-indigo-700', textBoxBg: 'bg-slate-100/90', border: 'border-slate-400' },
+                'ユニット': { bg: 'bg-amber-900', text: 'text-amber-100', heading: 'text-white', subtleText: 'text-amber-300', accent1: 'text-cyan-300', accent2: 'text-yellow-300', textBoxBg: 'bg-black/40', border: 'border-amber-700' },
+                'タクト': { bg: 'bg-slate-900', text: 'text-slate-200', heading: 'text-white', subtleText: 'text-slate-400', accent1: 'text-sky-400', accent2: 'text-violet-400', textBoxBg: 'bg-black/50', border: 'border-slate-600' },
+                'ストラクト': { bg: 'bg-slate-700', text: 'text-slate-100', heading: 'text-white', subtleText: 'text-slate-300', accent1: 'text-cyan-300', accent2: 'text-lime-300', textBoxBg: 'bg-gray-800/50', border: 'border-slate-500' }
+            }[card.type] || { bg: 'bg-gray-700', text: 'text-gray-200', heading: 'text-white', subtleText: 'text-gray-400', accent1: 'text-cyan-300', accent2: 'text-amber-300', textBoxBg: 'bg-gray-900/50', border: 'border-gray-600' };
+            
+            cardEl.className = `card ${theme.bg} ${theme.border} rounded-lg p-2 flex flex-col cursor-pointer text-center`;
+
+            if (card.rarity === '伝説') cardEl.classList.add('rarity-legendary');
+            if (card.rarity === '神話') cardEl.classList.add('rarity-mythic');
+            
+            const playCostDisplay = createCostDisplay(card.costs, 'play').outerHTML;
+            const actCostDisplay = (card.type === 'ユニット') ? createCostDisplay(card.costs, 'act').outerHTML : '';
+            
+            const defaultImage = `https://placehold.co/200x280/4a5568/e2e8f0?text=${encodeURIComponent(card.name)}`;
+            const imageUrl = card.imageUrl || defaultImage;
+            
+            const descriptionHTML = card.description ? `<p class="whitespace-pre-wrap ${theme.text}">${card.description}</p>` : '';
+            const flavorHTML = card.flavorText ? `<p class="italic ${theme.subtleText} whitespace-pre-wrap mt-1">${card.flavorText}</p>` : '';
+            const unitStatsHTML = card.type === 'ユニット' ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
+
+            cardEl.innerHTML = `
+                <div class="card-content-wrapper flex flex-col w-full h-full">
+                    <p class="font-bold text-center text-[10px] ${theme.text} opacity-80 mb-1">${card.type}</p>
+                    <div class="relative">
+                        <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full h-28 object-cover rounded-md">
+                        <div class="absolute top-1 right-1 bg-black/50 rounded-full px-2 py-0.5">${playCostDisplay}</div>
+                    </div>
+                    <h4 class="font-bold text-sm truncate ${theme.heading} mt-1">${card.name}</h4>
+                    <div class="card-text-box text-xs text-left p-1 ${theme.textBoxBg} rounded my-1 h-20 overflow-y-auto">${descriptionHTML}${flavorHTML}</div>
+                    <div class="mt-auto flex justify-between items-end gap-2 min-h-[40px]">
+                        <div class="text-left text-xs min-w-0 flex-1">
+                            <p class="${theme.subtleText} truncate">${card.rarity || '通常'}</p>
+                            <p class="text-xs ${theme.accent1} truncate" title="${card.world}">${card.world || ''}</p>
+                            <p class="text-xs ${theme.accent2} truncate" title="${(card.tags || []).join(', ')}">${(card.tags || []).join(', ')}</p>
+                            <p class="text-xs text-green-400 truncate" title="${(card.roles || []).join(', ')}">${(card.roles || []).join(', ')}</p>
+                        </div>
+                        <div class="flex-shrink-0 flex flex-col items-end gap-1">${unitStatsHTML}<div class="bg-black/40 rounded-full px-2 py-0.5">${actCostDisplay}</div></div>
+                    </div>
+                </div>`;
+            
+            if (context === 'library') {
+                cardEl.addEventListener('click', () => addCardToDeck(card.id));
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'absolute top-1 left-1 flex flex-col gap-1 z-20';
+                
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '&#9998;';
+                editBtn.title = "編集";
+                editBtn.className = 'text-xs p-1 rounded-full bg-gray-600 hover:bg-gray-500 opacity-50 hover:opacity-100';
+                editBtn.onclick = (e) => { e.stopPropagation(); openCardModal(card); };
+                buttonContainer.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '&#128465;';
+                deleteBtn.title = "削除";
+                deleteBtn.className = 'text-xs p-1 rounded-full bg-red-700 hover:bg-red-600 opacity-50 hover:opacity-100';
+                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteCard(card.id, card.name); };
+                buttonContainer.appendChild(deleteBtn);
+                cardEl.appendChild(buttonContainer);
+            }
+            return cardEl;
+        }
+        
+        function createDeckCardElement(card, count, sectionName) {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'relative flex flex-col items-center cursor-pointer group';
+            cardWrapper.dataset.cardId = card.id;
+
+            let maxCount = (card.type === 'コア' || card.rarity === '神話' || card.rarity === '伝説') ? 1 : 4;
+            const countDisplay = card.type === 'ストラクト' ? `${count}` : `${count}/${maxCount}`;
+
+            const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card.name)}`;
+            const imageUrl = card.imageUrl || defaultImage;
+
+            cardWrapper.innerHTML = `
+                <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full object-cover rounded-md card group-hover:opacity-80">
+                <div class="text-sm font-bold text-center text-gray-200 bg-gray-900/80 rounded-full px-3 py-0.5 mt-1">${countDisplay}</div>`;
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 z-20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none';
+            tooltip.textContent = card.name;
+            cardWrapper.appendChild(tooltip);
+
+            cardWrapper.addEventListener('click', () => removeCardFromDeck(card.id, sectionName));
+            return cardWrapper;
+        }
+        
+        function createCoreCardDisplay(card) {
+            coreDeckEl.innerHTML = '';
+            if (!card) return;
+
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'flex flex-col items-center cursor-pointer group flex-shrink-0 w-32';
+            cardWrapper.dataset.cardId = card.id;
+            cardWrapper.addEventListener('click', () => removeCardFromDeck(card.id, 'core'));
+
+            const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card.name)}`;
+            const imageUrl = card.imageUrl || defaultImage;
+
+            cardWrapper.innerHTML = `<img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full object-cover rounded-md card group-hover:opacity-80">`;
+
+            const infoEl = document.createElement('div');
+            infoEl.className = 'text-xs text-gray-300 space-y-2 mt-2 pl-4 flex-grow';
+            
+            let infoHTML = `<h4 class="font-bold text-base text-amber-300">${card.name}</h4><p class="whitespace-pre-wrap">${card.description || ''}</p>`;
+            const stats = [{label: 'ライフ', value: card.life}, {label: '初期手札', value: card.initialHand}, {label: '手札上限', value: card.handLimit}, {label: 'ターン毎ドロー', value: card.drawPerTurn}, {label: '敗北条件', value: card.defeatCondition}];
+            stats.forEach(stat => { if(stat.value) infoHTML += `<div><strong class="text-gray-400">${stat.label}:</strong> ${stat.value}</div>`; });
+            
+            if (card.initialResources && Object.values(card.initialResources).some(v => v > 0)) {
+                infoHTML += `<div><strong class="text-gray-400">初期資源:</strong> `;
+                const resourceStrings = Object.entries(card.initialResources)
+                    .filter(([, val]) => val > 0)
+                    .map(([key, val]) => `<span style="color:${costTypes[key].colorHex}; font-weight: bold;">${costTypes[key].label} ${val}</span>`);
+                infoHTML += resourceStrings.join(', ') + `</div>`;
+            }
+            infoEl.innerHTML = infoHTML;
+            coreDeckEl.appendChild(cardWrapper);
+            coreDeckEl.appendChild(infoEl);
+        }
+
+        function renderCardLibrary() {
+            cardLibrary.innerHTML = '';
+            const searchValue = cardSearch.value.toLowerCase();
+            const checkedFields = [...searchOptions].filter(cb => cb.checked).map(cb => cb.value);
+            const worldValue = worldFilter.value;
+            const typeValue = typeFilter.value;
+            const rarityValue = rarityFilter.value;
+            const tagValue = tagFilter.value;
+            const resourceValue = resourceFilter.value;
+            const sortValue = sortBy.value;
+
+            const filterFn = c => 
+                (!worldValue || c.world === worldValue) &&
+                (!typeValue || c.type === typeValue) &&
+                (!rarityValue || c.rarity === rarityValue) &&
+                (!tagValue || (c.tags && c.tags.includes(tagValue))) &&
+                (!resourceValue || (c.costs?.play && c.costs.play[resourceValue] > 0)) &&
+                (!searchValue || checkedFields.some(field => (c[field]?.toString() || '').toLowerCase().includes(searchValue)));
+
+            const getTotalPlayCost = card => Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
+
+            const sortFns = {
+                'attack_desc': (a, b) => (b.attack || -1) - (a.attack || -1),
+                'attack_asc': (a, b) => (a.attack || -1) - (b.attack || -1),
+                'defense_desc': (a, b) => (b.defense || -1) - (a.defense || -1),
+                'defense_asc': (a, b) => (a.defense || -1) - (b.defense || -1),
+                'total_cost_desc': (a, b) => getTotalPlayCost(b) - getTotalPlayCost(a),
+                'total_cost_asc': (a, b) => getTotalPlayCost(a) - getTotalPlayCost(b),
+                'name_asc': (a, b) => (a.name || '').localeCompare(b.name || '')
+            };
+
+            const sortedCards = allCards.filter(filterFn).sort(sortFns[sortValue] || sortFns['name_asc']);
+            sortedCards.forEach(card => cardLibrary.appendChild(createCardElement(card, 'library')));
+        }
+
+        // --- デッキ描画 ---
+        function renderDeckList() {
+            deckList.innerHTML = allDecks.length === 0 
+                ? '<p class="text-gray-500">デッキがありません。</p>'
+                : allDecks.map(deck => `<div class="p-3 rounded-lg cursor-pointer deck-list-item" data-deck-id="${deck.id}">${deck.name}</div>`).join('');
+            deckList.querySelectorAll('.deck-list-item').forEach(el => el.onclick = () => loadDeckIntoEditor(el.dataset.deckId));
+        }
+
+        function renderDeckContents() {
+            if (!currentDeck) return;
+            const renderSection = (element, cardIds, sectionName) => {
+                element.innerHTML = '';
+                const cardCounts = (cardIds || []).reduce((acc, id) => ({...acc, [id]: (acc[id] || 0) + 1 }), {});
+                Object.keys(cardCounts).sort((a,b) => (allCards.find(c=>c.id===a)?.name || '').localeCompare(allCards.find(c=>c.id===b)?.name || '')).forEach(cardId => {
+                    const card = allCards.find(c => c.id === cardId);
+                    if(card) element.appendChild(createDeckCardElement(card, cardCounts[cardId], sectionName));
+                });
+            };
+            
+            const coreCard = allCards.find(c => c.id === currentDeck.coreCardId);
+            createCoreCardDisplay(coreCard);
+            renderSection(mainDeckEl, currentDeck.mainDeckCardIds, 'main');
+            renderSection(structDeckEl, currentDeck.structDeckCardIds, 'struct');
+            updateDeckCount();
+            renderDeckAnalysis();
+            renderCostCurve();
+            renderResourceSummary();
+            renderResourceBalance();
+        }
+        
+        function renderDeckAnalysis() {
+            if (!currentDeck || !typeDistributionCanvas) return;
+            
+            const mainDeckCards = (currentDeck.mainDeckCardIds || []).map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            const deckSummaryEl = getEl('deckSummary');
+            const tagSummaryEl = getEl('tagSummary');
+            const roleSummaryEl = getEl('roleSummary');
+
+            if (mainDeckCards.length === 0) {
+                if (typeDistributionChart) { typeDistributionChart.destroy(); typeDistributionChart = null; }
+                const noCardsMsg = `<p class="text-gray-500">メインデッキにカードがありません。</p>`;
+                deckSummaryEl.innerHTML = noCardsMsg;
+                tagSummaryEl.innerHTML = noCardsMsg;
+                roleSummaryEl.innerHTML = noCardsMsg;
+                return;
+            }
+
+            // 1. カード種類分布
+            const typeCounts = mainDeckCards.reduce((acc, card) => {
+                acc[card.type] = (acc[card.type] || 0) + 1;
+                return acc;
+            }, {});
+
+            if (typeDistributionChart) typeDistributionChart.destroy();
+            typeDistributionChart = new Chart(typeDistributionCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['ユニット', 'タクト'],
+                    datasets: [{
+                        data: [typeCounts['ユニット'] || 0, typeCounts['タクト'] || 0],
+                        backgroundColor: ['#f59e0b', '#3b82f6'],
+                        borderColor: '#4a5568',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: '#e2e8f0' } } }
+                }
+            });
+
+            // 2. デッキサマリー
+            let totalCost = 0, totalAttack = 0, totalDefense = 0, unitCount = 0;
+            let legendaryCount = new Set(), mythicCount = new Set();
+            mainDeckCards.forEach(card => {
+                totalCost += Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
+                if (card.rarity === '伝説') legendaryCount.add(card.id);
+                if (card.rarity === '神話') mythicCount.add(card.id);
+                if (card.type === 'ユニット') {
+                    unitCount++;
+                    totalAttack += card.attack || 0;
+                    totalDefense += card.defense || 0;
+                }
+            });
+
+            const summaryHTML = `
+                <div class="flex justify-between"><span>平均プレイコスト:</span> <span class="font-bold text-white">${(totalCost / mainDeckCards.length || 0).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>平均攻撃力 (ユニット):</span> <span class="font-bold text-white">${(totalAttack / unitCount || 0).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>平均体力 (ユニット):</span> <span class="font-bold text-white">${(totalDefense / unitCount || 0).toFixed(2)}</span></div>
+                <div class="flex justify-between mt-2 pt-2 border-t border-gray-700"><span>伝説カード:</span> <span class="font-bold text-white">${legendaryCount.size} 種類</span></div>
+                <div class="flex justify-between"><span>神話カード:</span> <span class="font-bold text-white">${mythicCount.size} 種類</span></div>
+            `;
+            deckSummaryEl.innerHTML = summaryHTML;
+            
+            // 3. タグ、役割の集計
+            const createSummaryHTML = (items, placeholder) => {
+                const counts = items.reduce((acc, item) => { acc[item] = (acc[item] || 0) + 1; return acc; }, {});
+                const sorted = Object.entries(counts).sort(([,a],[,b]) => b-a).slice(0, 5);
+                if (sorted.length > 0) {
+                    return sorted.map(([name, count]) => `<div class="flex justify-between items-center"><span class="font-semibold text-gray-300">${name}</span><span class="text-white font-bold">${count}枚</span></div>`).join('');
+                }
+                return `<p class="text-gray-500">${placeholder}</p>`;
+            };
+
+            tagSummaryEl.innerHTML = createSummaryHTML(mainDeckCards.flatMap(c => c.tags || []), 'タグを持つカードがありません。');
+            roleSummaryEl.innerHTML = createSummaryHTML(mainDeckCards.flatMap(c => c.roles || []), '役割を持つカードがありません。');
+        }
+        
+        function renderCostCurve() {
+            if (!currentDeck || !costCurveCanvas) return;
+            if (costChart) { costChart.destroy(); costChart = null; }
+            const cardsInDeck = [...(currentDeck.mainDeckCardIds || []), ...(currentDeck.structDeckCardIds || [])].map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            const costData = cardsInDeck.reduce((acc, card) => {
+                const totalCost = Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
+                acc[totalCost] = (acc[totalCost] || 0) + 1;
+                return acc;
+            }, {});
+            const maxCost = Math.max(7, ...Object.keys(costData).map(Number));
+            const labels = Array.from({length: maxCost + 1}, (_, i) => i);
+            const data = labels.map(i => costData[i] || 0);
+            costChart = new Chart(costCurveCanvas.getContext('2d'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'カード枚数', data, backgroundColor: 'rgba(132, 204, 22, 0.7)', borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#9ca3af', stepSize: 1 }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }, x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } } }, plugins: { legend: { display: false } } }
+            });
+        }
+        function renderResourceSummary() {
+            if (!currentDeck) return;
+            const resourceSummary = getEl('resourceSummary');
+            const cardsInDeck = [...(currentDeck.mainDeckCardIds || []), ...(currentDeck.structDeckCardIds || [])].map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            const totalCosts = cardsInDeck.reduce((acc, card) => {
+                Object.entries(card.costs?.play || {}).forEach(([key, val]) => acc[key] = (acc[key] || 0) + val);
+                if (card.type === 'ユニット') {
+                    Object.entries(card.costs?.act || {}).forEach(([key, val]) => acc[key] = (acc[key] || 0) + val);
+                }
+                return acc;
+            }, {});
+            const grandTotal = Object.values(totalCosts).reduce((s, v) => s + v, 0);
+            if (grandTotal === 0) {
+                resourceSummary.innerHTML = `<p class="text-gray-500 text-center">固定コストを持つカードがありません。</p>`;
+                return;
+            }
+            resourceSummary.innerHTML = Object.entries(totalCosts).filter(([,val]) => val > 0).map(([key, val]) => {
+                const percentage = (val / grandTotal * 100).toFixed(1);
+                return `<div><div class="flex items-center justify-between text-sm mb-1"><span class="font-semibold" style="color: ${costTypes[key].colorHex}">${costTypes[key].label}</span><span class="text-gray-300">${val} (${percentage}%)</span></div><div class="w-full bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full" style="width: ${percentage}%; background-color: ${costTypes[key].colorHex};"></div></div></div>`;
+            }).join('');
+        }
+        
+        function renderResourceBalance() {
+            if (!currentDeck) return;
+            const resourceBalanceSummaryEl = getEl('resourceBalanceSummary');
+
+            const allDeckCards = [
+                ...(currentDeck.mainDeckCardIds || []),
+                ...(currentDeck.structDeckCardIds || [])
+            ].map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            const coreCard = allCards.find(c => c.id === currentDeck.coreCardId);
+
+            const totalProduction = {};
+            const totalConsumption = {};
+
+            for (const key in costTypes) {
+                totalProduction[key] = 0;
+                totalConsumption[key] = 0;
+            }
+
+            if (coreCard && coreCard.initialResources) {
+                for (const key in coreCard.initialResources) {
+                    totalProduction[key] += coreCard.initialResources[key] || 0;
+                }
+            }
+
+            allDeckCards.forEach(card => {
+                if (card.costs) {
+                    for (const key in card.costs.play) {
+                        totalConsumption[key] += card.costs.play[key] || 0;
+                    }
+                    if (card.type === 'ユニット' && card.costs.act) {
+                        for (const key in card.costs.act) {
+                            totalConsumption[key] += card.costs.act[key] || 0;
+                        }
+                    }
+                }
+                if (card.generates) {
+                    for (const key in card.generates) {
+                        let generatedValue = card.generates[key] || 0;
+                        if (card.type === 'ストラクト') {
+                            generatedValue *= (generatedValue > 0) ? 5.0 : 2.5;
+                        }
+                        
+                        if (generatedValue > 0) {
+                            totalProduction[key] += generatedValue;
+                        } else {
+                            totalConsumption[key] -= generatedValue;
+                        }
+                    }
+                }
+            });
+
+            const maxVal = Math.max(1, ...Object.values(totalProduction), ...Object.values(totalConsumption));
+
+            if (maxVal <= 1 && Object.values(totalProduction).every(v => v===0) && Object.values(totalConsumption).every(v => v===0)) {
+                resourceBalanceSummaryEl.innerHTML = `<p class="text-gray-500">分析対象の資源を持つカードがありません。</p>`;
+                return;
+            }
+
+            let html = '';
+            for (const key of Object.keys(costTypes)) {
+                const production = Math.round(totalProduction[key] * 10) / 10;
+                const cost = totalConsumption[key];
+                
+                if (production === 0 && cost === 0) continue;
+
+                const balance = production - cost;
+                const prodPercentage = (production / maxVal) * 100;
+                const costPercentage = (cost / maxVal) * 100;
+                const balanceColor = balance > 0 ? 'text-green-400' : balance < 0 ? 'text-red-400' : 'text-gray-400';
+
+                html += `
+                    <div class="grid grid-cols-12 items-center gap-2 text-sm">
+                        <div class="col-span-1 font-bold text-center" style="color: ${costTypes[key].colorHex};">${costTypes[key].label}</div>
+                        <div class="col-span-9">
+                            <div class="flex justify-between text-xs text-gray-300">
+                                <span>生産</span>
+                                <span class="font-semibold">${production}</span>
+                            </div>
+                            <div class="w-full bg-gray-700/50 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: ${prodPercentage}%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-300 mt-1">
+                                <span>消費 (合計)</span>
+                                <span class="font-semibold">${cost}</span>
+                            </div>
+                            <div class="w-full bg-gray-700/50 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: ${costPercentage}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-span-2 text-center">
+                            <div class="text-xs text-gray-400">収支</div>
+                            <div class="font-bold text-lg ${balanceColor}">${balance > 0 ? '+' : ''}${Math.round(balance * 10) / 10}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            resourceBalanceSummaryEl.innerHTML = html;
+        }
+
+        function createChoiceCostInputRow(data = {}) {
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2';
+            const resourceOptions = Object.keys(costTypes).map(key => `<option value="${key}">${costTypes[key].label}</option>`).join('');
+            row.innerHTML = `<input type="number" placeholder="数" class="p-2 text-center bg-gray-700 rounded-lg w-16 choice-cost-amount" min="1" value="${data.amount || ''}"><select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type1">${resourceOptions}</select><span class="text-gray-400">/</span><select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type2">${resourceOptions}</select><button type="button" class="remove-choice-cost-btn text-red-400 hover:text-red-600 font-bold text-xl">&times;</button>`;
+            if (data.types?.length === 2) {
+                row.querySelector('.choice-cost-type1').value = data.types[0];
+                row.querySelector('.choice-cost-type2').value = data.types[1];
+            } else {
+                const [val1, val2] = Object.keys(costTypes);
+                row.querySelector('.choice-cost-type1').value = val1;
+                row.querySelector('.choice-cost-type2').value = val2 || val1;
+            }
+            row.querySelector('.remove-choice-cost-btn').onclick = () => row.remove();
+            return row;
+        }
+
+        // --- カード操作 ---
+        function openCardModal(card = null) {
+            cardForm.reset();
+            const choicePlayContainer = getEl('choicePlayCostContainer');
+            const choiceActContainer = getEl('choiceActCostContainer');
+            choicePlayContainer.innerHTML = ''; 
+            choiceActContainer.innerHTML = ''; 
+            imagePreview.src = ''; 
+            imagePreview.style.display = 'none'; 
+            cardImageDataBase64.value = '';
+
+            if (card) {
+                getEl('cardId').value = card.id;
+                getEl('cardName').value = card.name;
+                cardTypeSelect.value = card.type || '';
+                getEl('cardRarity').value = card.rarity || '通常';
+                getEl('cardWorld').value = card.world || '';
+                getEl('cardTags').value = card.tags ? card.tags.join(', ') : '';
+                getEl('cardRoles').value = card.roles ? card.roles.join(', ') : '';
+                getEl('cardDescription').value = card.description || '';
+                getEl('cardFlavorText').value = card.flavorText || '';
+                
+                Object.entries(costTypes).forEach(([key,]) => {
+                    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+                    if (card.costs?.play) getEl(`playCost${capKey}`).value = card.costs.play[key] || '';
+                    if (card.generates) getEl(`generates${capKey}`).value = card.generates[key] || '';
+                    if (card.type === 'ユニット' && card.costs?.act) getEl(`actCost${capKey}`).value = card.costs.act[key] || '';
+                    if (card.type === 'コア' && card.initialResources) getEl(`initialResource${capKey}`).value = card.initialResources[key] || '';
+                });
+
+                card.costs?.choice?.forEach(c => choicePlayContainer.appendChild(createChoiceCostInputRow(c)));
+                
+                if (card.imageUrl) {
+                    cardImageDataBase64.value = card.imageUrl;
+                    imagePreview.src = card.imageUrl;
+                    imagePreview.style.display = 'block';
+                }
+
+                if (card.type === 'ユニット') {
+                    card.costs?.choiceAct?.forEach(c => choiceActContainer.appendChild(createChoiceCostInputRow(c)));
+                    getEl('cardAttack').value = card.attack || '';
+                    getEl('cardDefense').value = card.defense || '';
+                } else if (card.type === 'コア') {
+                    getEl('coreLife').value = card.life || '';
+                    getEl('coreInitialHand').value = card.initialHand || '';
+                    getEl('coreDrawPerTurn').value = card.drawPerTurn || '';
+                    getEl('coreHandLimit').value = card.handLimit || '';
+                    getEl('coreDefeatCondition').value = card.defeatCondition || '';
+                    cardData.initialResources = {};
+                    Object.keys(costTypes).forEach(key => cardData.initialResources[key] = parseInt(getEl(`initialResource${key.charAt(0).toUpperCase() + key.slice(1)}`).value) || 0);
+                }
+            } else {
+                 getEl('cardId').value = '';
+            }
+            cardTypeSelect.dispatchEvent(new Event('change'));
+            cardModal.style.display = 'flex';
+        }
+
+        function saveCard(event) {
+            event.preventDefault();
+            const getChoiceCostsFromContainer = (containerId) => {
+                let isValid = true;
+                const costs = [...document.querySelectorAll(`#${containerId} > div.flex`)].map(row => {
+                    const amount = parseInt(row.querySelector('.choice-cost-amount').value);
+                    const type1 = row.querySelector('.choice-cost-type1').value;
+                    const type2 = row.querySelector('.choice-cost-type2').value;
+                    if (Number.isNaN(amount) || amount <= 0) return null;
+                    if (type1 === type2) {
+                        alert('選択コストでは異なる2種類の資源を選択してください。');
+                        isValid = false;
+                    }
+                    return { amount, types: [type1, type2] };
+                }).filter(Boolean);
+                return { costs, isValid };
+            };
+
+            const playChoiceResult = getChoiceCostsFromContainer('choicePlayCostContainer');
+            if (!playChoiceResult.isValid) return;
+            const actChoiceResult = getChoiceCostsFromContainer('choiceActCostContainer');
+            if (!actChoiceResult.isValid) return;
+            
+            const cardType = cardTypeSelect.value;
+            if (!cardType) { alert('カードタイプを選択してください。'); return; }
+
+            const cardData = {
+                id: getEl('cardId').value || `card_${Date.now()}`,
+                name: getEl('cardName').value, type: cardType, rarity: getEl('cardRarity').value,
+                world: getEl('cardWorld').value.trim() || NEUTRAL_WORLD_NAME,
+                tags: getEl('cardTags').value.split(',').map(t => t.trim()).filter(Boolean),
+                roles: getEl('cardRoles').value.split(',').map(t => t.trim()).filter(Boolean),
+                imageUrl: cardImageDataBase64.value,
+                description: getEl('cardDescription').value, flavorText: getEl('cardFlavorText').value,
+                costs: { play: {}, act: {}, choice: playChoiceResult.costs, choiceAct: [] },
+                generates: {}
+            };
+
+            if (cardType !== 'コア') {
+                Object.keys(costTypes).forEach(key => {
+                    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+                    cardData.costs.play[key] = parseInt(getEl(`playCost${capKey}`).value) || 0;
+                    cardData.generates[key] = parseInt(getEl(`generates${capKey}`).value) || 0;
+                });
+            }
+            if (cardType === 'ユニット') {
+                cardData.attack = parseInt(getEl('cardAttack').value) || null;
+                cardData.defense = parseInt(getEl('cardDefense').value) || null;
+                cardData.costs.choiceAct = actChoiceResult.costs;
+                Object.keys(costTypes).forEach(key => cardData.costs.act[key] = parseInt(getEl(`actCost${key.charAt(0).toUpperCase() + key.slice(1)}`).value) || 0);
+            } else if (cardType === 'コア') {
+                cardData.life = parseInt(getEl('coreLife').value) || null;
+                cardData.initialHand = parseInt(getEl('coreInitialHand').value) || null;
+                cardData.drawPerTurn = parseInt(getEl('coreDrawPerTurn').value) || null;
+                cardData.handLimit = parseInt(getEl('coreHandLimit').value) || null;
+                cardData.defeatCondition = getEl('coreDefeatCondition').value;
+                cardData.initialResources = {};
+                Object.keys(costTypes).forEach(key => cardData.initialResources[key] = parseInt(getEl(`initialResource${key.charAt(0).toUpperCase() + key.slice(1)}`).value) || 0);
+            }
+
+            const existingIndex = allCards.findIndex(c => c.id === cardData.id);
+            if (existingIndex > -1) allCards[existingIndex] = cardData;
+            else allCards.push(cardData);
+            
+            saveCardsToLocalStorage(); 
+            refreshAllUI();
+            cardModal.style.display = 'none';
+        }
+        
+        // --- デッキ操作 ---
+        function deleteCard(cardId, cardName) {
+            if (!confirm(`「${cardName}」をライブラリから完全に削除しますか？\nこのカードはすべてのデッキからも削除されます。この操作は元に戻せません。`)) return;
+            allCards = allCards.filter(c => c.id !== cardId);
+            allDecks.forEach(deck => {
+                if (deck.coreCardId === cardId) deck.coreCardId = null;
+                if (deck.mainDeckCardIds) deck.mainDeckCardIds = deck.mainDeckCardIds.filter(id => id !== cardId);
+                if (deck.structDeckCardIds) deck.structDeckCardIds = deck.structDeckCardIds.filter(id => id !== cardId);
+            });
+            saveCardsToLocalStorage();
+            saveDecksToLocalStorage();
+            refreshAllUI();
+            alert(`「${cardName}」を削除しました。`);
+        }
+        function createNewDeck() {
+            currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, mainDeckCardIds: [], structDeckCardIds: [] };
+            showDeckEditor();
+        }
+        function loadDeckIntoEditor(deckId) {
+            const deck = allDecks.find(d => d.id === deckId);
+            if (deck) {
+                currentDeck = JSON.parse(JSON.stringify(deck));
+                showDeckEditor();
+            }
+        }
+        function showDeckEditor() {
+            deckEditorContent.classList.remove('hidden');
+            deckEditorPlaceholder.classList.add('hidden');
+            deckNameInput.value = currentDeck.name;
+            deckDescriptionInput.value = currentDeck.description || '';
+            deckWorld1.value = currentDeck.worlds?.[0] || '';
+            deckWorld2.value = currentDeck.worlds?.[1] || '';
+            renderDeckContents();
+        }
+        function saveDeck() {
+            if (!currentDeck) return;
+            const deckName = deckNameInput.value.trim();
+            if (!deckName) {
+                alert('デッキ名を入力してください。');
+                return;
+            }
+            updateCurrentDeckFromUI();
+            const existingIndex = allDecks.findIndex(d => d.id === currentDeck.id);
+            if (existingIndex > -1) allDecks[existingIndex] = currentDeck;
+            else allDecks.push(currentDeck);
+            saveDecksToLocalStorage(); 
+            refreshAllUI();
+            alert('デッキを保存しました！');
+        }
+        function deleteDeck() {
+            if (!currentDeck || !confirm(`「${currentDeck.name}」を本当に削除しますか？`)) return;
+            allDecks = allDecks.filter(d => d.id !== currentDeck.id);
+            saveDecksToLocalStorage(); 
+            currentDeck = null;
+            deckEditorContent.classList.add('hidden');
+            deckEditorPlaceholder.classList.remove('hidden');
+            refreshAllUI();
+        }
+
+        function addCardToDeck(cardId) {
+            if (!currentDeck) { alert("まずデッキを選択または作成してください。"); return; }
+            const card = allCards.find(c => c.id === cardId); 
+            if(!card?.type || !card?.rarity) { alert('カードデータが不正です。このカードを一度編集して保存し直してください。'); return; }
+            const selectedWorlds = (currentDeck.worlds || []).filter(Boolean);
+            if (selectedWorlds.length > 0 && card.world !== NEUTRAL_WORLD_NAME && !selectedWorlds.includes(card.world)) { alert(`このカードは選択された世界「${selectedWorlds.join(', ')}」に属していません。`); return; }
+            
+            const mainDeckIds = currentDeck.mainDeckCardIds || [];
+            const structDeckIds = currentDeck.structDeckCardIds || [];
+            if ((card.type === 'ユニット' || card.type === 'タクト') && mainDeckIds.length >= DECK_LIMITS.MAIN) { alert(`メインデッキは${DECK_LIMITS.MAIN}枚までです。`); return; }
+            if (card.type === 'ストラクト' && structDeckIds.length >= DECK_LIMITS.STRUCT) { alert(`ストラクトデッキは${DECK_LIMITS.STRUCT}枚までです。`); return; }
+            
+            const deckCounts = getDeckCardCounts(); 
+            const cardCountInDeck = deckCounts.cardCounts[cardId] || 0;
+            
+            if (card.type !== 'コア') {
+                if (card.rarity === '神話') {
+                    if (deckCounts.mythicCount > 0 && cardCountInDeck < 1) { alert(`神話カードはデッキに1種類までです。`); return; }
+                    if (cardCountInDeck >= 1) { alert(`神話カード「${card.name}」は1枚までです。`); return; }
+                } else if (card.rarity === '伝説') {
+                    if (deckCounts.legendaryCount >= 4 && cardCountInDeck < 1) { alert('伝説カードは合計4種類までです。'); return; } 
+                    if (cardCountInDeck >= 1) { alert(`伝説カード「${card.name}」は1枚までです。`); return; } 
+                } else if (card.type !== 'ストラクト' && cardCountInDeck >= 4) { 
+                    alert(`「${card.name}」は4枚までです。`); return; 
+                }
+            }
+            switch(card.type) {
+                case 'コア': 
+                    if (currentDeck.coreCardId) { alert('コアカードはすでにデッキに存在します。'); return; } 
+                    currentDeck.coreCardId = card.id; 
+                    break;
+                case 'ユニット': case 'タクト': 
+                    currentDeck.mainDeckCardIds = [...mainDeckIds, card.id];
+                    break;
+                case 'ストラクト': 
+                    currentDeck.structDeckCardIds = [...structDeckIds, card.id];
+                    break;
+            }
+            renderDeckContents();
+        }
+        function getDeckCardCounts() {
+            if (!currentDeck) return { legendaryCount: 0, mythicCount: 0, cardCounts: {} };
+            const allDeckIds = [...(currentDeck.mainDeckCardIds || []), ...(currentDeck.structDeckCardIds || []), ...(currentDeck.coreCardId ? [currentDeck.coreCardId] : [])];
+            const allCardsInDeck = allDeckIds.map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            const counts = { cardCounts: allDeckIds.reduce((acc, id) => ({...acc, [id]: (acc[id] || 0) + 1 }), {}) };
+            counts.legendaryCount = new Set(allCardsInDeck.filter(c => c.rarity === '伝説').map(c => c.id)).size;
+            counts.mythicCount = new Set(allCardsInDeck.filter(c => c.rarity === '神話').map(c => c.id)).size;
+            return counts;
+        }
+
+        function removeCardFromDeck(cardId, deckSection) {
+            if (!currentDeck) return;
+            if (deckSection === 'core') {
+                currentDeck.coreCardId = null;
+            } else if (deckSection === 'main') {
+                const index = (currentDeck.mainDeckCardIds || []).lastIndexOf(cardId);
+                if (index > -1) currentDeck.mainDeckCardIds.splice(index, 1);
+            } else if (deckSection === 'struct') {
+                const index = (currentDeck.structDeckCardIds || []).lastIndexOf(cardId);
+                if (index > -1) currentDeck.structDeckCardIds.splice(index, 1);
+            }
+            renderDeckContents();
+        }
+        function updateDeckCount() {
+            if (currentDeck) {
+                const mainCurrent = (currentDeck.mainDeckCardIds || []).length;
+                const structCurrent = (currentDeck.structDeckCardIds || []).length;
+                mainDeckCount.textContent = mainCurrent;
+                structDeckCount.textContent = structCurrent;
+                mainDeckCount.parentElement.classList.toggle('text-red-400', mainCurrent > DECK_LIMITS.MAIN);
+                structDeckCount.parentElement.classList.toggle('text-red-400', structCurrent > DECK_LIMITS.STRUCT);
+            }
+        }
+        
+        // --- インポート/エクスポート機能 ---
+        function exportAllData() {
+            if (allCards.length === 0 && allDecks.length === 0) { alert('エクスポートするデータがありません。'); return; }
+            const dataStr = JSON.stringify({ cards: allCards, decks: allDecks, worlds: allWorlds }, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'deck_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportSingleDeck() {
+            if (!currentDeck) { alert('エクスポートするデッキが選択されていません。'); return; }
+            updateCurrentDeckFromUI();
+            const dataStr = JSON.stringify(currentDeck, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentDeck.name.replace(/[\\/:"*?<>|]/g, '_') || 'deck'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        function importSingleDeck() {
+            const fileInput = getEl('deck-import-input');
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const importedDeck = JSON.parse(event.target.result);
+                        const existingCardIds = new Set(allCards.map(c => c.id));
+                        const newDeck = {
+                            id: `deck_${Date.now()}`,
+                            name: importedDeck.name ? `${importedDeck.name} (インポート)` : "名称未設定のデッキ",
+                            description: importedDeck.description || "", worlds: importedDeck.worlds || [],
+                            coreCardId: existingCardIds.has(importedDeck.coreCardId) ? importedDeck.coreCardId : null,
+                            mainDeckCardIds: (importedDeck.mainDeckCardIds || []).filter(id => existingCardIds.has(id)),
+                            structDeckCardIds: (importedDeck.structDeckCardIds || []).filter(id => existingCardIds.has(id)),
+                        };
+                        allDecks.push(newDeck);
+                        saveDecksToLocalStorage();
+                        refreshAllUI();
+                        alert(`デッキ「${newDeck.name}」をインポートしました。`);
+                    } catch (error) { alert('デッキファイルの読み込みに失敗しました。'); }
+                    fileInput.value = ''; // Reset for next import
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
+        }
+        
+        function updateCurrentDeckFromUI() {
+            if (!currentDeck) return;
+            currentDeck.name = deckNameInput.value;
+            currentDeck.description = deckDescriptionInput.value;
+            currentDeck.worlds = [deckWorld1.value, deckWorld2.value].filter(Boolean);
+        }
+
+        // --- テストドロー関連 (グローバルヘルパー) ---
+        function performInitialDraw() {
+            if (!currentDeck) return;
+            const drawCount = parseInt(getEl('drawCountInput').value) || 7;
+            const mainDeck = currentDeck.mainDeckCardIds || [];
+            
+            if (drawCount > mainDeck.length) {
+                alert('ドロー枚数がデッキの枚数を超えています。');
+                return;
+            }
+
+            testDeck = [...mainDeck];
+            for (let i = testDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [testDeck[i], testDeck[j]] = [testDeck[j], testDeck[i]];
+            }
+
+            getEl('handDisplayArea').innerHTML = '';
+            for (let i = 0; i < drawCount; i++) {
+                drawOneMoreCard();
+            }
+            
+            getEl('initialDrawSetup').classList.add('hidden');
+            getEl('drawInterface').classList.remove('hidden');
+        }
+
+        function drawOneMoreCard() {
+            if (testDeck.length === 0) {
+                alert('山札がありません。');
+                return;
+            }
+            const cardId = testDeck.pop();
+            const card = allCards.find(c => c.id === cardId);
+            if (card) getEl('handDisplayArea').appendChild(createCardElement(card, 'hand'));
+            
+            getEl('drawDeckInfo').textContent = `山札: ${testDeck.length}枚`;
+            
+            const drawOneMoreBtn = getEl('drawOneMoreBtn');
+            if (testDeck.length === 0) {
+                drawOneMoreBtn.disabled = true;
+                drawOneMoreBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function openTestDrawModal() {
+            updateCurrentDeckFromUI();
+            if (!currentDeck?.mainDeckCardIds?.length) {
+                alert('テストドローを行うには、メインデッキにカードを追加してください。');
+                return;
+            }
+            
+            getEl('handDisplayArea').innerHTML = '';
+            getEl('drawDeckInfo').textContent = `山札: ${currentDeck.mainDeckCardIds.length}枚`;
+            getEl('initialDrawSetup').classList.remove('hidden');
+            getEl('drawInterface').classList.add('hidden');
+            
+            const drawOneMoreBtn = getEl('drawOneMoreBtn');
+            drawOneMoreBtn.disabled = false;
+            drawOneMoreBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            testDrawModal.style.display = 'flex';
+        }
+
+        // --- 世界観機能 ---
+        function initializeWorldsData() {
+            const existingWorldNames = new Set(allWorlds.map(w => w.name));
+            const cardWorlds = new Set(allCards.map(c => c.world).filter(Boolean));
+            
+            cardWorlds.forEach(worldName => {
+                if (worldName !== NEUTRAL_WORLD_NAME && !existingWorldNames.has(worldName)) {
+                    allWorlds.push({
+                        name: worldName,
+                        description: '',
+                        representativeCardId: ''
+                    });
+                }
+            });
+            
+            const allCurrentWorldNames = new Set(allCards.map(c => c.world).filter(Boolean));
+            allWorlds = allWorlds.filter(world => allCurrentWorldNames.has(world.name));
+
+            allWorlds.sort((a, b) => a.name.localeCompare(b.name));
+            saveWorldsToLocalStorage();
+        }
+
+        function openWorldLoreModal() {
+            renderWorldLoreList();
+            worldLoreModal.style.display = 'flex';
+        }
+
+        function renderWorldLoreList() {
+            const listEl = getEl('worldLoreList');
+            listEl.innerHTML = '';
+            
+            const worldsToDisplay = allWorlds.filter(w => w.name !== NEUTRAL_WORLD_NAME);
+
+            if (worldsToDisplay.length === 0) {
+                listEl.innerHTML = '<p class="text-gray-500">ニュートラル以外の世界がまだありません。カードを作成すると自動的に追加されます。</p>';
+                return;
+            }
+
+            worldsToDisplay.forEach(world => {
+                const representativeCard = allCards.find(c => c.id === world.representativeCardId);
+                const defaultImage = `https://placehold.co/100x140/2d3748/e2e8f0?text=${encodeURIComponent(world.name)}`;
+                const imageUrl = representativeCard?.imageUrl || defaultImage;
+
+                const worldEl = document.createElement('div');
+                worldEl.className = 'bg-gray-900/50 p-4 rounded-lg flex gap-6 items-start';
+                worldEl.innerHTML = `
+                    <div class="flex-shrink-0 w-24">
+                        <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${world.name}" class="w-full object-cover rounded-md">
+                        <p class="text-xs text-center mt-1 text-gray-400 truncate" title="${representativeCard?.name || '未設定'}">${representativeCard?.name || '代表カード未設定'}</p>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-purple-300">${world.name}</h3>
+                            <button data-world-name="${world.name}" class="edit-world-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg text-sm">編集</button>
+                        </div>
+                        <p class="text-gray-300 whitespace-pre-wrap">${world.description || 'この世界の詳細な説明はまだありません...'}</p>
+                    </div>
+                `;
+                listEl.appendChild(worldEl);
+            });
+
+            document.querySelectorAll('.edit-world-btn').forEach(btn => {
+                btn.onclick = () => openEditWorldModal(btn.dataset.worldName);
+            });
+        }
+
+        function openEditWorldModal(worldName) {
+            const world = allWorlds.find(w => w.name === worldName);
+            if (!world) return;
+
+            getEl('editWorldName').value = world.name;
+            getEl('worldDescription').value = world.description || '';
+
+            const cardSelect = getEl('representativeCard');
+            const cardsInWorld = allCards.filter(c => c.world === worldName).sort((a,b) => a.name.localeCompare(b.name));
+            
+            cardSelect.innerHTML = '<option value="">代表カードなし</option>';
+            cardsInWorld.forEach(card => {
+                cardSelect.innerHTML += `<option value="${card.id}">${card.name}</option>`;
+            });
+            cardSelect.value = world.representativeCardId || '';
+
+            editWorldModal.style.display = 'flex';
+        }
+
+        function saveWorldData(event) {
+            event.preventDefault();
+            const worldName = getEl('editWorldName').value;
+            const world = allWorlds.find(w => w.name === worldName);
+            if (!world) return;
+
+            world.description = getEl('worldDescription').value;
+            world.representativeCardId = getEl('representativeCard').value;
+
+            saveWorldsToLocalStorage();
+            renderWorldLoreList();
+            editWorldModal.style.display = 'none';
+            alert(`「${worldName}」の設定を保存しました。`);
+        }
+
+        // --- デッキ画像出力機能 ---
+        async function exportDeckAsImage() {
+            if (!currentDeck) {
+                alert('画像として出力するデッキが選択されていません。');
+                return;
+            }
+            alert('デッキ画像の生成を開始します。完了までしばらくお待ちください...');
+
+            const container = document.createElement('div');
+            container.id = 'deck-image-generator';
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            container.style.width = '1920px';
+            container.style.backgroundColor = '#1a202c';
+            container.style.color = '#e2e8f0';
+            container.style.padding = '40px';
+            container.style.fontFamily = "'Noto Sans JP', 'Inter', sans-serif";
+            
+            const deckName = currentDeck.name || '無名のデッキ';
+            const worlds = (currentDeck.worlds || []).filter(Boolean);
+            const description = currentDeck.description || '説明はありません。';
+            const coreCard = allCards.find(c => c.id === currentDeck.coreCardId);
+            
+            const getCardImageUrl = (card) => card?.imageUrl || `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card?.name || '?')}`;
+
+            let html = `
+                <div style="text-align: center;">
+                    <div id="deck-title-for-image" style="font-weight: 700; line-height: 1.2;">${deckName}</div>
+                    <div style="font-size: 24px; color: #9ca3af; margin-top: 8px;">${worlds.join(' / ')}</div>
+                </div>
+                
+                <div style="display: flex; margin-top: 32px; gap: 32px; min-height: 350px;">
+                    <div style="flex: 1; border: 1px solid #4a5568; border-radius: 8px; padding: 24px;">
+                        <div id="deck-desc-for-image" style="white-space: pre-wrap; word-break: break-all;">${description}</div>
+                    </div>
+                    <div style="flex-shrink: 0; text-align: center;">`;
+            
+            if (coreCard) {
+                html += `<img src="${getCardImageUrl(coreCard)}" style="width: 250px; height: 350px; object-fit: cover; border-radius: 12px; border: 2px solid #f59e0b;" crossorigin="anonymous">
+                         <p style="font-weight: 600; margin-top: 8px;">${coreCard.name}</p>`;
+            } else {
+                html += `<div style="width: 250px; height: 350px; border-radius: 12px; background-color: #2d3748; display: flex; align-items: center; justify-content: center; color: #9ca3af;">コアなし</div>`;
+            }
+            html += `</div></div>`;
+
+            const createCardGrid = (title, cardIds, rows, cols) => {
+                let gridHtml = `<div style="margin-top: 32px;">
+                                    <h3 style="font-size: 28px; font-weight: 600; margin-bottom: 16px; border-bottom: 2px solid #4a5568; padding-bottom: 8px;">${title} (${cardIds.length}枚)</h3>
+                                    <div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 12px;">`;
+                
+                const sortedCards = cardIds
+                    .map(id => allCards.find(c => c.id === id))
+                    .filter(Boolean)
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                for(let i = 0; i < rows * cols; i++) {
+                    const card = sortedCards[i];
+                    if (card) {
+                        gridHtml += `<div>
+                                        <img src="${getCardImageUrl(card)}" style="width: 100%; aspect-ratio: 200 / 280; object-fit: cover; border-radius: 8px;" crossorigin="anonymous">
+                                     </div>`;
+                    } else {
+                        gridHtml += `<div style="aspect-ratio: 200 / 280; background-color: rgba(45, 55, 72, 0.5); border-radius: 8px;"></div>`;
+                    }
+                }
+                gridHtml += `</div></div>`;
+                return gridHtml;
+            };
+
+            html += createCardGrid('メインデッキ', currentDeck.mainDeckCardIds || [], 4, 10);
+            html += createCardGrid('ストラクトデッキ', currentDeck.structDeckCardIds || [], 2, 10);
+
+            container.innerHTML = html;
+            document.body.appendChild(container);
+
+            const adjustFontSize = (elementId, initialSize, minSize) => {
+                const el = document.getElementById(elementId);
+                let currentSize = initialSize;
+                el.style.fontSize = `${currentSize}px`;
+                while (el.scrollHeight > el.clientHeight && currentSize > minSize) {
+                    currentSize--;
+                    el.style.fontSize = `${currentSize}px`;
+                }
+            };
+
+            adjustFontSize('deck-title-for-image', 80, 24);
+            adjustFontSize('deck-desc-for-image', 24, 12);
+
+            try {
+                const canvas = await html2canvas(container, {
+                    useCORS: true, 
+                    allowTaint: true,
+                    scale: 1.2,
+                });
+                
+                const link = document.createElement('a');
+                link.download = `${deckName.replace(/[\\/:"*?<>|]/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                alert('デッキ画像の生成が完了しました。');
+
+            } catch (error) {
+                console.error('画像生成エラー:', error);
+                alert('画像の生成中にエラーが発生しました。コンソールを確認してください。\n外部サイトの画像（placehold.coなど）が原因である可能性があります。');
+            } finally {
+                document.body.removeChild(container);
+            }
+        }
+
+        // --- イベントリスナー ---
+        function setupEventListeners() {
+            getEl('newCardBtn').onclick = () => openCardModal();
+            getEl('cancelCard').onclick = () => cardModal.style.display = 'none';
+            cardForm.onsubmit = saveCard;
+            getEl('howToUseBtn').onclick = () => usageModal.style.display = 'flex';
+            getEl('closeUsageModal').onclick = () => usageModal.style.display = 'none';
+            getEl('newDeckBtn').onclick = createNewDeck;
+            getEl('saveDeckBtn').onclick = saveDeck;
+            getEl('deleteDeckBtn').onclick = deleteDeck;
+            [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
+            
+            deckWorld1.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
+            deckWorld2.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
+            getEl('exportAllBtn').onclick = exportAllData;
+            getEl('importDeckBtn').onclick = importSingleDeck;
+            getEl('exportDeckBtn').onclick = exportSingleDeck;
+            
+            getEl('exportImageBtn').onclick = exportDeckAsImage;
+
+            cardTypeSelect.onchange = (e) => {
+                const type = e.target.value;
+                getEl('unitStatsContainer').classList.toggle('hidden', type !== 'ユニット');
+                getEl('coreStatsContainer').classList.toggle('hidden', type !== 'コア');
+                getEl('playCostContainer').classList.toggle('hidden', type === 'コア');
+                getEl('choicePlayCostContainerWrapper').classList.toggle('hidden', type === 'コア');
+                getEl('generatesContainer').classList.toggle('hidden', type === 'コア');
+            };
+            getEl('cardImageFileLabel').onclick = () => getEl('card-image-input').click();
+            getEl('card-image-input').onchange = async (event) => {
+                const file = event.target.files[0]; if (!file) return;
+                try {
+                    const compressedBase64 = await resizeAndCompressImage(file, 400, 560, 0.7);
+                    cardImageDataBase64.value = compressedBase64;
+                    imagePreview.src = compressedBase64;
+                    imagePreview.style.display = 'block';
+                } catch (error) { alert("画像の処理に失敗しました。"); }
+                getEl('card-image-input').value = '';
+            };
+            searchOptions.forEach(checkbox => checkbox.onchange = renderCardLibrary);
+            
+            // Test Draw Listeners
+            getEl('testDrawBtn').onclick = openTestDrawModal;
+            getEl('closeDrawModalBtn').onclick = () => testDrawModal.style.display = 'none';
+            getEl('startDrawBtn').onclick = performInitialDraw;
+            getEl('drawOneMoreBtn').onclick = drawOneMoreCard;
+
+            // Choice Cost Listeners
+            getEl('addChoicePlayCostBtn').onclick = () => getEl('choicePlayCostContainer').appendChild(createChoiceCostInputRow());
+            getEl('addChoiceActCostBtn').onclick = () => getEl('choiceActCostContainer').appendChild(createChoiceCostInputRow());
+
+            // World Lore Listeners
+            getEl('worldLoreBtn').onclick = openWorldLoreModal;
+            getEl('closeWorldLoreModal').onclick = () => worldLoreModal.style.display = 'none';
+            getEl('cancelEditWorld').onclick = () => editWorldModal.style.display = 'none';
+            editWorldForm.onsubmit = saveWorldData;
+        }
+
+        // --- 初期化処理 ---
+        window.onload = () => {
+            loadDataFromFile();
+            setupEventListeners();
+        };
+    </script>
+</body>
+</html>
