@@ -151,9 +151,10 @@
         <header class="bg-gray-900 shadow-lg p-4 flex justify-between items-center z-20 flex-wrap">
             <h1 class="text-2xl font-bold text-white mb-2 sm:mb-0">デッキメーカー</h1>
             <div class="flex items-center space-x-2 flex-wrap">
+                <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
+                <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
                 <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">使用方法</button>
                 <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
-                <button id="importDeckBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">デッキ読込</button>
                 <button id="exportAllBtn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">全データ書出</button>
                 <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                     新しいカードを追加
@@ -632,15 +633,47 @@
         </div>
     </div>
 
+    <!-- データ同期モーダル -->
+    <div id="syncModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-4xl mx-auto border border-gray-700">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
+                <h2 class="text-2xl font-bold">データ同期</h2>
+                <button type="button" id="closeSyncModal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+            <div id="syncList" class="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+                <!-- 保存されたデータバージョンがここに表示されます -->
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
-        // --- ★★★ サイト編集者向け設定 ★★★ ---
-        // GitHub Pagesなどで公開した deck_data.json ファイルの完全なURLをここに貼り付けてください。
-        // 例: 'https://your-username.github.io/your-repo-name/deck_data.json'
-        // このURLが空の場合、アプリはローカルの編集データ（もしあれば）で起動します。
-        const dataFileUrl = 'https://an0hit0.github.io/Deckmaker/deck_data.json';
+        // Firebase SDK のインポート
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, query, orderBy, serverTimestamp, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        // --- ★★★ Firebase 設定情報 ★★★ ---
+        const firebaseConfig = {
+  apiKey: "AIzaSyBRRUttf5Fm-ijDsnSFf3gvZYPpi8cmrIE",
+  authDomain: "threadscard-68f82.firebaseapp.com",
+  projectId: "threadscard-68f82",
+  storageBucket: "threadscard-68f82.firebasestorage.app",
+  messagingSenderId: "88156430574",
+  appId: "1:88156430574:web:4d91c8b66e7c7d1948d3ff"
+};
         // --- ★★★ 設定ここまで ★★★ ---
 
+        // Firebaseの初期化
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) {
+            console.error("Firebaseの初期化に失敗しました。設定情報を確認してください。", e);
+            showAlert("アプリケーションの初期化に失敗しました。設定情報を確認してください。");
+        }
 
         // --- グローバル変数と状態管理 ---
         let allCards = [];
@@ -650,6 +683,8 @@
         let costChart = null;
         let typeDistributionChart = null;
         let testDeck = [];
+        let initialServerState = { cards: [], decks: [], worlds: [] };
+        let changeLog = [];
 
         const costTypes = {
             human: { label: '人', colorHex: '#d97706' }, // Amber-600
@@ -674,6 +709,7 @@
         const testDrawModal = getEl('testDrawModal');
         const worldLoreModal = getEl('worldLoreModal');
         const editWorldModal = getEl('editWorldModal');
+        const syncModal = getEl('syncModal');
         const cardForm = getEl('cardForm');
         const editWorldForm = getEl('editWorldForm');
         const deckList = getEl('deckList');
@@ -726,42 +762,31 @@
         }
 
         // --- データ読み込み ---
-        async function loadDataFromFile() {
-            const localCards = localStorage.getItem('deckBuilderCards_temp');
-            const localDecks = localStorage.getItem('deckBuilderDecks_temp');
-            const localWorlds = localStorage.getItem('deckBuilderWorlds_temp');
+        async function loadLatestDataFromServer() {
+            try {
+                const q = query(collection(db, "data_versions"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const latestDoc = querySnapshot.docs[0];
+                    const data = latestDoc.data();
+                    allCards = JSON.parse(data.cards);
+                    allDecks = JSON.parse(data.decks);
+                    allWorlds = JSON.parse(data.worlds);
 
-            if (dataFileUrl) {
-                try {
-                    const response = await fetch(`${dataFileUrl}?t=${new Date().getTime()}`);
-                    if (!response.ok) {
-                        console.warn(`${dataFileUrl} が見つかりませんでした。`);
-                        await showAlert(`データファイルの読み込みに失敗しました。\nURLが正しいか確認してください:\n${dataFileUrl}`);
-                        if (localCards || localDecks || localWorlds) {
-                            loadDataFromLocalStorage();
-                            return;
-                        }
-                        allCards = []; allDecks = []; allWorlds = [];
-                    } else {
-                        const data = await response.json();
-                        allCards = data.cards || [];
-                        allDecks = data.decks || [];
-                        allWorlds = data.worlds || [];
-                        saveCardsToLocalStorage();
-                        saveDecksToLocalStorage();
-                        saveWorldsToLocalStorage();
-                    }
-                } catch (e) {
-                    console.error("データファイルの読み込みまたは解析エラー:", e);
-                    await showAlert(`${dataFileUrl}の読み込みに失敗しました。\nURLが正しいか、ファイルがJSON形式か確認してください。`);
-                    if (localCards || localDecks || localWorlds) {
-                        loadDataFromLocalStorage();
-                        return;
-                    }
-                    allCards = []; allDecks = []; allWorlds = [];
+                    initialServerState = {
+                        cards: JSON.parse(data.cards),
+                        decks: JSON.parse(data.decks),
+                        worlds: JSON.parse(data.worlds)
+                    };
+                    changeLog = [];
+                } else {
+                    console.log("サーバーにデータがありません。空の状態で開始します。");
+                    initialServerState = { cards: [], decks: [], worlds: [] };
+                    changeLog = [];
                 }
-            } else {
-                loadDataFromLocalStorage();
+            } catch (e) {
+                console.error("サーバーからのデータ読み込みエラー:", e);
+                await showAlert("サーバーからのデータ読み込みに失敗しました。");
             }
             
             allCards.forEach(card => {
@@ -774,22 +799,6 @@
             });
 
             refreshAllUI();
-        }
-
-        function loadDataFromLocalStorage() {
-            const localCards = localStorage.getItem('deckBuilderCards_temp');
-            const localDecks = localStorage.getItem('deckBuilderDecks_temp');
-            const localWorlds = localStorage.getItem('deckBuilderWorlds_temp');
-            
-            allCards = localCards ? JSON.parse(localCards) : [];
-            allDecks = localDecks ? JSON.parse(localDecks) : [];
-            allWorlds = localWorlds ? JSON.parse(localWorlds) : [];
-            
-            if (!localCards && !localDecks && !localWorlds) {
-                 console.log("外部URLの指定がなく、ローカルデータも存在しないため、空の状態で開始します。");
-            } else {
-                 console.log("外部URLの指定がないため、ローカルに保存されたデータで起動しました。");
-            }
         }
 
         // --- データ保存 (ブラウザ内) ---
@@ -2122,8 +2131,21 @@
         }
 
         // --- 初期化処理 ---
-        window.onload = () => {
-            loadDataFromFile();
+        window.onload = async () => {
+            if (auth) {
+                try {
+                    await signInAnonymously(auth);
+                    onAuthStateChanged(auth, user => {
+                        if (user) {
+                            console.log("匿名ユーザーとしてログイン:", user.uid);
+                            loadLatestDataFromServer();
+                        }
+                    });
+                } catch (e) {
+                    console.error("匿名ログインエラー:", e);
+                    await showAlert("データベースへの接続に失敗しました。");
+                }
+            }
             setupEventListeners();
         };
     </script>
