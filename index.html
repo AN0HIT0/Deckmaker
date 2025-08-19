@@ -685,10 +685,11 @@
     <script type="module">
         // Firebase SDK のインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, query, orderBy, serverTimestamp, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, serverTimestamp, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         // --- ★★★ Firebase 設定情報 ★★★ ---
+        // 自身のFirebaseプロジェクトの設定情報に書き換えてください
         const firebaseConfig = {
           apiKey: "AIzaSyBRRUttf5Fm-ijDsnSFf3gvZYPpi8cmrIE",
           authDomain: "threadscard-68f82.firebaseapp.com",
@@ -700,7 +701,7 @@
         // --- ★★★ 設定ここまで ★★★ ---
 
         // Firebaseの初期化
-        let app, db, auth;
+        let app, db, auth, currentUser = null;
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -718,9 +719,7 @@
         let costChart = null;
         let typeDistributionChart = null;
         let testDeck = [];
-        let initialServerState = { cards: [], decks: [], worlds: [] };
-        let changeLog = [];
-
+        
         const costTypes = {
             human: { label: '人', colorHex: '#d97706' }, // Amber-600
             nature: { label: '自', colorHex: '#22c55e' },
@@ -745,6 +744,7 @@
         const worldLoreModal = getEl('worldLoreModal');
         const editWorldModal = getEl('editWorldModal');
         const syncModal = getEl('syncModal');
+        const consoleModal = getEl('consoleModal');
         const cardForm = getEl('cardForm');
         const editWorldForm = getEl('editWorldForm');
         const deckList = getEl('deckList');
@@ -773,9 +773,19 @@
         const typeDistributionCanvas = getEl('typeDistributionCanvas');
         const cardTypeSelect = getEl('cardType');
         const searchOptions = document.querySelectorAll('#searchOptions input[name="searchField"]');
+        const consoleOutput = getEl('consoleOutput');
         
+        // --- コンソールログ ---
+        function logToConsole(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] [${type}] ${message}\n`;
+            consoleOutput.value += logEntry;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
         // --- UI更新の集中管理 ---
         function refreshAllUI() {
+            logToConsole("UIの全体更新を開始します。");
             allDecks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             
             initializeWorldsData();
@@ -794,57 +804,87 @@
                     deckEditorPlaceholder.classList.remove('hidden');
                 }
             }
+            logToConsole("UIの全体更新が完了しました。");
         }
 
         // --- データ読み込み ---
         async function loadLatestDataFromServer() {
+            logToConsole("サーバーから最新データの読み込みを開始します...");
             try {
-                const q = query(collection(db, "data_versions"), orderBy("timestamp", "desc"));
+                const q = query(collection(db, "versions"), orderBy("timestamp", "desc"));
                 const querySnapshot = await getDocs(q);
                 if (!querySnapshot.empty) {
-                    const latestDoc = querySnapshot.docs[0];
-                    const data = latestDoc.data();
-                    allCards = JSON.parse(data.cards);
-                    allDecks = JSON.parse(data.decks);
-                    allWorlds = JSON.parse(data.worlds);
-
-                    initialServerState = {
-                        cards: JSON.parse(data.cards),
-                        decks: JSON.parse(data.decks),
-                        worlds: JSON.parse(data.worlds)
-                    };
-                    changeLog = [];
+                    const latestVersionDoc = querySnapshot.docs[0];
+                    logToConsole(`最新バージョンを検出しました (ID: ${latestVersionDoc.id})。データを読み込みます。`);
+                    await loadVersionFromServer(latestVersionDoc.id, false); // No confirmation on initial load
                 } else {
-                    console.log("サーバーにデータがありません。空の状態で開始します。");
-                    initialServerState = { cards: [], decks: [], worlds: [] };
-                    changeLog = [];
+                    logToConsole("サーバーにデータがありません。空の状態で開始します。", "WARN");
+                    refreshAllUI();
                 }
             } catch (e) {
                 console.error("サーバーからのデータ読み込みエラー:", e);
+                logToConsole(`サーバーからのデータ読み込みに失敗しました: ${e.message}`, "ERROR");
                 await showAlert("サーバーからのデータ読み込みに失敗しました。");
+                refreshAllUI();
             }
-            
-            allCards.forEach(card => {
-                if (!card.costs) card.costs = {};
-                if (!card.costs.play) card.costs.play = {};
-                if (!card.costs.act) card.costs.act = {};
-                if (!card.costs.choice) card.costs.choice = [];
-                if (!card.costs.choiceAct) card.costs.choiceAct = [];
-                if (!card.generates) card.generates = {};
-            });
-
-            refreshAllUI();
         }
         
-        // --- データ保存 (ブラウザ内) ---
-        function saveCardsToLocalStorage() {
-            localStorage.setItem('deckBuilderCards_temp', JSON.stringify(allCards));
-        }
-        function saveDecksToLocalStorage() {
-            localStorage.setItem('deckBuilderDecks_temp', JSON.stringify(allDecks));
-        }
-        function saveWorldsToLocalStorage() { 
-            localStorage.setItem('deckBuilderWorlds_temp', JSON.stringify(allWorlds));
+        // --- データ保存 (サーバー) ---
+        async function saveDataToServer() {
+            if (!currentUser) {
+                await showAlert("ログインしていません。データは保存できません。");
+                return;
+            }
+            logToConsole("サーバーへのデータ保存を開始します...");
+            
+            const batch = writeBatch(db);
+
+            try {
+                // 1. Create a new version document to get an ID
+                const versionRef = doc(collection(db, "versions"));
+                batch.set(versionRef, {
+                    timestamp: serverTimestamp(),
+                    authorUid: currentUser.uid,
+                    cardCount: allCards.length,
+                    deckCount: allDecks.length,
+                    worldCount: allWorlds.length
+                });
+                const versionId = versionRef.id;
+
+                // 2. Function to chunk and save data
+                const chunkAndSave = (dataType, dataArray) => {
+                    const CHUNK_SIZE = 5; // Number of items per chunk
+                    if (dataArray.length === 0) return;
+
+                    for (let i = 0; i < dataArray.length; i += CHUNK_SIZE) {
+                        const chunk = dataArray.slice(i, i + CHUNK_SIZE);
+                        const chunkData = {
+                            versionId: versionId,
+                            type: dataType,
+                            chunkIndex: i / CHUNK_SIZE,
+                            data: JSON.stringify(chunk)
+                        };
+                        const chunkRef = doc(collection(db, "version_chunks"));
+                        batch.set(chunkRef, chunkData);
+                    }
+                };
+
+                // 3. Chunk and save all data types
+                chunkAndSave('cards', allCards);
+                chunkAndSave('decks', allDecks);
+                chunkAndSave('worlds', allWorlds);
+
+                // 4. Commit the batch
+                await batch.commit();
+
+                logToConsole(`データが正常に保存されました (Version ID: ${versionId})。`);
+                await showAlert("データをサーバーに保存しました！");
+
+            } catch (e) {
+                console.error("サーバーへのデータ保存エラー:", e);
+                logToConsole(`サーバーへのデータ保存に失敗しました: ${e.message}`, "ERROR");
+                await showAlert(`サーバーへのデータ保存に失敗しました。\nエラー: ${e.message}`);
+            }
         }
         
         // --- フィルターとソートのオプション更新 ---
@@ -1171,7 +1211,13 @@
                 (!rarityValue || c.rarity === rarityValue) &&
                 (!tagValue || (c.tags && c.tags.includes(tagValue))) &&
                 (!resourceValue || (c.costs?.play && c.costs.play[resourceValue] > 0)) &&
-                (!searchValue || checkedFields.some(field => (c[field]?.toString() || '').toLowerCase().includes(searchValue)));
+                (!searchValue || checkedFields.some(field => {
+                    const fieldValue = c[field];
+                    if (Array.isArray(fieldValue)) {
+                        return fieldValue.join(',').toLowerCase().includes(searchValue);
+                    }
+                    return (fieldValue?.toString() || '').toLowerCase().includes(searchValue);
+                }));
 
             const getTotalPlayCost = card => {
                 const fixedCost = Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0);
@@ -1596,10 +1642,14 @@
             }
 
             const existingIndex = allCards.findIndex(c => c.id === cardData.id);
-            if (existingIndex > -1) allCards[existingIndex] = cardData;
-            else allCards.push(cardData);
+            if (existingIndex > -1) {
+                allCards[existingIndex] = cardData;
+                logToConsole(`カード「${cardData.name}」を更新しました。`);
+            } else {
+                allCards.push(cardData);
+                logToConsole(`新規カード「${cardData.name}」を作成しました。`);
+            }
             
-            saveCardsToLocalStorage(); 
             refreshAllUI();
             cardModal.style.display = 'none';
         }
@@ -1615,19 +1665,20 @@
                 if (deck.mainDeckCardIds) deck.mainDeckCardIds = deck.mainDeckCardIds.filter(id => id !== cardId);
                 if (deck.structDeckCardIds) deck.structDeckCardIds = deck.structDeckCardIds.filter(id => id !== cardId);
             });
-            saveCardsToLocalStorage();
-            saveDecksToLocalStorage();
+            logToConsole(`カード「${cardName}」を削除しました。`);
             refreshAllUI();
             await showAlert(`「${cardName}」を削除しました。`);
         }
         function createNewDeck() {
             currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, mainDeckCardIds: [], structDeckCardIds: [] };
+            logToConsole("新規デッキの作成を開始します。");
             showDeckEditor();
         }
         function loadDeckIntoEditor(deckId) {
             const deck = allDecks.find(d => d.id === deckId);
             if (deck) {
                 currentDeck = JSON.parse(JSON.stringify(deck));
+                logToConsole(`デッキ「${deck.name}」をエディタに読み込みました。`);
                 showDeckEditor();
             }
         }
@@ -1649,22 +1700,27 @@
             }
             updateCurrentDeckFromUI();
             const existingIndex = allDecks.findIndex(d => d.id === currentDeck.id);
-            if (existingIndex > -1) allDecks[existingIndex] = currentDeck;
-            else allDecks.push(currentDeck);
-            saveDecksToLocalStorage(); 
+            if (existingIndex > -1) {
+                allDecks[existingIndex] = currentDeck;
+                logToConsole(`デッキ「${deckName}」を更新しました。`);
+            } else {
+                allDecks.push(currentDeck);
+                logToConsole(`新規デッキ「${deckName}」を保存しました。`);
+            }
             refreshAllUI();
-            await showAlert('デッキを保存しました！');
+            await showAlert('デッキをローカルに保存しました！ヘッダーの「データ保存」でサーバーにアップロードしてください。');
         }
         async function deleteDeck() {
             if (!currentDeck) return;
             const confirmed = await showConfirm(`「${currentDeck.name}」を本当に削除しますか？`);
             if (!confirmed) return;
 
+            const deckName = currentDeck.name;
             allDecks = allDecks.filter(d => d.id !== currentDeck.id);
-            saveDecksToLocalStorage(); 
             currentDeck = null;
             deckEditorContent.classList.add('hidden');
             deckEditorPlaceholder.classList.remove('hidden');
+            logToConsole(`デッキ「${deckName}」を削除しました。`);
             refreshAllUI();
         }
 
@@ -1751,6 +1807,7 @@
             const a = document.createElement('a'); a.href = url; a.download = 'deck_data.json';
             a.click();
             URL.revokeObjectURL(url);
+            logToConsole("全データを 'deck_data.json' としてエクスポートしました。");
         }
 
         async function exportSingleDeck() {
@@ -1765,35 +1822,45 @@
             a.click();
             URL.revokeObjectURL(url);
         }
-        function importSingleDeck() {
-            const fileInput = getEl('deck-import-input');
+        
+        function importAllDataFromFile() {
+            const fileInput = getEl('all-data-import-input');
             fileInput.onchange = e => {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     try {
-                        const importedDeck = JSON.parse(event.target.result);
-                        const existingCardIds = new Set(allCards.map(c => c.id));
-                        const newDeck = {
-                            id: `deck_${Date.now()}`,
-                            name: importedDeck.name ? `${importedDeck.name} (インポート)` : "名称未設定のデッキ",
-                            description: importedDeck.description || "", worlds: importedDeck.worlds || [],
-                            coreCardId: existingCardIds.has(importedDeck.coreCardId) ? importedDeck.coreCardId : null,
-                            mainDeckCardIds: (importedDeck.mainDeckCardIds || []).filter(id => existingCardIds.has(id)),
-                            structDeckCardIds: (importedDeck.structDeckCardIds || []).filter(id => existingCardIds.has(id)),
-                        };
-                        allDecks.push(newDeck);
-                        saveDecksToLocalStorage();
-                        refreshAllUI();
-                        await showAlert(`デッキ「${newDeck.name}」をインポートしました。`);
-                    } catch (error) { await showAlert('デッキファイルの読み込みに失敗しました。'); }
-                    fileInput.value = ''; // Reset for next import
+                        const data = JSON.parse(event.target.result);
+                        if (data.cards && data.decks && data.worlds) {
+                            const confirmed = await showConfirm(
+                                `ファイルから ${data.cards.length} 枚のカード、${data.decks.length} 個のデッキを読み込みます。\n現在のデータは上書きされます。よろしいですか？`
+                            );
+                            if (confirmed) {
+                                allCards = data.cards;
+                                allDecks = data.decks;
+                                allWorlds = data.worlds;
+                                currentDeck = null;
+                                deckEditorContent.classList.add('hidden');
+                                deckEditorPlaceholder.classList.remove('hidden');
+                                refreshAllUI();
+                                logToConsole(`ファイル「${file.name}」から全データをインポートしました。`);
+                                await showAlert('データのインポートが完了しました。');
+                            }
+                        } else {
+                            await showAlert('ファイルの形式が正しくありません。');
+                        }
+                    } catch (error) { 
+                        await showAlert('ファイルの読み込みに失敗しました。'); 
+                        logToConsole(`ファイルインポートエラー: ${error.message}`, "ERROR");
+                    }
+                    fileInput.value = '';
                 };
                 reader.readAsText(file);
             };
             fileInput.click();
         }
+
         
         function updateCurrentDeckFromUI() {
             if (!currentDeck) return;
@@ -1884,7 +1951,6 @@
             allWorlds = allWorlds.filter(world => allCurrentWorldNames.has(world.name));
 
             allWorlds.sort((a, b) => a.name.localeCompare(b.name));
-            saveWorldsToLocalStorage();
         }
 
         function openWorldLoreModal() {
@@ -1958,8 +2024,8 @@
 
             world.description = getEl('worldDescription').value;
             world.representativeCardId = getEl('representativeCard').value;
-
-            saveWorldsToLocalStorage();
+            
+            logToConsole(`世界「${worldName}」の設定を更新しました。`);
             renderWorldLoreList();
             editWorldModal.style.display = 'none';
             await showAlert(`「${worldName}」の設定を保存しました。`);
@@ -2074,6 +2140,118 @@
                 document.body.removeChild(container);
             }
         }
+        
+        // --- データ同期機能 ---
+        async function openSyncModal() {
+            logToConsole("データ同期モーダルを開きます。バージョンリストを取得中...");
+            const syncListEl = getEl('syncList');
+            syncListEl.innerHTML = '<p class="text-gray-400">バージョン履歴を読み込んでいます...</p>';
+            syncModal.style.display = 'flex';
+
+            try {
+                const q = query(collection(db, "versions"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    syncListEl.innerHTML = '<p class="text-gray-400">保存されたバージョンがありません。</p>';
+                    return;
+                }
+                
+                syncListEl.innerHTML = '';
+                querySnapshot.docs.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const timestamp = data.timestamp?.toDate()?.toLocaleString('ja-JP') || '日時不明';
+                    
+                    const versionEl = document.createElement('div');
+                    versionEl.className = 'bg-gray-900/50 p-4 rounded-lg flex justify-between items-center';
+                    versionEl.innerHTML = `
+                        <div>
+                            <p class="font-bold text-lg">${timestamp}</p>
+                            <p class="text-sm text-gray-400">カード: ${data.cardCount || 0}枚, デッキ: ${data.deckCount || 0}個, 作成者UID: ${data.authorUid || '不明'}</p>
+                        </div>
+                        <button data-doc-id="${docSnap.id}" class="load-version-btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">このバージョンを読込む</button>
+                    `;
+                    syncListEl.appendChild(versionEl);
+                });
+
+                document.querySelectorAll('.load-version-btn').forEach(btn => {
+                    btn.onclick = () => loadVersionFromServer(btn.dataset.docId, true);
+                });
+
+            } catch (e) {
+                console.error("バージョン履歴の取得エラー:", e);
+                logToConsole(`バージョン履歴の取得に失敗: ${e.message}`, "ERROR");
+                syncListEl.innerHTML = '<p class="text-red-400">バージョン履歴の読み込みに失敗しました。</p>';
+            }
+        }
+
+        async function loadVersionFromServer(versionId, showConfirmation = true) {
+            if (showConfirmation) {
+                const confirmed = await showConfirm("選択したバージョンを読み込みますか？\n現在の編集内容は破棄されます。");
+                if (!confirmed) return;
+            }
+
+            logToConsole(`バージョン(ID: ${versionId})の読み込みを開始...`);
+            try {
+                const q = query(collection(db, "version_chunks"), where("versionId", "==", versionId));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    logToConsole(`バージョン(ID: ${versionId})のデータチャンクが見つかりません。`, "WARN");
+                    if (showConfirmation) {
+                         await showAlert("選択されたバージョンのデータが見つかりませんでした。");
+                    }
+                    return;
+                }
+
+                const chunks = { cards: [], decks: [], worlds: [] };
+                querySnapshot.forEach(doc => {
+                    const chunkData = doc.data();
+                    if (chunks[chunkData.type]) {
+                        chunks[chunkData.type].push(chunkData);
+                    }
+                });
+
+                const reassemble = (type) => {
+                    if (!chunks[type] || chunks[type].length === 0) return [];
+                    return chunks[type]
+                        .sort((a, b) => a.chunkIndex - b.chunkIndex)
+                        .flatMap(chunk => JSON.parse(chunk.data));
+                };
+
+                allCards = reassemble('cards');
+                allDecks = reassemble('decks');
+                allWorlds = reassemble('worlds');
+                
+                currentDeck = null;
+                deckEditorContent.classList.add('hidden');
+                deckEditorPlaceholder.classList.remove('hidden');
+                
+                allCards.forEach(card => {
+                    if (!card.costs) card.costs = {};
+                    if (!card.costs.play) card.costs.play = {};
+                    if (!card.costs.act) card.costs.act = {};
+                    if (!card.costs.choice) card.costs.choice = [];
+                    if (!card.costs.choiceAct) card.costs.choiceAct = [];
+                    if (!card.generates) card.generates = {};
+                });
+
+                refreshAllUI();
+                if (syncModal.style.display === 'flex') {
+                    syncModal.style.display = 'none';
+                }
+                logToConsole(`バージョン(ID: ${versionId})の読み込みが完了しました。`);
+                if (showConfirmation) {
+                    await showAlert("データの読み込みが完了しました。");
+                }
+
+            } catch (e) {
+                console.error("バージョン読み込みエラー:", e);
+                logToConsole(`バージョン読み込みエラー: ${e.message}`, "ERROR");
+                await showAlert("データの読み込み中にエラーが発生しました。");
+            }
+        }
+
 
         // --- Custom Modals ---
         const confirmModal = getEl('confirmModal');
@@ -2109,24 +2287,20 @@
 
         // --- イベントリスナー ---
         function setupEventListeners() {
+            // Header Buttons
+            getEl('saveDataBtn').onclick = saveDataToServer;
+            getEl('syncDataBtn').onclick = openSyncModal;
+            getEl('importAllDataBtn').onclick = importAllDataFromFile;
+            getEl('exportAllBtn').onclick = exportAllData;
             getEl('newCardBtn').onclick = () => openCardModal();
+            getEl('newDeckBtn').onclick = createNewDeck;
+            getEl('howToUseBtn').onclick = () => usageModal.style.display = 'flex';
+            getEl('worldLoreBtn').onclick = openWorldLoreModal;
+            getEl('consoleBtn').onclick = () => consoleModal.style.display = 'flex';
+
+            // Card Modal
             getEl('cancelCard').onclick = () => cardModal.style.display = 'none';
             cardForm.onsubmit = saveCard;
-            getEl('howToUseBtn').onclick = () => usageModal.style.display = 'flex';
-            getEl('closeUsageModal').onclick = () => usageModal.style.display = 'none';
-            getEl('newDeckBtn').onclick = createNewDeck;
-            getEl('saveDeckBtn').onclick = saveDeck;
-            getEl('deleteDeckBtn').onclick = deleteDeck;
-            [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
-            
-            deckWorld1.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
-            deckWorld2.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
-            getEl('exportAllBtn').onclick = exportAllData;
-            
-            getEl('exportDeckBtn').onclick = exportSingleDeck;
-            
-            getEl('exportImageBtn').onclick = exportDeckAsImage;
-
             cardTypeSelect.onchange = (e) => {
                 const type = e.target.value;
                 getEl('unitStatsContainer').classList.toggle('hidden', type !== 'ユニット');
@@ -2146,23 +2320,45 @@
                 } catch (error) { await showAlert("画像の処理に失敗しました。"); }
                 getEl('card-image-input').value = '';
             };
+            getEl('addChoicePlayCostBtn').onclick = () => getEl('choicePlayCostContainer').appendChild(createChoiceCostInputRow());
+            getEl('addChoiceActCostBtn').onclick = () => getEl('choiceActCostContainer').appendChild(createChoiceCostInputRow());
+
+            // Deck Editor
+            getEl('saveDeckBtn').onclick = saveDeck;
+            getEl('deleteDeckBtn').onclick = deleteDeck;
+            getEl('exportDeckBtn').onclick = exportSingleDeck;
+            getEl('exportImageBtn').onclick = exportDeckAsImage;
+            deckWorld1.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
+            deckWorld2.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
+
+            // Library Filters
+            [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
             searchOptions.forEach(checkbox => checkbox.onchange = renderCardLibrary);
             
-            // Test Draw Listeners
+            // Test Draw Modal
             getEl('testDrawBtn').onclick = openTestDrawModal;
             getEl('closeDrawModalBtn').onclick = () => testDrawModal.style.display = 'none';
             getEl('startDrawBtn').onclick = performInitialDraw;
             getEl('drawOneMoreBtn').onclick = drawOneMoreCard;
 
-            // Choice Cost Listeners
-            getEl('addChoicePlayCostBtn').onclick = () => getEl('choicePlayCostContainer').appendChild(createChoiceCostInputRow());
-            getEl('addChoiceActCostBtn').onclick = () => getEl('choiceActCostContainer').appendChild(createChoiceCostInputRow());
-
-            // World Lore Listeners
-            getEl('worldLoreBtn').onclick = openWorldLoreModal;
+            // World Lore Modals
             getEl('closeWorldLoreModal').onclick = () => worldLoreModal.style.display = 'none';
             getEl('cancelEditWorld').onclick = () => editWorldModal.style.display = 'none';
             editWorldForm.onsubmit = saveWorldData;
+
+            // Other Modals
+            getEl('closeUsageModal').onclick = () => usageModal.style.display = 'none';
+            getEl('closeSyncModal').onclick = () => syncModal.style.display = 'none';
+            getEl('closeConsoleModalBtn').onclick = () => consoleModal.style.display = 'none';
+            getEl('clearConsoleBtn').onclick = () => { consoleOutput.value = ''; logToConsole("コンソールをクリアしました。"); };
+            getEl('showUidBtn').onclick = () => {
+                if (currentUser) {
+                    logToConsole(`あなたのUID: ${currentUser.uid}`);
+                    showAlert(`あなたのUIDはコンソールに表示されました。\n\n${currentUser.uid}`);
+                } else {
+                    logToConsole("まだログインしていません。", "WARN");
+                }
+            };
         }
 
         // --- 初期化処理 ---
@@ -2172,12 +2368,17 @@
                     await signInAnonymously(auth);
                     onAuthStateChanged(auth, user => {
                         if (user) {
-                            console.log("匿名ユーザーとしてログイン:", user.uid);
+                            currentUser = user;
+                            logToConsole(`匿名ユーザーとしてログイン成功 (UID: ${user.uid})`);
                             loadLatestDataFromServer();
+                        } else {
+                            currentUser = null;
+                            logToConsole("ユーザーがログアウトしました。", "WARN");
                         }
                     });
                 } catch (e) {
                     console.error("匿名ログインエラー:", e);
+                    logToConsole(`匿名ログインに失敗: ${e.message}`, "ERROR");
                     await showAlert("データベースへの接続に失敗しました。");
                 }
             }
