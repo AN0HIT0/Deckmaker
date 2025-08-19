@@ -149,22 +149,28 @@
     <!-- メインコンテンツ -->
     <div id="app" class="min-h-screen flex flex-col">
         <!-- ヘッダー -->
-        <header class="bg-gray-900 shadow-lg p-4 flex justify-between items-center z-20 flex-wrap">
-            <h1 class="text-2xl font-bold text-white mb-2 sm:mb-0">デッキメーカー</h1>
-            <div class="flex items-center space-x-2 flex-wrap">
-                <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
-                <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
-                <button id="importAllDataBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">全データ読込</button>
-                <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">使用方法</button>
-                <button id="consoleBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">コンソール</button>
-                <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
-                <button id="exportAllBtn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">全データ書出</button>
-                <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                    新しいカードを追加
-                </button>
-                <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                    新しいデッキを作成
-                </button>
+        <header class="bg-gray-900 shadow-lg p-4 flex justify-between items-center z-20">
+            <h1 class="text-2xl font-bold text-white">デッキメーカー</h1>
+            <div class="flex flex-col items-end space-y-2">
+                <!-- Main Actions -->
+                <div class="flex items-center space-x-2">
+                    <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
+                    <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
+                    <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
+                    <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        新しいカードを追加
+                    </button>
+                    <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        新しいデッキを作成
+                    </button>
+                </div>
+                <!-- Utility and Other Actions -->
+                <div class="flex items-center space-x-2">
+                    <button id="importAllDataBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ読込</button>
+                    <button id="exportAllBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ書出</button>
+                    <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">使用方法</button>
+                    <button id="consoleBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">コンソール</button>
+                </div>
             </div>
         </header>
 
@@ -353,11 +359,25 @@
             <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">使用方法</h2>
             <div class="space-y-6 text-gray-300 max-h-[75vh] overflow-y-auto pr-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-cyan-400 mb-2">【重要】データ管理について</h3>
-                    <ul class="list-disc list-inside space-y-2">
-                        <li>カードやデッキの変更は、ヘッダーの「**データ保存**」ボタンを押すまでサーバーに保存されません。</li>
-                        <li>「**データ同期**」ボタンから、過去に保存した好きな時点のデータに復元できます。</li>
-                        <li>「**全データ読込**」は、お持ちの`deck_data.json`ファイルでサーバー上のデータを上書きする機能です。バックアップからの復元などに使用します。</li>
+                    <h3 class="text-lg font-semibold text-cyan-400 mb-2">【重要】データ管理の仕組み</h3>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li>
+                            <strong>データ保存:</strong> このボタンを押すと、現在の全てのカード、デッキ、世界観データが「バージョン」としてサーバーに保存されます。
+                            <ul class="list-['-_'] list-inside ml-4 mt-2 space-y-2">
+                                <li>多数の画像付きカードを保存するとデータサイズが非常に大きくなりますが、このアプリではデータを自動的に小さな塊（チャンク）に分割して保存するため、エラーが起きにくくなっています。</li>
+                                <li>共同編集者とデータを共有したい場合や、バックアップを取りたい場合に利用してください。</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>データ同期:</strong> 過去に「データ保存」されたバージョンの一覧を表示します。好きな時点のデータを選んで、現在の作業状態をそのバージョンに完全に戻すことができます。
+                        </li>
+                         <li>
+                            <strong>全データ読込/書出:</strong>
+                            <ul class="list-['-_'] list-inside ml-4 mt-2 space-y-2">
+                                <li><strong>読込:</strong> PCに保存されているバックアップファイル（`deck_data.json`）を読み込み、現在のデータを完全に上書きします。</li>
+                                <li><strong>書出:</strong> 現在の全データをPCに`deck_data.json`としてダウンロードします。</li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
                 <div>
