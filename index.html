@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>デッキメーカー</title>
+    <title>デッキメーカー（世界観設定機能追加版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -610,7 +610,7 @@
         // GitHub Pagesなどで公開した deck_data.json ファイルの完全なURLをここに貼り付けてください。
         // 例: 'https://your-username.github.io/your-repo-name/deck_data.json'
         // このURLが空の場合、アプリはローカルの編集データ（もしあれば）で起動します。
-        const dataFileUrl = 'https://raw.githubusercontent.com/AN0HIT0/Deckmaker/refs/heads/main/deck_data.json'; // ← ここにURLを貼り付け
+        const dataFileUrl = 'https://an0hit0.github.io/Deckmaker/deck_data.json';
         // --- ★★★ 設定ここまで ★★★ ---
 
 
@@ -885,6 +885,7 @@
         function createCardElement(card, context) {
             const cardEl = document.createElement('div');
             cardEl.dataset.cardId = card.id;
+            cardEl.className = 'relative h-full'; 
 
             const theme = {
                 'コア': { bg: 'bg-slate-200', text: 'text-slate-800', heading: 'text-black', subtleText: 'text-slate-600', accent1: 'text-blue-700', accent2: 'text-indigo-700', textBoxBg: 'bg-slate-100/90', border: 'border-slate-400' },
@@ -893,10 +894,11 @@
                 'ストラクト': { bg: 'bg-slate-700', text: 'text-slate-100', heading: 'text-white', subtleText: 'text-slate-300', accent1: 'text-cyan-300', accent2: 'text-lime-300', textBoxBg: 'bg-gray-800/50', border: 'border-slate-500' }
             }[card.type] || { bg: 'bg-gray-700', text: 'text-gray-200', heading: 'text-white', subtleText: 'text-gray-400', accent1: 'text-cyan-300', accent2: 'text-amber-300', textBoxBg: 'bg-gray-900/50', border: 'border-gray-600' };
             
-            cardEl.className = `card ${theme.bg} ${theme.border} rounded-lg p-2 flex flex-col cursor-pointer text-center`;
+            const cardInner = document.createElement('div');
+            cardInner.className = `card ${theme.bg} ${theme.border} rounded-lg p-2 flex flex-col cursor-pointer text-center h-full`;
 
-            if (card.rarity === '伝説') cardEl.classList.add('rarity-legendary');
-            if (card.rarity === '神話') cardEl.classList.add('rarity-mythic');
+            if (card.rarity === '伝説') cardInner.classList.add('rarity-legendary');
+            if (card.rarity === '神話') cardInner.classList.add('rarity-mythic');
             
             const playCostDisplay = createCostDisplay(card.costs, 'play').outerHTML;
             const actCostDisplay = (card.type === 'ユニット') ? createCostDisplay(card.costs, 'act').outerHTML : '';
@@ -908,7 +910,7 @@
             const flavorHTML = card.flavorText ? `<p class="italic ${theme.subtleText} whitespace-pre-wrap mt-1">${card.flavorText}</p>` : '';
             const unitStatsHTML = card.type === 'ユニット' ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
 
-            cardEl.innerHTML = `
+            cardInner.innerHTML = `
                 <div class="card-content-wrapper flex flex-col w-full h-full">
                     <p class="font-bold text-center text-[10px] ${theme.text} opacity-80 mb-1">${card.type}</p>
                     <div class="relative">
@@ -929,7 +931,7 @@
                 </div>`;
             
             if (context === 'library') {
-                cardEl.addEventListener('click', () => addCardToDeck(card.id));
+                cardInner.addEventListener('click', () => addCardToDeck(card.id));
 
                 const buttonContainer = document.createElement('div');
                 buttonContainer.className = 'absolute top-1 left-1 flex flex-col gap-1 z-20';
@@ -949,12 +951,13 @@
                 buttonContainer.appendChild(deleteBtn);
                 cardEl.appendChild(buttonContainer);
             }
+            cardEl.appendChild(cardInner);
             return cardEl;
         }
         
         function createDeckCardElement(card, count, sectionName) {
             const cardWrapper = document.createElement('div');
-            cardWrapper.className = 'relative flex flex-col items-center cursor-pointer group';
+            cardWrapper.className = 'relative flex flex-col items-center group';
             cardWrapper.dataset.cardId = card.id;
 
             let maxCount = (card.type === 'コア' || card.rarity === '神話' || card.rarity === '伝説') ? 1 : 4;
@@ -964,15 +967,52 @@
             const imageUrl = card.imageUrl || defaultImage;
 
             cardWrapper.innerHTML = `
-                <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full object-cover rounded-md card group-hover:opacity-80">
+                <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full object-cover rounded-md card group-hover:opacity-80 transition-opacity">
                 <div class="text-sm font-bold text-center text-gray-200 bg-gray-900/80 rounded-full px-3 py-0.5 mt-1">${countDisplay}</div>`;
             
             const tooltip = document.createElement('div');
-            tooltip.className = 'absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 z-20 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none';
+            tooltip.className = 'absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded py-1 px-2 z-30 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none';
             tooltip.textContent = card.name;
             cardWrapper.appendChild(tooltip);
 
-            cardWrapper.addEventListener('click', () => removeCardFromDeck(card.id, sectionName));
+            const overlay = document.createElement('div');
+            overlay.className = 'absolute inset-0 bg-black/60 rounded-md flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10';
+
+            const addBtn = document.createElement('button');
+            addBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-green-600 rounded-full text-white';
+            addBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 4.293a1 1 0 00-1.414 0l-6 6a1 1 0 001.414 1.414L10 6.414l5.293 5.293a1 1 0 001.414-1.414l-6-6z"></path></svg>`;
+            addBtn.title = "1枚追加";
+            addBtn.onclick = (e) => {
+                e.stopPropagation();
+                addCardToDeck(card.id);
+            };
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-blue-600 rounded-full text-white';
+            editBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
+            editBtn.title = "編集";
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
+                openCardModal(card);
+            };
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-red-600 rounded-full text-white';
+            removeBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.293 15.707a1 1 0 001.414 0l6-6a1 1 0 00-1.414-1.414L10 13.586 4.707 8.293a1 1 0 00-1.414 1.414l6 6z"></path></svg>`;
+            removeBtn.title = "1枚減少";
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeCardFromDeck(card.id, sectionName);
+            };
+            
+            if (card.type !== 'コア') {
+                overlay.appendChild(addBtn);
+            }
+            overlay.appendChild(editBtn);
+            overlay.appendChild(removeBtn);
+
+            cardWrapper.appendChild(overlay);
+
             return cardWrapper;
         }
         
@@ -980,15 +1020,45 @@
             coreDeckEl.innerHTML = '';
             if (!card) return;
 
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'relative group flex-shrink-0 w-32';
+
             const cardWrapper = document.createElement('div');
-            cardWrapper.className = 'flex flex-col items-center cursor-pointer group flex-shrink-0 w-32';
+            cardWrapper.className = 'flex flex-col items-center';
             cardWrapper.dataset.cardId = card.id;
-            cardWrapper.addEventListener('click', () => removeCardFromDeck(card.id, 'core'));
 
             const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card.name)}`;
             const imageUrl = card.imageUrl || defaultImage;
 
-            cardWrapper.innerHTML = `<img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full object-cover rounded-md card group-hover:opacity-80">`;
+            cardWrapper.innerHTML = `<img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full object-cover rounded-md card group-hover:opacity-80 transition-opacity">`;
+            
+            cardContainer.appendChild(cardWrapper);
+
+            const overlay = document.createElement('div');
+            overlay.className = 'absolute inset-0 bg-black/60 rounded-md flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10';
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'w-10 h-10 flex items-center justify-center bg-gray-700/80 hover:bg-blue-600 rounded-full text-white';
+            editBtn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
+            editBtn.title = "編集";
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
+                openCardModal(card);
+            };
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'w-10 h-10 flex items-center justify-center bg-gray-700/80 hover:bg-red-600 rounded-full text-white';
+            removeBtn.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.293 15.707a1 1 0 001.414 0l6-6a1 1 0 00-1.414-1.414L10 13.586 4.707 8.293a1 1 0 00-1.414 1.414l6 6z"></path></svg>`;
+            removeBtn.title = "削除";
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeCardFromDeck(card.id, 'core');
+            };
+
+            overlay.appendChild(editBtn);
+            overlay.appendChild(removeBtn);
+            
+            cardContainer.appendChild(overlay);
 
             const infoEl = document.createElement('div');
             infoEl.className = 'text-xs text-gray-300 space-y-2 mt-2 pl-4 flex-grow';
@@ -1005,7 +1075,7 @@
                 infoHTML += resourceStrings.join(', ') + `</div>`;
             }
             infoEl.innerHTML = infoHTML;
-            coreDeckEl.appendChild(cardWrapper);
+            coreDeckEl.appendChild(cardContainer);
             coreDeckEl.appendChild(infoEl);
         }
 
@@ -1356,8 +1426,6 @@
                     getEl('coreDrawPerTurn').value = card.drawPerTurn || '';
                     getEl('coreHandLimit').value = card.handLimit || '';
                     getEl('coreDefeatCondition').value = card.defeatCondition || '';
-                    cardData.initialResources = {};
-                    Object.keys(costTypes).forEach(key => cardData.initialResources[key] = parseInt(getEl(`initialResource${key.charAt(0).toUpperCase() + key.slice(1)}`).value) || 0);
                 }
             } else {
                  getEl('cardId').value = '';
@@ -1884,7 +1952,7 @@
                 const canvas = await html2canvas(container, {
                     useCORS: true, 
                     allowTaint: true,
-                    scale: 1.2,
+                    scale: 1.4,
                 });
                 
                 const link = document.createElement('a');
@@ -1967,4 +2035,3 @@
     </script>
 </body>
 </html>
-
