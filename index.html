@@ -422,6 +422,7 @@
                             <option value="コア">コア</option>
                             <option value="ユニット">ユニット</option>
                             <option value="タクト">タクト</option>
+                            <option value="グランド">グランド</option>
                             <option value="ストラクト">ストラクト</option>
                         </select>
                         <select id="cardRarity" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
@@ -444,19 +445,6 @@
                 
                 <!-- 右列 -->
                 <div class="space-y-4">
-                    <!-- 生成資源 -->
-                    <div id="generatesContainer">
-                        <label class="block text-sm font-medium text-gray-300 mb-2">生成資源</label>
-                        <div class="grid grid-cols-4 gap-3">
-                            <input type="number" id="generatesHuman" placeholder="人" class="p-2 text-center bg-gray-700 rounded-lg">
-                            <input type="number" id="generatesNature" placeholder="自" class="p-2 text-center bg-gray-700 rounded-lg">
-                            <input type="number" id="generatesMineral" placeholder="鉱" class="p-2 text-center bg-gray-700 rounded-lg">
-                            <input type="number" id="generatesGold" placeholder="金" class="p-2 text-center bg-gray-700 rounded-lg">
-                            <input type="number" id="generatesElectric" placeholder="電" class="p-2 text-center bg-gray-700 rounded-lg">
-                            <input type="number" id="generatesFuel" placeholder="燃" class="p-2 text-center bg-gray-700 rounded-lg">
-                            <input type="number" id="generatesMagic" placeholder="魔" class="p-2 text-center bg-gray-700 rounded-lg">
-                        </div>
-                    </div>
                     <!-- プレイコスト -->
                     <div id="playCostContainer">
                         <label class="block text-sm font-medium text-gray-300 mb-2">固定プレイコスト</label>
@@ -481,9 +469,12 @@
                     
                     <!-- ユニット専用設定 -->
                     <div id="unitStatsContainer" class="hidden space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="number" id="cardAttack" placeholder="攻撃力" class="p-3 bg-gray-700 rounded-lg">
-                            <input type="number" id="cardDefense" placeholder="体力" class="p-3 bg-gray-700 rounded-lg">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">ステータス</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" id="cardAttack" placeholder="攻撃力" class="p-3 bg-gray-700 rounded-lg">
+                                <input type="number" id="cardDefense" placeholder="体力" class="p-3 bg-gray-700 rounded-lg">
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">固定アクトコスト</label>
@@ -503,6 +494,20 @@
                                 <button type="button" id="addChoiceActCostBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-1 px-3 rounded-lg text-xs transition-colors">追加</button>
                             </div>
                             <div id="choiceActCostContainer" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- 生成資源 -->
+                    <div id="generatesContainer">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">生成資源</label>
+                        <div class="grid grid-cols-4 gap-3">
+                            <input type="number" id="generatesHuman" placeholder="人" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesNature" placeholder="自" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesMineral" placeholder="鉱" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesGold" placeholder="金" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesElectric" placeholder="電" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesFuel" placeholder="燃" class="p-2 text-center bg-gray-700 rounded-lg">
+                            <input type="number" id="generatesMagic" placeholder="魔" class="p-2 text-center bg-gray-700 rounded-lg">
                         </div>
                     </div>
 
@@ -601,6 +606,29 @@
                     <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 確認モーダル -->
+    <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
+            <h2 id="confirmTitle" class="text-xl font-bold mb-4">確認</h2>
+            <p id="confirmMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
+            <div class="flex justify-end space-x-4">
+                <button id="confirmCancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">キャンセル</button>
+                <button id="confirmOkBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- アラートモーダル -->
+    <div id="alertModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
+            <h2 id="alertTitle" class="text-xl font-bold mb-4">情報</h2>
+            <p id="alertMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
+            <div class="flex justify-end">
+                <button id="alertOkBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+            </div>
         </div>
     </div>
 
@@ -708,7 +736,7 @@
                     const response = await fetch(`${dataFileUrl}?t=${new Date().getTime()}`);
                     if (!response.ok) {
                         console.warn(`${dataFileUrl} が見つかりませんでした。`);
-                        alert(`データファイルの読み込みに失敗しました。\nURLが正しいか確認してください:\n${dataFileUrl}`);
+                        await showAlert(`データファイルの読み込みに失敗しました。\nURLが正しいか確認してください:\n${dataFileUrl}`);
                         if (localCards || localDecks || localWorlds) {
                             loadDataFromLocalStorage();
                             return;
@@ -725,7 +753,7 @@
                     }
                 } catch (e) {
                     console.error("データファイルの読み込みまたは解析エラー:", e);
-                    alert(`${dataFileUrl}の読み込みに失敗しました。\nURLが正しいか、ファイルがJSON形式か確認してください。`);
+                    await showAlert(`${dataFileUrl}の読み込みに失敗しました。\nURLが正しいか、ファイルがJSON形式か確認してください。`);
                     if (localCards || localDecks || localWorlds) {
                         loadDataFromLocalStorage();
                         return;
@@ -793,7 +821,7 @@
             deckWorld2.innerHTML = `<option value="">世界2を選択</option>` + worldOptions;
             worldFilter.innerHTML = `<option value="">すべての世界</option>` + worldOptions;
             
-            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="ストラクト">ストラクト</option>`;
+            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option>`;
             rarityFilter.innerHTML = `<option value="">すべてのレアリティ</option><option value="通常">通常</option><option value="伝説">伝説</option><option value="神話">神話</option>`;
             
             let resourceOptionsHTML = `<option value="">すべての資源(固定コスト)</option>`;
@@ -832,16 +860,18 @@
             });
 
             choiceCosts.forEach(choice => {
-                if (choice.amount > 0 && choice.types?.length === 2) {
-                    const choiceEl = document.createElement('span');
-                    choiceEl.className = 'flex items-baseline gap-x-0';
-                    const [type1, type2] = choice.types;
-                    choiceEl.innerHTML = `
-                        <span style="color:${costTypes[type1].colorHex}">${choice.amount}</span>
-                        <span class="text-gray-400 text-sm mx-px">/</span>
-                        <span style="color:${costTypes[type2].colorHex}">${choice.amount}</span>`;
-                    costContainer.appendChild(choiceEl);
-                    hasAnyCost = true;
+                if (Array.isArray(choice) && choice.length === 2) {
+                    const [cost1, cost2] = choice;
+                    if (cost1.amount > 0 && cost2.amount > 0) {
+                        const choiceEl = document.createElement('span');
+                        choiceEl.className = 'flex items-baseline gap-x-0';
+                        choiceEl.innerHTML = `
+                            <span style="color:${costTypes[cost1.type].colorHex}">${cost1.amount}</span>
+                            <span class="text-gray-400 text-sm mx-px">/</span>
+                            <span style="color:${costTypes[cost2.type].colorHex}">${cost2.amount}</span>`;
+                        costContainer.appendChild(choiceEl);
+                        hasAnyCost = true;
+                    }
                 }
             });
 
@@ -891,6 +921,7 @@
                 'コア': { bg: 'bg-slate-200', text: 'text-slate-800', heading: 'text-black', subtleText: 'text-slate-600', accent1: 'text-blue-700', accent2: 'text-indigo-700', textBoxBg: 'bg-slate-100/90', border: 'border-slate-400' },
                 'ユニット': { bg: 'bg-amber-900', text: 'text-amber-100', heading: 'text-white', subtleText: 'text-amber-300', accent1: 'text-cyan-300', accent2: 'text-yellow-300', textBoxBg: 'bg-black/40', border: 'border-amber-700' },
                 'タクト': { bg: 'bg-slate-900', text: 'text-slate-200', heading: 'text-white', subtleText: 'text-slate-400', accent1: 'text-sky-400', accent2: 'text-violet-400', textBoxBg: 'bg-black/50', border: 'border-slate-600' },
+                'グランド': { bg: 'bg-teal-900', text: 'text-teal-100', heading: 'text-white', subtleText: 'text-teal-300', accent1: 'text-cyan-300', accent2: 'text-lime-300', textBoxBg: 'bg-black/50', border: 'border-teal-600' },
                 'ストラクト': { bg: 'bg-slate-700', text: 'text-slate-100', heading: 'text-white', subtleText: 'text-slate-300', accent1: 'text-cyan-300', accent2: 'text-lime-300', textBoxBg: 'bg-gray-800/50', border: 'border-slate-500' }
             }[card.type] || { bg: 'bg-gray-700', text: 'text-gray-200', heading: 'text-white', subtleText: 'text-gray-400', accent1: 'text-cyan-300', accent2: 'text-amber-300', textBoxBg: 'bg-gray-900/50', border: 'border-gray-600' };
             
@@ -1098,7 +1129,16 @@
                 (!resourceValue || (c.costs?.play && c.costs.play[resourceValue] > 0)) &&
                 (!searchValue || checkedFields.some(field => (c[field]?.toString() || '').toLowerCase().includes(searchValue)));
 
-            const getTotalPlayCost = card => Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
+            const getTotalPlayCost = card => {
+                const fixedCost = Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0);
+                const choiceCost = (card.costs?.choice || []).reduce((s, c) => {
+                    if (Array.isArray(c) && c.length === 2) {
+                        return s + Math.min(c[0].amount, c[1].amount);
+                    }
+                    return s;
+                }, 0);
+                return fixedCost + choiceCost;
+            };
 
             const sortFns = {
                 'attack_desc': (a, b) => (b.attack || -1) - (a.attack || -1),
@@ -1171,10 +1211,10 @@
             typeDistributionChart = new Chart(typeDistributionCanvas.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['ユニット', 'タクト'],
+                    labels: ['ユニット', 'タクト', 'グランド'],
                     datasets: [{
-                        data: [typeCounts['ユニット'] || 0, typeCounts['タクト'] || 0],
-                        backgroundColor: ['#f59e0b', '#3b82f6'],
+                        data: [typeCounts['ユニット'] || 0, typeCounts['タクト'] || 0, typeCounts['グランド'] || 0],
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#14b8a6'],
                         borderColor: '#4a5568',
                     }]
                 },
@@ -1361,19 +1401,32 @@
             resourceBalanceSummaryEl.innerHTML = html;
         }
 
-        function createChoiceCostInputRow(data = {}) {
+        function createChoiceCostInputRow(data = [{}, {}]) {
             const row = document.createElement('div');
             row.className = 'flex items-center gap-2';
             const resourceOptions = Object.keys(costTypes).map(key => `<option value="${key}">${costTypes[key].label}</option>`).join('');
-            row.innerHTML = `<input type="number" placeholder="数" class="p-2 text-center bg-gray-700 rounded-lg w-16 choice-cost-amount" min="1" value="${data.amount || ''}"><select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type1">${resourceOptions}</select><span class="text-gray-400">/</span><select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type2">${resourceOptions}</select><button type="button" class="remove-choice-cost-btn text-red-400 hover:text-red-600 font-bold text-xl">&times;</button>`;
-            if (data.types?.length === 2) {
-                row.querySelector('.choice-cost-type1').value = data.types[0];
-                row.querySelector('.choice-cost-type2').value = data.types[1];
-            } else {
-                const [val1, val2] = Object.keys(costTypes);
-                row.querySelector('.choice-cost-type1').value = val1;
-                row.querySelector('.choice-cost-type2').value = val2 || val1;
+            row.innerHTML = `
+                <input type="number" placeholder="数" class="p-2 text-center bg-gray-700 rounded-lg w-16 choice-cost-amount1" min="1" value="${data[0]?.amount || ''}">
+                <select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type1">${resourceOptions}</select>
+                <span class="text-gray-400">/</span>
+                <input type="number" placeholder="数" class="p-2 text-center bg-gray-700 rounded-lg w-16 choice-cost-amount2" min="1" value="${data[1]?.amount || ''}">
+                <select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type2">${resourceOptions}</select>
+                <button type="button" class="remove-choice-cost-btn text-red-400 hover:text-red-600 font-bold text-xl">&times;</button>`;
+            
+            if (data[0]?.type) {
+                row.querySelector('.choice-cost-type1').value = data[0].type;
             }
+            if (data[1]?.type) {
+                row.querySelector('.choice-cost-type2').value = data[1].type;
+            } else {
+                const firstType = row.querySelector('.choice-cost-type1').value;
+                const secondSelect = row.querySelector('.choice-cost-type2');
+                const secondOption = [...secondSelect.options].find(opt => opt.value !== firstType);
+                if (secondOption) {
+                    secondSelect.value = secondOption.value;
+                }
+            }
+
             row.querySelector('.remove-choice-cost-btn').onclick = () => row.remove();
             return row;
         }
@@ -1434,31 +1487,35 @@
             cardModal.style.display = 'flex';
         }
 
-        function saveCard(event) {
+        async function saveCard(event) {
             event.preventDefault();
-            const getChoiceCostsFromContainer = (containerId) => {
+            const getChoiceCostsFromContainer = async (containerId) => {
                 let isValid = true;
                 const costs = [...document.querySelectorAll(`#${containerId} > div.flex`)].map(row => {
-                    const amount = parseInt(row.querySelector('.choice-cost-amount').value);
+                    const amount1 = parseInt(row.querySelector('.choice-cost-amount1').value);
                     const type1 = row.querySelector('.choice-cost-type1').value;
+                    const amount2 = parseInt(row.querySelector('.choice-cost-amount2').value);
                     const type2 = row.querySelector('.choice-cost-type2').value;
-                    if (Number.isNaN(amount) || amount <= 0) return null;
+
+                    if (Number.isNaN(amount1) || amount1 <= 0 || Number.isNaN(amount2) || amount2 <= 0) {
+                        return null;
+                    }
                     if (type1 === type2) {
-                        alert('選択コストでは異なる2種類の資源を選択してください。');
+                        showAlert('選択コストでは異なる2種類の資源を選択してください。');
                         isValid = false;
                     }
-                    return { amount, types: [type1, type2] };
+                    return [{ type: type1, amount: amount1 }, { type: type2, amount: amount2 }];
                 }).filter(Boolean);
                 return { costs, isValid };
             };
 
-            const playChoiceResult = getChoiceCostsFromContainer('choicePlayCostContainer');
+            const playChoiceResult = await getChoiceCostsFromContainer('choicePlayCostContainer');
             if (!playChoiceResult.isValid) return;
-            const actChoiceResult = getChoiceCostsFromContainer('choiceActCostContainer');
+            const actChoiceResult = await getChoiceCostsFromContainer('choiceActCostContainer');
             if (!actChoiceResult.isValid) return;
             
             const cardType = cardTypeSelect.value;
-            if (!cardType) { alert('カードタイプを選択してください。'); return; }
+            if (!cardType) { await showAlert('カードタイプを選択してください。'); return; }
 
             const cardData = {
                 id: getEl('cardId').value || `card_${Date.now()}`,
@@ -1504,8 +1561,10 @@
         }
         
         // --- デッキ操作 ---
-        function deleteCard(cardId, cardName) {
-            if (!confirm(`「${cardName}」をライブラリから完全に削除しますか？\nこのカードはすべてのデッキからも削除されます。この操作は元に戻せません。`)) return;
+        async function deleteCard(cardId, cardName) {
+            const confirmed = await showConfirm(`「${cardName}」をライブラリから完全に削除しますか？\nこのカードはすべてのデッキからも削除されます。この操作は元に戻せません。`);
+            if (!confirmed) return;
+
             allCards = allCards.filter(c => c.id !== cardId);
             allDecks.forEach(deck => {
                 if (deck.coreCardId === cardId) deck.coreCardId = null;
@@ -1515,7 +1574,7 @@
             saveCardsToLocalStorage();
             saveDecksToLocalStorage();
             refreshAllUI();
-            alert(`「${cardName}」を削除しました。`);
+            await showAlert(`「${cardName}」を削除しました。`);
         }
         function createNewDeck() {
             currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, mainDeckCardIds: [], structDeckCardIds: [] };
@@ -1537,11 +1596,11 @@
             deckWorld2.value = currentDeck.worlds?.[1] || '';
             renderDeckContents();
         }
-        function saveDeck() {
+        async function saveDeck() {
             if (!currentDeck) return;
             const deckName = deckNameInput.value.trim();
             if (!deckName) {
-                alert('デッキ名を入力してください。');
+                await showAlert('デッキ名を入力してください。');
                 return;
             }
             updateCurrentDeckFromUI();
@@ -1550,10 +1609,13 @@
             else allDecks.push(currentDeck);
             saveDecksToLocalStorage(); 
             refreshAllUI();
-            alert('デッキを保存しました！');
+            await showAlert('デッキを保存しました！');
         }
-        function deleteDeck() {
-            if (!currentDeck || !confirm(`「${currentDeck.name}」を本当に削除しますか？`)) return;
+        async function deleteDeck() {
+            if (!currentDeck) return;
+            const confirmed = await showConfirm(`「${currentDeck.name}」を本当に削除しますか？`);
+            if (!confirmed) return;
+
             allDecks = allDecks.filter(d => d.id !== currentDeck.id);
             saveDecksToLocalStorage(); 
             currentDeck = null;
@@ -1562,38 +1624,38 @@
             refreshAllUI();
         }
 
-        function addCardToDeck(cardId) {
-            if (!currentDeck) { alert("まずデッキを選択または作成してください。"); return; }
+        async function addCardToDeck(cardId) {
+            if (!currentDeck) { await showAlert("まずデッキを選択または作成してください。"); return; }
             const card = allCards.find(c => c.id === cardId); 
-            if(!card?.type || !card?.rarity) { alert('カードデータが不正です。このカードを一度編集して保存し直してください。'); return; }
+            if(!card?.type || !card?.rarity) { await showAlert('カードデータが不正です。このカードを一度編集して保存し直してください。'); return; }
             const selectedWorlds = (currentDeck.worlds || []).filter(Boolean);
-            if (selectedWorlds.length > 0 && card.world !== NEUTRAL_WORLD_NAME && !selectedWorlds.includes(card.world)) { alert(`このカードは選択された世界「${selectedWorlds.join(', ')}」に属していません。`); return; }
+            if (selectedWorlds.length > 0 && card.world !== NEUTRAL_WORLD_NAME && !selectedWorlds.includes(card.world)) { await showAlert(`このカードは選択された世界「${selectedWorlds.join(', ')}」に属していません。`); return; }
             
             const mainDeckIds = currentDeck.mainDeckCardIds || [];
             const structDeckIds = currentDeck.structDeckCardIds || [];
-            if ((card.type === 'ユニット' || card.type === 'タクト') && mainDeckIds.length >= DECK_LIMITS.MAIN) { alert(`メインデッキは${DECK_LIMITS.MAIN}枚までです。`); return; }
-            if (card.type === 'ストラクト' && structDeckIds.length >= DECK_LIMITS.STRUCT) { alert(`ストラクトデッキは${DECK_LIMITS.STRUCT}枚までです。`); return; }
+            if ((card.type === 'ユニット' || card.type === 'タクト' || card.type === 'グランド') && mainDeckIds.length >= DECK_LIMITS.MAIN) { await showAlert(`メインデッキは${DECK_LIMITS.MAIN}枚までです。`); return; }
+            if (card.type === 'ストラクト' && structDeckIds.length >= DECK_LIMITS.STRUCT) { await showAlert(`ストラクトデッキは${DECK_LIMITS.STRUCT}枚までです。`); return; }
             
             const deckCounts = getDeckCardCounts(); 
             const cardCountInDeck = deckCounts.cardCounts[cardId] || 0;
             
             if (card.type !== 'コア') {
                 if (card.rarity === '神話') {
-                    if (deckCounts.mythicCount > 0 && cardCountInDeck < 1) { alert(`神話カードはデッキに1種類までです。`); return; }
-                    if (cardCountInDeck >= 1) { alert(`神話カード「${card.name}」は1枚までです。`); return; }
+                    if (deckCounts.mythicCount > 0 && cardCountInDeck < 1) { await showAlert(`神話カードはデッキに1種類までです。`); return; }
+                    if (cardCountInDeck >= 1) { await showAlert(`神話カード「${card.name}」は1枚までです。`); return; }
                 } else if (card.rarity === '伝説') {
-                    if (deckCounts.legendaryCount >= 4 && cardCountInDeck < 1) { alert('伝説カードは合計4種類までです。'); return; } 
-                    if (cardCountInDeck >= 1) { alert(`伝説カード「${card.name}」は1枚までです。`); return; } 
+                    if (deckCounts.legendaryCount >= 4 && cardCountInDeck < 1) { await showAlert('伝説カードは合計4種類までです。'); return; } 
+                    if (cardCountInDeck >= 1) { await showAlert(`伝説カード「${card.name}」は1枚までです。`); return; } 
                 } else if (card.type !== 'ストラクト' && cardCountInDeck >= 4) { 
-                    alert(`「${card.name}」は4枚までです。`); return; 
+                    await showAlert(`「${card.name}」は4枚までです。`); return; 
                 }
             }
             switch(card.type) {
                 case 'コア': 
-                    if (currentDeck.coreCardId) { alert('コアカードはすでにデッキに存在します。'); return; } 
+                    if (currentDeck.coreCardId) { await showAlert('コアカードはすでにデッキに存在します。'); return; } 
                     currentDeck.coreCardId = card.id; 
                     break;
-                case 'ユニット': case 'タクト': 
+                case 'ユニット': case 'タクト': case 'グランド':
                     currentDeck.mainDeckCardIds = [...mainDeckIds, card.id];
                     break;
                 case 'ストラクト': 
@@ -1637,8 +1699,8 @@
         }
         
         // --- インポート/エクスポート機能 ---
-        function exportAllData() {
-            if (allCards.length === 0 && allDecks.length === 0) { alert('エクスポートするデータがありません。'); return; }
+        async function exportAllData() {
+            if (allCards.length === 0 && allDecks.length === 0) { await showAlert('エクスポートするデータがありません。'); return; }
             const dataStr = JSON.stringify({ cards: allCards, decks: allDecks, worlds: allWorlds }, null, 2);
             const blob = new Blob([dataStr], {type: "application/json"});
             const url = URL.createObjectURL(blob);
@@ -1647,8 +1709,8 @@
             URL.revokeObjectURL(url);
         }
 
-        function exportSingleDeck() {
-            if (!currentDeck) { alert('エクスポートするデッキが選択されていません。'); return; }
+        async function exportSingleDeck() {
+            if (!currentDeck) { await showAlert('エクスポートするデッキが選択されていません。'); return; }
             updateCurrentDeckFromUI();
             const dataStr = JSON.stringify(currentDeck, null, 2);
             const blob = new Blob([dataStr], {type: "application/json"});
@@ -1665,7 +1727,7 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = event => {
+                reader.onload = async (event) => {
                     try {
                         const importedDeck = JSON.parse(event.target.result);
                         const existingCardIds = new Set(allCards.map(c => c.id));
@@ -1680,8 +1742,8 @@
                         allDecks.push(newDeck);
                         saveDecksToLocalStorage();
                         refreshAllUI();
-                        alert(`デッキ「${newDeck.name}」をインポートしました。`);
-                    } catch (error) { alert('デッキファイルの読み込みに失敗しました。'); }
+                        await showAlert(`デッキ「${newDeck.name}」をインポートしました。`);
+                    } catch (error) { await showAlert('デッキファイルの読み込みに失敗しました。'); }
                     fileInput.value = ''; // Reset for next import
                 };
                 reader.readAsText(file);
@@ -1697,13 +1759,13 @@
         }
 
         // --- テストドロー関連 (グローバルヘルパー) ---
-        function performInitialDraw() {
+        async function performInitialDraw() {
             if (!currentDeck) return;
             const drawCount = parseInt(getEl('drawCountInput').value) || 7;
             const mainDeck = currentDeck.mainDeckCardIds || [];
             
             if (drawCount > mainDeck.length) {
-                alert('ドロー枚数がデッキの枚数を超えています。');
+                await showAlert('ドロー枚数がデッキの枚数を超えています。');
                 return;
             }
 
@@ -1722,9 +1784,9 @@
             getEl('drawInterface').classList.remove('hidden');
         }
 
-        function drawOneMoreCard() {
+        async function drawOneMoreCard() {
             if (testDeck.length === 0) {
-                alert('山札がありません。');
+                await showAlert('山札がありません。');
                 return;
             }
             const cardId = testDeck.pop();
@@ -1740,10 +1802,10 @@
             }
         }
 
-        function openTestDrawModal() {
+        async function openTestDrawModal() {
             updateCurrentDeckFromUI();
             if (!currentDeck?.mainDeckCardIds?.length) {
-                alert('テストドローを行うには、メインデッキにカードを追加してください。');
+                await showAlert('テストドローを行うには、メインデッキにカードを追加してください。');
                 return;
             }
             
@@ -1844,7 +1906,7 @@
             editWorldModal.style.display = 'flex';
         }
 
-        function saveWorldData(event) {
+        async function saveWorldData(event) {
             event.preventDefault();
             const worldName = getEl('editWorldName').value;
             const world = allWorlds.find(w => w.name === worldName);
@@ -1856,16 +1918,16 @@
             saveWorldsToLocalStorage();
             renderWorldLoreList();
             editWorldModal.style.display = 'none';
-            alert(`「${worldName}」の設定を保存しました。`);
+            await showAlert(`「${worldName}」の設定を保存しました。`);
         }
 
         // --- デッキ画像出力機能 ---
         async function exportDeckAsImage() {
             if (!currentDeck) {
-                alert('画像として出力するデッキが選択されていません。');
+                await showAlert('画像として出力するデッキが選択されていません。');
                 return;
             }
-            alert('デッキ画像の生成を開始します。完了までしばらくお待ちください...');
+            await showAlert('デッキ画像の生成を開始します。完了までしばらくお待ちください...');
 
             const container = document.createElement('div');
             container.id = 'deck-image-generator';
@@ -1959,14 +2021,46 @@
                 link.download = `${deckName.replace(/[\\/:"*?<>|]/g, '_')}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                alert('デッキ画像の生成が完了しました。');
+                await showAlert('デッキ画像の生成が完了しました。');
 
             } catch (error) {
                 console.error('画像生成エラー:', error);
-                alert('画像の生成中にエラーが発生しました。コンソールを確認してください。\n外部サイトの画像（placehold.coなど）が原因である可能性があります。');
+                await showAlert('画像の生成中にエラーが発生しました。コンソールを確認してください。\n外部サイトの画像（placehold.coなど）が原因である可能性があります。');
             } finally {
                 document.body.removeChild(container);
             }
+        }
+
+        // --- Custom Modals ---
+        const confirmModal = getEl('confirmModal');
+        const alertModal = getEl('alertModal');
+        
+        function showAlert(message, title = '情報') {
+            getEl('alertTitle').textContent = title;
+            getEl('alertMessage').textContent = message;
+            alertModal.style.display = 'flex';
+            return new Promise(resolve => {
+                getEl('alertOkBtn').onclick = () => {
+                    alertModal.style.display = 'none';
+                    resolve();
+                };
+            });
+        }
+
+        function showConfirm(message, title = '確認') {
+            getEl('confirmTitle').textContent = title;
+            getEl('confirmMessage').textContent = message;
+            confirmModal.style.display = 'flex';
+            return new Promise(resolve => {
+                getEl('confirmOkBtn').onclick = () => {
+                    confirmModal.style.display = 'none';
+                    resolve(true);
+                };
+                getEl('confirmCancelBtn').onclick = () => {
+                    confirmModal.style.display = 'none';
+                    resolve(false);
+                };
+            });
         }
 
         // --- イベントリスナー ---
@@ -2005,7 +2099,7 @@
                     cardImageDataBase64.value = compressedBase64;
                     imagePreview.src = compressedBase64;
                     imagePreview.style.display = 'block';
-                } catch (error) { alert("画像の処理に失敗しました。"); }
+                } catch (error) { await showAlert("画像の処理に失敗しました。"); }
                 getEl('card-image-input').value = '';
             };
             searchOptions.forEach(checkbox => checkbox.onchange = renderCardLibrary);
