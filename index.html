@@ -144,6 +144,7 @@
     <!-- Hidden file inputs -->
     <input type="file" id="deck-import-input" class="hidden" accept=".json">
     <input type="file" id="card-image-input" class="hidden" accept="image/*">
+    <input type="file" id="all-data-import-input" class="hidden" accept=".json">
 
     <!-- メインコンテンツ -->
     <div id="app" class="min-h-screen flex flex-col">
@@ -153,7 +154,9 @@
             <div class="flex items-center space-x-2 flex-wrap">
                 <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
                 <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
+                <button id="importAllDataBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">全データ読込</button>
                 <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">使用方法</button>
+                <button id="consoleBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">コンソール</button>
                 <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
                 <button id="exportAllBtn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">全データ書出</button>
                 <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
@@ -350,6 +353,14 @@
             <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">使用方法</h2>
             <div class="space-y-6 text-gray-300 max-h-[75vh] overflow-y-auto pr-4">
                 <div>
+                    <h3 class="text-lg font-semibold text-cyan-400 mb-2">【重要】データ管理について</h3>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>カードやデッキの変更は、ヘッダーの「**データ保存**」ボタンを押すまでサーバーに保存されません。</li>
+                        <li>「**データ同期**」ボタンから、過去に保存した好きな時点のデータに復元できます。</li>
+                        <li>「**全データ読込**」は、お持ちの`deck_data.json`ファイルでサーバー上のデータを上書きする機能です。バックアップからの復元などに使用します。</li>
+                    </ul>
+                </div>
+                <div>
                     <h3 class="text-lg font-semibold text-indigo-400 mb-2">【1】 カードの作成と編集</h3>
                     <p class="mb-3">まず、デッキに入れるカードを作成します。右上の「新しいカードを追加」ボタンから始めます。</p>
                     <ul class="list-disc list-inside space-y-2">
@@ -397,6 +408,15 @@
                         <li>カードを作成すると、そのカードが属する「世界」が自動的にリストに追加されます。(「ニュートラル」は除外されます)</li>
                         <li>世界観モーダルで各世界の「編集」ボタンを押すと、その世界の詳細な説明文や、世界を象徴する「代表カード」を設定できます。</li>
                     </ul>
+                </div>
+                 <div>
+                    <h3 class="text-lg font-semibold text-red-400 mb-2">【管理者向け】UIDの確認方法</h3>
+                    <p class="mb-3">データベースのセキュリティルールを設定するために、あなた自身のユーザーID（UID）が必要です。</p>
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li>ヘッダーにある「コンソール」ボタンを押して、開発者コンソールを開きます。</li>
+                        <li>コンソール画面の右上にある「自分のUIDを表示」ボタンを押します。</li>
+                        <li>「あなたのUID: (英数字の羅列)」のように表示された英数字があなたのUIDです。これをコピーして使用してください。</li>
+                    </ol>
                 </div>
             </div>
             <div class="mt-8 flex justify-end">
@@ -646,6 +666,21 @@
         </div>
     </div>
 
+    <!-- コンソールモーダル -->
+    <div id="consoleModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-3xl mx-auto border border-gray-700 flex flex-col" style="height: 80vh;">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h2 class="text-2xl font-bold">開発者コンソール</h2>
+                <div>
+                    <button id="showUidBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm mr-2">自分のUIDを表示</button>
+                    <button id="clearConsoleBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">クリア</button>
+                </div>
+                <button type="button" id="closeConsoleModalBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+            <textarea id="consoleOutput" class="w-full h-full bg-gray-900 text-white font-mono text-sm p-2 rounded-lg resize-none" readonly></textarea>
+        </div>
+    </div>
+
 
     <script type="module">
         // Firebase SDK のインポート
@@ -655,13 +690,13 @@
 
         // --- ★★★ Firebase 設定情報 ★★★ ---
         const firebaseConfig = {
-  apiKey: "AIzaSyBRRUttf5Fm-ijDsnSFf3gvZYPpi8cmrIE",
-  authDomain: "threadscard-68f82.firebaseapp.com",
-  projectId: "threadscard-68f82",
-  storageBucket: "threadscard-68f82.firebasestorage.app",
-  messagingSenderId: "88156430574",
-  appId: "1:88156430574:web:4d91c8b66e7c7d1948d3ff"
-};
+          apiKey: "AIzaSyBRRUttf5Fm-ijDsnSFf3gvZYPpi8cmrIE",
+          authDomain: "threadscard-68f82.firebaseapp.com",
+          projectId: "threadscard-68f82",
+          storageBucket: "threadscard-68f82.firebasestorage.app",
+          messagingSenderId: "88156430574",
+          appId: "1:88156430574:web:4d91c8b66e7c7d1948d3ff"
+        };
         // --- ★★★ 設定ここまで ★★★ ---
 
         // Firebaseの初期化
@@ -800,7 +835,7 @@
 
             refreshAllUI();
         }
-
+        
         // --- データ保存 (ブラウザ内) ---
         function saveCardsToLocalStorage() {
             localStorage.setItem('deckBuilderCards_temp', JSON.stringify(allCards));
@@ -2087,7 +2122,7 @@
             deckWorld1.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
             deckWorld2.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
             getEl('exportAllBtn').onclick = exportAllData;
-            getEl('importDeckBtn').onclick = importSingleDeck;
+            
             getEl('exportDeckBtn').onclick = exportSingleDeck;
             
             getEl('exportImageBtn').onclick = exportDeckAsImage;
