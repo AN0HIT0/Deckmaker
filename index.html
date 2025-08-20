@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DM：THREADSWRLD</title>
+    <title>DM：THREADSWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -137,6 +137,13 @@
             background-size: 100% 100%;
             background-position: center;
             background-repeat: no-repeat;
+        }
+        /* Chat styles */
+        #chat-toggle {
+            transition: transform 0.3s ease-in-out;
+        }
+        #chat-panel {
+            transition: transform 0.3s ease-in-out;
         }
     </style>
 </head>
@@ -368,6 +375,34 @@
             </div>
             
         </main>
+    </div>
+    
+    <!-- Chat Toggle Button -->
+    <button id="chat-toggle" class="fixed bottom-5 right-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg z-30">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl z-40 transform translate-x-full border-l-2 border-gray-700 flex flex-col">
+        <div class="flex justify-between items-center p-4 bg-gray-900">
+            <h2 class="text-xl font-bold text-white">チャット</h2>
+            <button id="close-chat" class="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-4">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="p-4 bg-gray-900">
+            <form id="chat-form" class="flex space-x-2">
+                <input type="text" id="chat-input" placeholder="メッセージを入力..." class="flex-grow p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" autocomplete="off">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">送信</button>
+            </form>
+        </div>
     </div>
     
     <!-- 使用方法モーダル -->
@@ -743,7 +778,7 @@
     <script type="module">
         // Firebase SDK のインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, serverTimestamp, where, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, serverTimestamp, where, writeBatch, deleteDoc, limitToLast, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         // --- ★★★ Firebase 設定情報 ★★★ ---
@@ -777,6 +812,7 @@
         let costChart = null;
         let typeDistributionChart = null;
         let testDeck = [];
+        let unsubscribeChat = null;
         
         const costTypes = {
             human: { label: '人', colorHex: '#d97706' }, // Amber-600
@@ -833,6 +869,8 @@
         const cardTypeSelect = getEl('cardType');
         const searchOptions = document.querySelectorAll('#searchOptions input[name="searchField"]');
         const consoleOutput = getEl('consoleOutput');
+        const chatPanel = getEl('chat-panel');
+        const chatMessages = getEl('chat-messages');
         
         // --- コンソールログ ---
         function logToConsole(message, type = 'INFO') {
@@ -2752,4 +2790,3 @@
     </script>
 </body>
 </html>
-
