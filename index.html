@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>デッキメーカー（世界観設定機能追加版）</title>
+    <title>THREADSWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -194,10 +194,10 @@
             font-weight: bold;
             z-index: 50; /* Ensure badge is on top */
         }
-        
-        /* --- モーダルの重ね合わせ順を修正 --- */
-        #alertModal, #confirmModal, #shareDetailModal {
-            z-index: 5000;
+        /* Deck detail modal card list active state */
+        .deck-card-entry.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
         }
     </style>
 </head>
@@ -443,7 +443,7 @@
     </div>
 
     <!-- Chat Panel -->
-    <div id="chat-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl z-40 transform translate-x-full border-l-2 border-gray-700 flex flex-col">
+    <div id="chat-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl z-[1040] transform translate-x-full border-l-2 border-gray-700 flex flex-col">
         <div class="flex justify-between items-center p-4 bg-gray-900">
             <h2 class="text-xl font-bold text-white">チャット</h2>
             <button id="close-chat" class="text-gray-400 hover:text-white">
@@ -464,7 +464,7 @@
     </div>
     
     <!-- 使用方法モーダル -->
-    <div id="usageModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+    <div id="usageModal" class="fixed inset-0 z-[1050] flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-3xl mx-auto border border-gray-700">
             <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">使用方法</h2>
             <div class="space-y-6 text-gray-300 max-h-[75vh] overflow-y-auto pr-4">
@@ -564,7 +564,7 @@
 
 
     <!-- カード作成モーダル -->
-    <div id="cardModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+    <div id="cardModal" class="fixed inset-0 z-[1050] flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-2xl mx-auto border border-gray-700">
             <h2 class="text-2xl font-bold mb-6">カード作成・編集</h2>
             <form id="cardForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
@@ -705,7 +705,7 @@
     </div>
     
     <!-- テストドローモーダル -->
-    <div id="testDrawModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+    <div id="testDrawModal" class="fixed inset-0 z-[1050] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-5xl mx-auto border border-gray-700 flex flex-col" style="height: 85vh;">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
                 <h2 class="text-2xl font-bold">テストドロー</h2>
@@ -729,7 +729,7 @@
     </div>
 
     <!-- 世界観モーダル -->
-    <div id="worldLoreModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+    <div id="worldLoreModal" class="fixed inset-0 z-[1050] flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-5xl mx-auto border border-gray-700">
             <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
                 <h2 class="text-2xl font-bold">世界観</h2>
@@ -742,7 +742,7 @@
     </div>
 
     <!-- 世界編集モーダル -->
-    <div id="editWorldModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+    <div id="editWorldModal" class="fixed inset-0 z-[1050] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-900 rounded-lg shadow-2xl p-8 w-full max-w-2xl mx-auto border border-gray-700">
             <h2 class="text-2xl font-bold mb-6">世界設定の編集</h2>
             <form id="editWorldForm">
@@ -768,7 +768,7 @@
     </div>
     
     <!-- データ保存モーダル -->
-    <div id="saveDataModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+    <div id="saveDataModal" class="fixed inset-0 z-[1050] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
             <h2 class="text-xl font-bold mb-4">データに名前を付けて保存</h2>
             <p class="text-gray-300 mb-4">このバージョンの分かりやすい名前を入力してください。（例：「第一版完成」「〇〇調整後」）</p>
@@ -782,7 +782,7 @@
 
 
     <!-- 確認モーダル -->
-    <div id="confirmModal" class="fixed inset-0 z-60 flex items-center justify-center hidden modal-backdrop">
+    <div id="confirmModal" class="fixed inset-0 z-[1060] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
             <h2 id="confirmTitle" class="text-xl font-bold mb-4">確認</h2>
             <p id="confirmMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
@@ -794,7 +794,7 @@
     </div>
 
     <!-- アラートモーダル -->
-    <div id="alertModal" class="fixed inset-0 z-60 flex items-center justify-center hidden modal-backdrop">
+    <div id="alertModal" class="fixed inset-0 z-[1060] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
             <h2 id="alertTitle" class="text-xl font-bold mb-4">情報</h2>
             <p id="alertMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
@@ -805,7 +805,7 @@
     </div>
 
     <!-- データ同期モーダル -->
-    <div id="syncModal" class="fixed inset-0 z-50 flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
+    <div id="syncModal" class="fixed inset-0 z-[1050] flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-4xl mx-auto border border-gray-700">
             <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
                 <h2 class="text-2xl font-bold">データ同期</h2>
@@ -818,7 +818,7 @@
     </div>
 
     <!-- コンソールモーダル -->
-    <div id="consoleModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+    <div id="consoleModal" class="fixed inset-0 z-[1050] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-3xl mx-auto border border-gray-700 flex flex-col" style="height: 80vh;">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
                 <h2 class="text-2xl font-bold">開発者コンソール</h2>
@@ -833,13 +833,13 @@
     </div>
 
     <!-- 共有アイテム詳細モーダル -->
-    <div id="shareDetailModal" class="fixed inset-0 z-999 flex items-center justify-center hidden modal-backdrop">
-        <div id="shareDetailModalContent" class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-4xl mx-auto border border-gray-700 flex flex-col" style="height: 85vh;">
+    <div id="shareDetailModal" class="fixed inset-0 z-[1070] flex items-center justify-center hidden modal-backdrop">
+        <div id="shareDetailModalContent" class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-5xl mx-auto border border-gray-700 flex flex-col" style="height: 85vh;">
             <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
                 <h2 id="shareDetailTitle" class="text-2xl font-bold">共有アイテム詳細</h2>
                 <button type="button" id="closeShareDetailModalBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
             </div>
-            <div id="shareDetailBody" class="flex-grow overflow-y-auto p-2">
+            <div id="shareDetailBody" class="flex-grow overflow-y-auto p-2 min-h-0">
                 <!-- 共有されたコンテンツがここに表示されます -->
             </div>
         </div>
@@ -1258,13 +1258,11 @@
                 shareBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>`;
                 shareBtn.title = "チャットで共有";
                 shareBtn.className = 'text-xs p-1 rounded-full bg-violet-600 hover:bg-violet-500 opacity-50 hover:opacity-100 flex items-center justify-center';
-                // --- BUG FIX START ---
                 shareBtn.onclick = (e) => { 
                     e.stopPropagation(); 
                     sendChatMessage({ type: 'card', cardId: card.id });
                     showAlert(`カード「${card.name}」をチャットで共有しました。`);
                 };
-                // --- BUG FIX END ---
                 buttonContainer.appendChild(shareBtn);
 
                 const deleteBtn = document.createElement('button');
@@ -2846,27 +2844,27 @@
                 authorName.textContent = msg.authorName;
 
                 const bubble = document.createElement('div');
-                bubble.className = 'chat-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
                 
                 // Handle different message types
                 if (msg.type === 'card' && msg.cardId) {
                     const card = allCards.find(c => c.id === msg.cardId);
-                    bubble.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
-                            <span>カード: <strong>${card ? card.name : '不明なカード'}</strong></span>
-                        </div>`;
-                    bubble.classList.add('chat-share-bubble');
+                    const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card?.name || '?')}`;
+                    const imageUrl = card?.imageUrl || defaultImage;
+                    
+                    bubble.className = 'p-0 bg-transparent rounded-lg overflow-hidden cursor-pointer';
+                    bubble.innerHTML = `<img src="${imageUrl}" alt="${card?.name || '不明なカード'}" class="w-28 h-auto rounded-lg border-2 border-gray-600 hover:border-indigo-500 transition-colors">`;
                     if(card) bubble.onclick = () => openShareDetailModal({ type: 'card', data: card });
+
                 } else if (msg.type === 'deck' && msg.deckData) {
+                    bubble.className = 'chat-bubble chat-share-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
                     bubble.innerHTML = `
                         <div class="flex items-center gap-2">
                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z" /></svg>
                             <span>デッキ: <strong>${msg.deckData.name || '無名のデッキ'}</strong></span>
                         </div>`;
-                    bubble.classList.add('chat-share-bubble');
                     bubble.onclick = () => openShareDetailModal({ type: 'deck', data: msg.deckData });
                 } else {
+                    bubble.className = 'chat-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
                     bubble.textContent = msg.text;
                 }
 
@@ -2888,7 +2886,66 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
         
-        // --- NEW FUNCTION: 共有アイテム詳細表示 ---
+        // --- 共有アイテム詳細表示 ---
+        function createCardTextDetailHtml(card) {
+            if (!card) return '<p class="text-gray-500">カード情報が見つかりません。</p>';
+            
+            const createCostHtml = (costs, costType) => {
+                let html = '';
+                const fixedCosts = costs?.[costType] || {};
+                const choiceCosts = (costType === 'play' ? costs?.choice : costs?.choiceAct) || [];
+                
+                const fixedCostEntries = Object.entries(fixedCosts).filter(([, val]) => val > 0);
+                if (fixedCostEntries.length > 0) {
+                    html += fixedCostEntries.map(([key, value]) => `<span style="color:${costTypes[key].colorHex}; font-weight: bold;">${value}</span>`).join(' ');
+                }
+
+                if (choiceCosts.length > 0) {
+                    if (fixedCostEntries.length > 0) html += ' / ';
+                    html += choiceCosts.map(choice => {
+                        if (Array.isArray(choice) && choice.length === 2) {
+                            const [c1, c2] = choice;
+                            return `<span style="color:${costTypes[c1.type].colorHex};">${c1.amount}</span>/<span style="color:${costTypes[c2.type].colorHex};">${c2.amount}</span>`;
+                        }
+                        return '';
+                    }).join(' / ');
+                }
+                return html || 'なし';
+            };
+
+            let detailHtml = `<div class="space-y-4 text-gray-300">`;
+            detailHtml += `<div class="flex justify-between items-baseline border-b-2 border-gray-700 pb-2">
+                                <h3 class="text-2xl font-bold text-white">${card.name}</h3>
+                                ${card.type === 'ユニット' ? `<p class="text-xl font-bold text-yellow-300">${card.attack || 0} / ${card.defense || 0}</p>` : ''}
+                           </div>`;
+            detailHtml += `<div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                            <p><strong>タイプ:</strong> ${card.type || 'N/A'}</p>
+                            <p><strong>レアリティ:</strong> ${card.rarity || 'N/A'}</p>
+                            <p><strong>世界:</strong> ${card.world || 'N/A'}</p>
+                            <p><strong>タグ:</strong> ${(card.tags || []).join(', ') || 'なし'}</p>
+                           </div>`;
+            
+            detailHtml += `<div class="space-y-2 text-sm">
+                            <p><strong>プレイコスト:</strong> ${createCostHtml(card.costs, 'play')}</p>
+                            ${card.type === 'ユニット' ? `<p><strong>アクトコスト:</strong> ${createCostHtml(card.costs, 'act')}</p>` : ''}
+                           </div>`;
+            
+            if (card.description) {
+                detailHtml += `<div class="bg-gray-900/50 p-3 rounded-lg">
+                                <h4 class="font-semibold text-indigo-300 mb-1">効果</h4>
+                                <p class="whitespace-pre-wrap">${card.description}</p>
+                               </div>`;
+            }
+            if (card.flavorText) {
+                detailHtml += `<div class="border-t border-gray-700 pt-3 mt-3">
+                                <p class="italic text-gray-400 whitespace-pre-wrap">${card.flavorText}</p>
+                               </div>`;
+            }
+
+            detailHtml += '</div>';
+            return detailHtml;
+        }
+
         function openShareDetailModal(item) {
             const modal = getEl('shareDetailModal');
             const titleEl = getEl('shareDetailTitle');
@@ -2897,57 +2954,68 @@
 
             if (item.type === 'card' && item.data) {
                 titleEl.textContent = `カード詳細: ${item.data.name}`;
-                const cardEl = createCardElement(item.data, 'detail'); // 'detail' context to prevent click events
-                cardEl.style.width = '300px';
-                cardEl.style.margin = '0 auto';
-                bodyEl.appendChild(cardEl);
+                bodyEl.innerHTML = createCardTextDetailHtml(item.data);
 
             } else if (item.type === 'deck' && item.data) {
                 titleEl.textContent = `デッキ詳細: ${item.data.name}`;
-
                 const deck = item.data;
-                const allDeckCardIds = [
-                    ...(deck.coreCardId ? [deck.coreCardId] : []),
-                    ...(deck.mainDeckCardIds || []),
-                    ...(deck.structDeckCardIds || [])
-                ];
 
-                const cardCounts = allDeckCardIds.reduce((acc, id) => {
-                    acc[id] = (acc[id] || 0) + 1;
-                    return acc;
-                }, {});
+                bodyEl.innerHTML = `
+                    <p class="text-gray-400 mb-4">${deck.description || '説明なし'}</p>
+                    <div class="flex h-full gap-6">
+                        <div id="deckDetailList" class="w-1/2 h-full overflow-y-auto pr-2 space-y-2"></div>
+                        <div id="deckDetailView" class="w-1/2 h-full bg-gray-900/50 p-4 rounded-lg overflow-y-auto">
+                            <p class="text-gray-500">左のリストからカードを選択して詳細を表示</p>
+                        </div>
+                    </div>
+                `;
 
-                let html = `<p class="text-gray-400 mb-4">${deck.description || '説明なし'}</p>`;
-                html += '<div class="space-y-4">';
+                const listContainer = getEl('deckDetailList');
+                const detailViewContainer = getEl('deckDetailView');
+                
+                const cardCounts = [...(deck.coreCardId ? [deck.coreCardId] : []), ...(deck.mainDeckCardIds || []), ...(deck.structDeckCardIds || [])]
+                    .reduce((acc, id) => { acc[id] = (acc[id] || 0) + 1; return acc; }, {});
 
                 const createSectionHtml = (title, cardIds) => {
                     if (!cardIds || cardIds.length === 0) return '';
-                    let sectionHtml = `<h3 class="text-lg font-semibold text-cyan-400 border-b border-gray-700 pb-2 mb-2">${title} (${cardIds.length}枚)</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">`;
+                    let sectionHtml = `<h3 class="text-lg font-semibold text-cyan-400 border-b border-gray-700 pb-2 mb-2">${title}</h3>`;
                     const uniqueCardIds = [...new Set(cardIds)].sort((a,b) => (allCards.find(c=>c.id===a)?.name || '').localeCompare(allCards.find(c=>c.id===b)?.name || ''));
                     
                     uniqueCardIds.forEach(id => {
                         const card = allCards.find(c => c.id === id);
                         if(card) {
-                            const count = cardCounts[id];
                             sectionHtml += `
-                                <div class="bg-gray-900/50 p-2 rounded-lg flex justify-between items-center">
+                                <div class="deck-card-entry bg-gray-900/50 p-2 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-700" data-card-id="${id}">
                                     <span class="font-bold">${card.name}</span>
-                                    <span class="text-gray-400 ml-2 font-semibold">x${count}</span>
+                                    <span class="text-gray-400 ml-2 font-semibold">x${cardCounts[id]}</span>
                                 </div>`;
                         }
                     });
-                    sectionHtml += `</div></div>`;
                     return sectionHtml;
                 };
-
+                
                 const coreCard = allCards.find(c => c.id === deck.coreCardId);
+                let listHtml = '';
                 if(coreCard) {
-                     html += `<h3 class="text-lg font-semibold text-amber-400 border-b border-gray-700 pb-2 mb-2">コア</h3><div class="bg-gray-900/50 p-2 rounded-lg text-center font-bold">${coreCard.name}</div>`;
+                    listHtml += `<h3 class="text-lg font-semibold text-amber-400 border-b border-gray-700 pb-2 mb-2">コア</h3>
+                                <div class="deck-card-entry bg-gray-900/50 p-2 rounded-lg text-center font-bold cursor-pointer hover:bg-gray-700" data-card-id="${coreCard.id}">${coreCard.name}</div>`;
                 }
-                html += createSectionHtml('メインデッキ', deck.mainDeckCardIds);
-                html += createSectionHtml('ストラクトデッキ', deck.structDeckCardIds);
-                html += '</div>';
-                bodyEl.innerHTML = html;
+                listHtml += createSectionHtml('メインデッキ', deck.mainDeckCardIds);
+                listHtml += createSectionHtml('ストラクトデッキ', deck.structDeckCardIds);
+                listContainer.innerHTML = listHtml;
+
+                listContainer.querySelectorAll('.deck-card-entry').forEach(el => {
+                    el.addEventListener('click', () => {
+                        // Remove active class from all other entries
+                        listContainer.querySelectorAll('.deck-card-entry').forEach(e => e.classList.remove('active'));
+                        // Add active class to the clicked one
+                        el.classList.add('active');
+
+                        const cardId = el.dataset.cardId;
+                        const card = allCards.find(c => c.id === cardId);
+                        detailViewContainer.innerHTML = createCardTextDetailHtml(card);
+                    });
+                });
             }
 
             modal.style.display = 'flex';
