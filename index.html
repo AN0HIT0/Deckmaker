@@ -145,6 +145,28 @@
         #chat-panel {
             transition: transform 0.3s ease-in-out;
         }
+        .chat-message-container {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 85%;
+        }
+        .chat-message-container.current-user {
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+        .chat-bubble {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+        .chat-bubble.current-user-bubble {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+        }
+        .chat-bubble.other-user-bubble {
+            background-color: #374151; /* Gray-700 */
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -871,6 +893,8 @@
         const consoleOutput = getEl('consoleOutput');
         const chatPanel = getEl('chat-panel');
         const chatMessages = getEl('chat-messages');
+        const chatForm = getEl('chat-form');
+        const chatInput = getEl('chat-input');
         
         // --- コンソールログ ---
         function logToConsole(message, type = 'INFO') {
@@ -2635,6 +2659,11 @@
 
         async function logout() {
             try {
+                if (unsubscribeChat) {
+                    unsubscribeChat();
+                    unsubscribeChat = null;
+                    logToConsole("チャットリスナーを停止しました。");
+                }
                 await signOut(auth);
                 // onAuthStateChanged will handle the rest, which will sign in anonymously
             } catch (error) {
@@ -2660,6 +2689,77 @@
             }
         }
 
+        // --- チャット機能 ---
+        function setupChatListener() {
+            if (unsubscribeChat) {
+                unsubscribeChat();
+            }
+            const q = query(collection(db, "chat"), orderBy("timestamp", "desc"), limitToLast(50));
+            unsubscribeChat = onSnapshot(q, (querySnapshot) => {
+                const messages = [];
+                querySnapshot.forEach((doc) => {
+                    messages.push(doc.data());
+                });
+                renderChatMessages(messages.reverse());
+            });
+            logToConsole("チャットのリアルタイム受信を開始しました。");
+        }
+
+        async function sendChatMessage(event) {
+            event.preventDefault();
+            const text = chatInput.value.trim();
+            if (text === '' || !currentUser) return;
+
+            try {
+                await addDoc(collection(db, "chat"), {
+                    text: text,
+                    authorName: currentUser.isAnonymous ? "匿名ユーザー" : currentUser.displayName,
+                    authorUid: currentUser.uid,
+                    authorPhotoURL: currentUser.photoURL || `https://placehold.co/40x40/718096/e2e8f0?text=${(currentUser.displayName || 'A').charAt(0)}`,
+                    timestamp: serverTimestamp()
+                });
+                chatInput.value = '';
+            } catch (e) {
+                console.error("メッセージ送信エラー:", e);
+                logToConsole(`メッセージ送信エラー: ${e.message}`, "ERROR");
+                await showAlert("メッセージの送信に失敗しました。");
+            }
+        }
+
+        function renderChatMessages(messages) {
+            chatMessages.innerHTML = '';
+            messages.forEach(msg => {
+                const isCurrentUser = msg.authorUid === currentUser.uid;
+                
+                const msgContainer = document.createElement('div');
+                msgContainer.className = 'chat-message-container' + (isCurrentUser ? ' current-user' : '');
+
+                const authorImg = document.createElement('img');
+                authorImg.src = msg.authorPhotoURL;
+                authorImg.alt = msg.authorName;
+                authorImg.className = 'w-8 h-8 rounded-full flex-shrink-0';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'flex flex-col' + (isCurrentUser ? ' items-end' : ' items-start');
+
+                const authorName = document.createElement('span');
+                authorName.className = 'text-xs text-gray-400 mb-1';
+                authorName.textContent = msg.authorName;
+
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
+                bubble.textContent = msg.text;
+
+                contentDiv.appendChild(authorName);
+                contentDiv.appendChild(bubble);
+
+                msgContainer.appendChild(authorImg);
+                msgContainer.appendChild(contentDiv);
+                
+                chatMessages.appendChild(msgContainer);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
 
         // --- イベントリスナー ---
         function setupEventListeners() {
@@ -2758,6 +2858,15 @@
                     logToConsole("ログインしていません。", "WARN");
                 }
             };
+            
+            // Chat Listeners
+            getEl('chat-toggle').onclick = () => {
+                chatPanel.classList.toggle('translate-x-full');
+            };
+            getEl('close-chat').onclick = () => {
+                chatPanel.classList.add('translate-x-full');
+            };
+            chatForm.onsubmit = sendChatMessage;
         }
 
         // --- 初期化処理 ---
@@ -2773,6 +2882,7 @@
                         logToConsole(`ログイン成功: ${user.displayName} (UID: ${user.uid})`);
                     }
                     await loadLatestDataFromServer();
+                    setupChatListener(); // チャットを開始
                 } else {
                     // No user is signed in, so sign in anonymously
                     try {
