@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THREADSWORLD</title>
+    <title>デッキメーカー（世界観設定機能追加版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -2798,7 +2798,12 @@
         }
 
         async function sendChatMessage(payload) {
-             if (!currentUser) return;
+             // DEBUG: ユーザー情報がない場合にアラートとログを表示するよう修正
+             if (!currentUser) {
+                console.error("送信エラー: ユーザーがまだログインしていません。(currentUser is null)");
+                showAlert("送信エラー: ユーザー情報がまだ読み込めていません。少し待ってからもう一度お試しください。");
+                return;
+             }
              try {
                 await addDoc(collection(db, "chat"), {
                     ...payload,
@@ -2823,65 +2828,70 @@
         function renderChatMessages(messages) {
             chatMessages.innerHTML = '';
             messages.forEach(msg => {
-                const isCurrentUser = msg.authorUid === currentUser.uid;
-                
-                const msgContainer = document.createElement('div');
-                msgContainer.className = 'chat-message-container' + (isCurrentUser ? ' current-user' : '');
-
-                const authorImg = document.createElement('img');
-                authorImg.src = msg.authorPhotoURL;
-                authorImg.alt = msg.authorName;
-                authorImg.className = 'w-8 h-8 rounded-full flex-shrink-0';
-                
-                const contentWrapper = document.createElement('div');
-                contentWrapper.className = 'flex items-end gap-2' + (isCurrentUser ? ' flex-row-reverse' : '');
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'flex flex-col' + (isCurrentUser ? ' items-end' : ' items-start');
-
-                const authorName = document.createElement('span');
-                authorName.className = 'text-xs text-gray-400 mb-1';
-                authorName.textContent = msg.authorName;
-
-                const bubble = document.createElement('div');
-                
-                // Handle different message types
-                if (msg.type === 'card' && msg.cardId) {
-                    const card = allCards.find(c => c.id === msg.cardId);
-                    const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card?.name || '?')}`;
-                    const imageUrl = card?.imageUrl || defaultImage;
+                // DEBUG: 個々のメッセージ描画エラーが全体に影響しないようにtry...catchを追加
+                try {
+                    const isCurrentUser = msg.authorUid === currentUser.uid;
                     
-                    bubble.className = 'p-0 bg-transparent rounded-lg overflow-hidden cursor-pointer';
-                    bubble.innerHTML = `<img src="${imageUrl}" alt="${card?.name || '不明なカード'}" class="w-28 h-auto rounded-lg border-2 border-gray-600 hover:border-indigo-500 transition-colors">`;
-                    if(card) bubble.onclick = () => openShareDetailModal({ type: 'card', data: card });
+                    const msgContainer = document.createElement('div');
+                    msgContainer.className = 'chat-message-container' + (isCurrentUser ? ' current-user' : '');
 
-                } else if (msg.type === 'deck' && msg.deckData) {
-                    bubble.className = 'chat-bubble chat-share-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
-                    bubble.innerHTML = `
-                        <div class="flex items-center gap-2">
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z" /></svg>
-                            <span>デッキ: <strong>${msg.deckData.name || '無名のデッキ'}</strong></span>
-                        </div>`;
-                    bubble.onclick = () => openShareDetailModal({ type: 'deck', data: msg.deckData });
-                } else {
-                    bubble.className = 'chat-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
-                    bubble.textContent = msg.text;
+                    const authorImg = document.createElement('img');
+                    authorImg.src = msg.authorPhotoURL;
+                    authorImg.alt = msg.authorName;
+                    authorImg.className = 'w-8 h-8 rounded-full flex-shrink-0';
+                    
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'flex items-end gap-2' + (isCurrentUser ? ' flex-row-reverse' : '');
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'flex flex-col' + (isCurrentUser ? ' items-end' : ' items-start');
+
+                    const authorName = document.createElement('span');
+                    authorName.className = 'text-xs text-gray-400 mb-1';
+                    authorName.textContent = msg.authorName;
+
+                    const bubble = document.createElement('div');
+                    
+                    // Handle different message types
+                    if (msg.type === 'card' && msg.cardId) {
+                        const card = allCards.find(c => c.id === msg.cardId);
+                        const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card?.name || '?')}`;
+                        const imageUrl = card?.imageUrl || defaultImage;
+                        
+                        bubble.className = 'p-0 bg-transparent rounded-lg overflow-hidden cursor-pointer';
+                        bubble.innerHTML = `<img src="${imageUrl}" alt="${card?.name || '不明なカード'}" class="w-28 h-auto rounded-lg border-2 border-gray-600 hover:border-indigo-500 transition-colors">`;
+                        if(card) bubble.onclick = () => openShareDetailModal({ type: 'card', data: card });
+
+                    } else if (msg.type === 'deck' && msg.deckData) {
+                        bubble.className = 'chat-bubble chat-share-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
+                        bubble.innerHTML = `
+                            <div class="flex items-center gap-2">
+                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z" /></svg>
+                                <span>デッキ: <strong>${msg.deckData.name || '無名のデッキ'}</strong></span>
+                            </div>`;
+                        bubble.onclick = () => openShareDetailModal({ type: 'deck', data: msg.deckData });
+                    } else {
+                        bubble.className = 'chat-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
+                        bubble.textContent = msg.text;
+                    }
+
+                    const timestampSpan = document.createElement('span');
+                    timestampSpan.className = 'text-xs text-gray-500';
+                    timestampSpan.textContent = formatTimestamp(msg.timestamp);
+
+                    contentDiv.appendChild(authorName);
+                    contentDiv.appendChild(bubble);
+
+                    contentWrapper.appendChild(contentDiv);
+                    contentWrapper.appendChild(timestampSpan);
+
+                    msgContainer.appendChild(authorImg);
+                    msgContainer.appendChild(contentWrapper);
+                    
+                    chatMessages.appendChild(msgContainer);
+                } catch (error) {
+                    console.error("メッセージの描画に失敗しました:", error, "問題のデータ:", msg);
                 }
-
-                const timestampSpan = document.createElement('span');
-                timestampSpan.className = 'text-xs text-gray-500';
-                timestampSpan.textContent = formatTimestamp(msg.timestamp);
-
-                contentDiv.appendChild(authorName);
-                contentDiv.appendChild(bubble);
-
-                contentWrapper.appendChild(contentDiv);
-                contentWrapper.appendChild(timestampSpan);
-
-                msgContainer.appendChild(authorImg);
-                msgContainer.appendChild(contentWrapper);
-                
-                chatMessages.appendChild(msgContainer);
             });
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
