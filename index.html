@@ -2347,7 +2347,7 @@
                     versionEl.className = 'bg-gray-900/50 p-4 rounded-lg flex justify-between items-center';
                     
                     let deleteBtnHtml = '';
-                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || data.authorName === '匿名ユーザー')) {
+                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || data.authorName === '匿名ユーザー' || !data.authorName)) {
                         deleteBtnHtml = `<button data-doc-id="${docSnap.id}" class="delete-version-btn bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-3 rounded-lg text-xs ml-4">削除</button>`;
                     }
 
