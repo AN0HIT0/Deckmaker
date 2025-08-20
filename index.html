@@ -678,7 +678,7 @@
 
 
     <!-- 確認モーダル -->
-    <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+    <div id="confirmModal" class="fixed inset-0 z-60 flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
             <h2 id="confirmTitle" class="text-xl font-bold mb-4">確認</h2>
             <p id="confirmMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
@@ -690,7 +690,7 @@
     </div>
 
     <!-- アラートモーダル -->
-    <div id="alertModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+    <div id="alertModal" class="fixed inset-0 z-60 flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
             <h2 id="alertTitle" class="text-xl font-bold mb-4">情報</h2>
             <p id="alertMessage" class="text-gray-300 mb-6 whitespace-pre-wrap"></p>
@@ -2347,7 +2347,7 @@
                     versionEl.className = 'bg-gray-900/50 p-4 rounded-lg flex justify-between items-center';
                     
                     let deleteBtnHtml = '';
-                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || data.authorName === '匿名ユーザー' || !data.authorName)) {
+                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || data.authorName === '匿名ユーザー' || data.authorName === '不明')) {
                         deleteBtnHtml = `<button data-doc-id="${docSnap.id}" class="delete-version-btn bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-3 rounded-lg text-xs ml-4">削除</button>`;
                     }
 
