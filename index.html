@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DM：THREADSWORLD</title>
+    <title>THREADSWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -141,12 +141,14 @@
         /* Chat styles */
         #chat-toggle {
             transition: transform 0.3s ease-in-out;
+            position: relative; /* For badge positioning */
         }
         #chat-panel {
             transition: transform 0.3s ease-in-out;
         }
         .chat-message-container {
             display: flex;
+            align-items: flex-end;
             gap: 0.75rem;
             max-width: 85%;
         }
@@ -166,6 +168,31 @@
         }
         .chat-bubble.other-user-bubble {
             background-color: #374151; /* Gray-700 */
+        }
+        .chat-share-bubble {
+            cursor: pointer;
+            border: 1px solid #4f46e5;
+            background-color: #312e81;
+            padding: 0.5rem;
+        }
+        .chat-share-bubble:hover {
+            background-color: #4338ca;
+        }
+        .unread-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 50; /* Ensure badge is on top */
         }
     </style>
 </head>
@@ -238,6 +265,7 @@
                         <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-3 flex-shrink-0 flex-wrap">
                             <input id="deckNameInput" type="text" class="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 mb-2 md:mb-0" value="新規デッキ">
                             <div class="flex items-center gap-2 flex-wrap">
+                                <button id="shareDeckBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">チャットで共有</button>
                                 <button id="testDrawBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">テストドロー</button>
                                 <button id="exportDeckBtn" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">エクスポート</button>
                                 <button id="exportImageBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">画像として出力</button>
@@ -400,11 +428,14 @@
     </div>
     
     <!-- Chat Toggle Button -->
-    <button id="chat-toggle" class="fixed bottom-5 right-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg z-30">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-    </button>
+    <div class="fixed bottom-5 right-5 z-30">
+        <button id="chat-toggle" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span id="unread-badge" class="unread-badge hidden"></span>
+        </button>
+    </div>
 
     <!-- Chat Panel -->
     <div id="chat-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl z-40 transform translate-x-full border-l-2 border-gray-700 flex flex-col">
@@ -796,6 +827,19 @@
         </div>
     </div>
 
+    <!-- 共有アイテム詳細モーダル -->
+    <div id="shareDetailModal" class="fixed inset-0 z-70 flex items-center justify-center hidden modal-backdrop">
+        <div id="shareDetailModalContent" class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-4xl mx-auto border border-gray-700 flex flex-col" style="height: 85vh;">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h2 id="shareDetailTitle" class="text-2xl font-bold">共有アイテム詳細</h2>
+                <button type="button" id="closeShareDetailModalBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+            <div id="shareDetailBody" class="flex-grow overflow-y-auto p-2">
+                <!-- 共有されたコンテンツがここに表示されます -->
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
         // Firebase SDK のインポート
@@ -835,6 +879,7 @@
         let typeDistributionChart = null;
         let testDeck = [];
         let unsubscribeChat = null;
+        let unreadMessageCount = 0;
         
         const costTypes = {
             human: { label: '人', colorHex: '#d97706' }, // Amber-600
@@ -895,6 +940,7 @@
         const chatMessages = getEl('chat-messages');
         const chatForm = getEl('chat-form');
         const chatInput = getEl('chat-input');
+        const unreadBadge = getEl('unread-badge');
         
         // --- コンソールログ ---
         function logToConsole(message, type = 'INFO') {
@@ -1129,6 +1175,9 @@
             const cardEl = document.createElement('div');
             cardEl.dataset.cardId = card.id;
             cardEl.className = 'relative h-full'; 
+            
+            // card can be null if it's a placeholder in the hand display
+            if (!card) return cardEl;
 
             const theme = {
                 'コア': { bg: 'bg-slate-200', text: 'text-slate-800', heading: 'text-black', subtleText: 'text-slate-600', accent1: 'text-blue-700', accent2: 'text-indigo-700', textBoxBg: 'bg-slate-100/90', border: 'border-slate-400' },
@@ -1139,7 +1188,13 @@
             }[card.type] || { bg: 'bg-gray-700', text: 'text-gray-200', heading: 'text-white', subtleText: 'text-gray-400', accent1: 'text-cyan-300', accent2: 'text-amber-300', textBoxBg: 'bg-gray-900/50', border: 'border-gray-600' };
             
             const cardInner = document.createElement('div');
-            cardInner.className = `card ${theme.bg} ${theme.border} rounded-lg p-2 flex flex-col cursor-pointer text-center h-full`;
+            cardInner.className = `card ${theme.bg} ${theme.border} rounded-lg p-2 flex flex-col text-center h-full`;
+            if (context !== 'library') {
+                cardInner.classList.add('cursor-default');
+            } else {
+                cardInner.classList.add('cursor-pointer');
+            }
+
 
             if (card.rarity === '伝説') cardInner.classList.add('rarity-legendary');
             if (card.rarity === '神話') cardInner.classList.add('rarity-mythic');
@@ -1193,6 +1248,19 @@
                 exportBtn.className = 'text-xs p-1 rounded-full bg-sky-600 hover:bg-sky-500 opacity-50 hover:opacity-100';
                 exportBtn.onclick = (e) => { e.stopPropagation(); exportSingleCard(card.id); };
                 buttonContainer.appendChild(exportBtn);
+
+                const shareBtn = document.createElement('button');
+                shareBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>`;
+                shareBtn.title = "チャットで共有";
+                shareBtn.className = 'text-xs p-1 rounded-full bg-violet-600 hover:bg-violet-500 opacity-50 hover:opacity-100 flex items-center justify-center';
+                // --- BUG FIX START ---
+                shareBtn.onclick = (e) => { 
+                    e.stopPropagation(); 
+                    sendChatMessage({ type: 'card', cardId: card.id });
+                    showAlert(`カード「${card.name}」をチャットで共有しました。`);
+                };
+                // --- BUG FIX END ---
+                buttonContainer.appendChild(shareBtn);
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.innerHTML = '&#128465;';
@@ -2697,33 +2765,56 @@
             const q = query(collection(db, "chat"), orderBy("timestamp", "desc"), limitToLast(50));
             unsubscribeChat = onSnapshot(q, (querySnapshot) => {
                 const messages = [];
+                let newMessagesCount = 0;
                 querySnapshot.forEach((doc) => {
-                    messages.push(doc.data());
+                    const data = doc.data();
+                    messages.push(data);
+                    // Check for new messages if chat panel is closed
+                    if (chatPanel.classList.contains('translate-x-full') && data.timestamp && data.timestamp.toMillis() > (window.lastReadTimestamp || 0)) {
+                         newMessagesCount++;
+                    }
                 });
+
+                if(newMessagesCount > 0){
+                    unreadMessageCount += newMessagesCount;
+                    updateUnreadBadge();
+                }
+
                 renderChatMessages(messages.reverse());
             });
             logToConsole("チャットのリアルタイム受信を開始しました。");
         }
+        
+        function updateUnreadBadge() {
+            if (unreadMessageCount > 0) {
+                unreadBadge.textContent = unreadMessageCount > 9 ? '9+' : unreadMessageCount;
+                unreadBadge.classList.remove('hidden');
+            } else {
+                unreadBadge.classList.add('hidden');
+            }
+        }
 
-        async function sendChatMessage(event) {
-            event.preventDefault();
-            const text = chatInput.value.trim();
-            if (text === '' || !currentUser) return;
-
-            try {
+        async function sendChatMessage(payload) {
+             if (!currentUser) return;
+             try {
                 await addDoc(collection(db, "chat"), {
-                    text: text,
+                    ...payload,
                     authorName: currentUser.isAnonymous ? "匿名ユーザー" : currentUser.displayName,
                     authorUid: currentUser.uid,
                     authorPhotoURL: currentUser.photoURL || `https://placehold.co/40x40/718096/e2e8f0?text=${(currentUser.displayName || 'A').charAt(0)}`,
                     timestamp: serverTimestamp()
                 });
-                chatInput.value = '';
             } catch (e) {
                 console.error("メッセージ送信エラー:", e);
                 logToConsole(`メッセージ送信エラー: ${e.message}`, "ERROR");
                 await showAlert("メッセージの送信に失敗しました。");
             }
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp || !timestamp.toDate) return '';
+            const date = timestamp.toDate();
+            return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
         }
 
         function renderChatMessages(messages) {
@@ -2739,6 +2830,9 @@
                 authorImg.alt = msg.authorName;
                 authorImg.className = 'w-8 h-8 rounded-full flex-shrink-0';
                 
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'flex items-end gap-2' + (isCurrentUser ? ' flex-row-reverse' : '');
+                
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'flex flex-col' + (isCurrentUser ? ' items-end' : ' items-start');
 
@@ -2748,18 +2842,112 @@
 
                 const bubble = document.createElement('div');
                 bubble.className = 'chat-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
-                bubble.textContent = msg.text;
+                
+                // Handle different message types
+                if (msg.type === 'card' && msg.cardId) {
+                    const card = allCards.find(c => c.id === msg.cardId);
+                    bubble.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                            <span>カード: <strong>${card ? card.name : '不明なカード'}</strong></span>
+                        </div>`;
+                    bubble.classList.add('chat-share-bubble');
+                    if(card) bubble.onclick = () => openShareDetailModal({ type: 'card', data: card });
+                } else if (msg.type === 'deck' && msg.deckData) {
+                    bubble.innerHTML = `
+                        <div class="flex items-center gap-2">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z" /></svg>
+                            <span>デッキ: <strong>${msg.deckData.name || '無名のデッキ'}</strong></span>
+                        </div>`;
+                    bubble.classList.add('chat-share-bubble');
+                    bubble.onclick = () => openShareDetailModal({ type: 'deck', data: msg.deckData });
+                } else {
+                    bubble.textContent = msg.text;
+                }
+
+                const timestampSpan = document.createElement('span');
+                timestampSpan.className = 'text-xs text-gray-500';
+                timestampSpan.textContent = formatTimestamp(msg.timestamp);
 
                 contentDiv.appendChild(authorName);
                 contentDiv.appendChild(bubble);
 
+                contentWrapper.appendChild(contentDiv);
+                contentWrapper.appendChild(timestampSpan);
+
                 msgContainer.appendChild(authorImg);
-                msgContainer.appendChild(contentDiv);
+                msgContainer.appendChild(contentWrapper);
                 
                 chatMessages.appendChild(msgContainer);
             });
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        
+        // --- NEW FUNCTION: 共有アイテム詳細表示 ---
+        function openShareDetailModal(item) {
+            const modal = getEl('shareDetailModal');
+            const titleEl = getEl('shareDetailTitle');
+            const bodyEl = getEl('shareDetailBody');
+            bodyEl.innerHTML = ''; // Clear previous content
+
+            if (item.type === 'card' && item.data) {
+                titleEl.textContent = `カード詳細: ${item.data.name}`;
+                const cardEl = createCardElement(item.data, 'detail'); // 'detail' context to prevent click events
+                cardEl.style.width = '300px';
+                cardEl.style.margin = '0 auto';
+                bodyEl.appendChild(cardEl);
+
+            } else if (item.type === 'deck' && item.data) {
+                titleEl.textContent = `デッキ詳細: ${item.data.name}`;
+
+                const deck = item.data;
+                const allDeckCardIds = [
+                    ...(deck.coreCardId ? [deck.coreCardId] : []),
+                    ...(deck.mainDeckCardIds || []),
+                    ...(deck.structDeckCardIds || [])
+                ];
+
+                const cardCounts = allDeckCardIds.reduce((acc, id) => {
+                    acc[id] = (acc[id] || 0) + 1;
+                    return acc;
+                }, {});
+
+                let html = `<p class="text-gray-400 mb-4">${deck.description || '説明なし'}</p>`;
+                html += '<div class="space-y-4">';
+
+                const createSectionHtml = (title, cardIds) => {
+                    if (!cardIds || cardIds.length === 0) return '';
+                    let sectionHtml = `<h3 class="text-lg font-semibold text-cyan-400 border-b border-gray-700 pb-2 mb-2">${title} (${cardIds.length}枚)</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">`;
+                    const uniqueCardIds = [...new Set(cardIds)].sort((a,b) => (allCards.find(c=>c.id===a)?.name || '').localeCompare(allCards.find(c=>c.id===b)?.name || ''));
+                    
+                    uniqueCardIds.forEach(id => {
+                        const card = allCards.find(c => c.id === id);
+                        if(card) {
+                            const count = cardCounts[id];
+                            sectionHtml += `
+                                <div class="bg-gray-900/50 p-2 rounded-lg flex justify-between items-center">
+                                    <span class="font-bold">${card.name}</span>
+                                    <span class="text-gray-400 ml-2 font-semibold">x${count}</span>
+                                </div>`;
+                        }
+                    });
+                    sectionHtml += `</div></div>`;
+                    return sectionHtml;
+                };
+
+                const coreCard = allCards.find(c => c.id === deck.coreCardId);
+                if(coreCard) {
+                     html += `<h3 class="text-lg font-semibold text-amber-400 border-b border-gray-700 pb-2 mb-2">コア</h3><div class="bg-gray-900/50 p-2 rounded-lg text-center font-bold">${coreCard.name}</div>`;
+                }
+                html += createSectionHtml('メインデッキ', deck.mainDeckCardIds);
+                html += createSectionHtml('ストラクトデッキ', deck.structDeckCardIds);
+                html += '</div>';
+                bodyEl.innerHTML = html;
+            }
+
+            modal.style.display = 'flex';
+        }
+
 
         // --- イベントリスナー ---
         function setupEventListeners() {
@@ -2824,6 +3012,15 @@
             getEl('exportImageBtn').onclick = exportDeckAsImage;
             deckWorld1.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
             deckWorld2.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
+            getEl('shareDeckBtn').onclick = () => {
+                if (currentDeck) {
+                    updateCurrentDeckFromUI();
+                    sendChatMessage({ type: 'deck', deckData: currentDeck });
+                    showAlert('現在のデッキをチャットで共有しました。');
+                } else {
+                    showAlert('共有するデッキが選択されていません。');
+                }
+            };
 
             // Library Filters
             [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
@@ -2859,14 +3056,29 @@
                 }
             };
             
+            // --- NEW: Event Listener for Share Detail Modal ---
+            getEl('closeShareDetailModalBtn').onclick = () => getEl('shareDetailModal').style.display = 'none';
+
             // Chat Listeners
             getEl('chat-toggle').onclick = () => {
                 chatPanel.classList.toggle('translate-x-full');
+                if (!chatPanel.classList.contains('translate-x-full')) {
+                    unreadMessageCount = 0;
+                    updateUnreadBadge();
+                    window.lastReadTimestamp = Date.now();
+                }
             };
             getEl('close-chat').onclick = () => {
                 chatPanel.classList.add('translate-x-full');
             };
-            chatForm.onsubmit = sendChatMessage;
+            chatForm.onsubmit = (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (text) {
+                    sendChatMessage({ type: 'text', text: text });
+                    chatInput.value = '';
+                }
+            };
         }
 
         // --- 初期化処理 ---
