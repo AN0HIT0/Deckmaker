@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THREADSWORLD</title>
+    <title>デッキメーカー（世界観設定機能追加版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -193,6 +193,11 @@
             justify-content: center;
             font-weight: bold;
             z-index: 50; /* Ensure badge is on top */
+        }
+        
+        /* --- モーダルの重ね合わせ順を修正 --- */
+        #alertModal, #confirmModal, #shareDetailModal {
+            z-index: 5000;
         }
     </style>
 </head>
