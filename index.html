@@ -151,25 +151,38 @@
         <!-- ヘッダー -->
         <header class="bg-gray-900 shadow-lg p-4 flex justify-between items-center z-20">
             <h1 class="text-2xl font-bold text-white">デッキメーカー</h1>
-            <div class="flex flex-col items-end space-y-2">
-                <!-- Main Actions -->
-                <div class="flex items-center space-x-2">
-                    <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
-                    <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
-                    <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
-                    <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                        新しいカードを追加
-                    </button>
-                    <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                        新しいデッキを作成
-                    </button>
+            <div class="flex items-center space-x-4">
+                <div class="flex flex-col items-end space-y-2">
+                    <!-- Main Actions -->
+                    <div class="flex items-center space-x-2">
+                        <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
+                        <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
+                        <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
+                        <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            新しいカードを追加
+                        </button>
+                        <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                            新しいデッキを作成
+                        </button>
+                    </div>
+                    <!-- Utility and Other Actions -->
+                    <div class="flex items-center space-x-2">
+                        <button id="importAllDataBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ読込</button>
+                        <button id="exportAllBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ書出</button>
+                        <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">使用方法</button>
+                        <button id="consoleBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">コンソール</button>
+                    </div>
                 </div>
-                <!-- Utility and Other Actions -->
-                <div class="flex items-center space-x-2">
-                    <button id="importAllDataBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ読込</button>
-                    <button id="exportAllBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ書出</button>
-                    <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">使用方法</button>
-                    <button id="consoleBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">コンソール</button>
+                <!-- User Auth Section -->
+                <div id="user-auth-status" class="flex items-center">
+                    <button id="loginBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                        Googleログイン
+                    </button>
+                    <div id="userInfo" class="hidden flex items-center space-x-3">
+                        <img id="userPhoto" class="w-10 h-10 rounded-full" alt="User photo">
+                        <span id="userName" class="text-white font-semibold"></span>
+                        <button id="logoutBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">ログアウト</button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -649,6 +662,20 @@
             </form>
         </div>
     </div>
+    
+    <!-- データ保存モーダル -->
+    <div id="saveDataModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">データに名前を付けて保存</h2>
+            <p class="text-gray-300 mb-4">このバージョンの分かりやすい名前を入力してください。（例：「第一版完成」「〇〇調整後」）</p>
+            <input type="text" id="saveNameInput" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-6" placeholder="バージョンの名前...">
+            <div class="flex justify-end space-x-4">
+                <button id="cancelSaveDataBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">キャンセル</button>
+                <button id="confirmSaveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">保存</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- 確認モーダル -->
     <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
@@ -705,8 +732,8 @@
     <script type="module">
         // Firebase SDK のインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, serverTimestamp, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, serverTimestamp, where, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         // --- ★★★ Firebase 設定情報 ★★★ ---
         // 自身のFirebaseプロジェクトの設定情報に書き換えてください
@@ -765,6 +792,7 @@
         const editWorldModal = getEl('editWorldModal');
         const syncModal = getEl('syncModal');
         const consoleModal = getEl('consoleModal');
+        const saveDataModal = getEl('saveDataModal');
         const cardForm = getEl('cardForm');
         const editWorldForm = getEl('editWorldForm');
         const deckList = getEl('deckList');
@@ -850,11 +878,16 @@
         }
         
         // --- データ保存 (サーバー) ---
-        async function saveDataToServer() {
+        async function saveDataToServer(saveName) {
             if (!currentUser) {
-                await showAlert("ログインしていません。データは保存できません。");
+                await showAlert("接続が確立されていません。少し待ってから再試行してください。");
                 return;
             }
+            if (!saveName || saveName.trim() === '') {
+                await showAlert("バージョンの名前を入力してください。");
+                return;
+            }
+
             logToConsole("サーバーへのデータ保存を開始します...");
             
             const batch = writeBatch(db);
@@ -863,8 +896,10 @@
                 // 1. Create a new version document to get an ID
                 const versionRef = doc(collection(db, "versions"));
                 batch.set(versionRef, {
+                    name: saveName.trim(),
                     timestamp: serverTimestamp(),
                     authorUid: currentUser.uid,
+                    authorName: currentUser.isAnonymous ? "匿名ユーザー" : currentUser.displayName,
                     cardCount: allCards.length,
                     deckCount: allDecks.length,
                     worldCount: allWorlds.length
@@ -899,6 +934,7 @@
 
                 logToConsole(`データが正常に保存されました (Version ID: ${versionId})。`);
                 await showAlert("データをサーバーに保存しました！");
+                saveDataModal.style.display = 'none';
 
             } catch (e) {
                 console.error("サーバーへのデータ保存エラー:", e);
@@ -2050,6 +2086,44 @@
             editWorldModal.style.display = 'none';
             await showAlert(`「${worldName}」の設定を保存しました。`);
         }
+        
+        // --- デッキ分析データ取得 ---
+        function getDeckAnalysisData() {
+            if (!currentDeck) return null;
+
+            const mainDeckCards = (currentDeck.mainDeckCardIds || []).map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            if (mainDeckCards.length === 0) return null;
+
+            const typeCounts = mainDeckCards.reduce((acc, card) => {
+                acc[card.type] = (acc[card.type] || 0) + 1;
+                return acc;
+            }, {});
+
+            let totalCost = 0;
+            mainDeckCards.forEach(card => {
+                totalCost += Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
+            });
+
+            const tagCounts = mainDeckCards.flatMap(c => c.tags || []).reduce((acc, tag) => {
+                acc[tag] = (acc[tag] || 0) + 1;
+                return acc;
+            }, {});
+            const topTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a).slice(0, 3).map(([name, count]) => `${name} x${count}`);
+            
+            const coreCard = allCards.find(c => c.id === currentDeck.coreCardId);
+
+            return {
+                mainDeckCount: mainDeckCards.length,
+                structDeckCount: (currentDeck.structDeckCardIds || []).length,
+                unitCount: typeCounts['ユニット'] || 0,
+                tactCount: typeCounts['タクト'] || 0,
+                grandCount: typeCounts['グランド'] || 0,
+                avgCost: (totalCost / mainDeckCards.length || 0).toFixed(2),
+                topTags: topTags.join(', ') || 'なし',
+                coreCard: coreCard
+            };
+        }
+
 
         // --- デッキ画像出力機能 ---
         async function exportDeckAsImage() {
@@ -2073,9 +2147,84 @@
             const deckName = currentDeck.name || '無名のデッキ';
             const worlds = (currentDeck.worlds || []).filter(Boolean);
             const description = currentDeck.description || '説明はありません。';
-            const coreCard = allCards.find(c => c.id === currentDeck.coreCardId);
+            const analysis = getDeckAnalysisData();
+            const coreCard = analysis?.coreCard;
             
             const getCardImageUrl = (card) => card?.imageUrl || `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card?.name || '?')}`;
+            
+            // Create a temporary canvas for the cost curve
+            const chartCanvas = document.createElement('canvas');
+            chartCanvas.width = 500;
+            chartCanvas.height = 250;
+            
+            let costCurveImage = '';
+            if (analysis) {
+                const cardsInDeck = [...(currentDeck.mainDeckCardIds || []), ...(currentDeck.structDeckCardIds || [])].map(id => allCards.find(c => c.id === id)).filter(Boolean);
+                const costData = cardsInDeck.reduce((acc, card) => {
+                    const totalCost = Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
+                    acc[totalCost] = (acc[totalCost] || 0) + 1;
+                    return acc;
+                }, {});
+                const maxCost = Math.max(7, ...Object.keys(costData).map(Number));
+                const labels = Array.from({length: maxCost + 1}, (_, i) => i);
+                const data = labels.map(i => costData[i] || 0);
+
+                new Chart(chartCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'カード枚数', data, backgroundColor: 'rgba(132, 204, 22, 0.7)', borderWidth: 1 }] },
+                    options: { 
+                        responsive: false, 
+                        animation: { duration: 0 },
+                        scales: { 
+                            y: { beginAtZero: true, ticks: { color: '#e2e8f0', stepSize: 1, font: { size: 16 } }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }, 
+                            x: { ticks: { color: '#e2e8f0', font: { size: 16 } }, grid: { color: 'rgba(255, 255, 255, 0.1)' } } 
+                        }, 
+                        plugins: { legend: { display: false } } 
+                    }
+                });
+                costCurveImage = chartCanvas.toDataURL('image/png');
+            }
+            
+            let analysisHtml = '';
+            if(analysis) {
+                let coreInfoHtml = 'データなし';
+                if(coreCard) {
+                    const initialResources = Object.entries(coreCard.initialResources || {})
+                        .filter(([, val]) => val > 0)
+                        .map(([key, val]) => `${costTypes[key].label} ${val}`)
+                        .join(', ');
+
+                    coreInfoHtml = `
+                        <div style="display: flex; justify-content: space-between;"><span>ライフ:</span> <span style="font-weight: 600;">${coreCard.life || 0}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span>初期手札:</span> <span style="font-weight: 600;">${coreCard.initialHand || 0}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span>手札上限:</span> <span style="font-weight: 600;">${coreCard.handLimit || 0}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span>初期資源:</span> <span style="font-weight: 600;">${initialResources || 'なし'}</span></div>
+                    `;
+                }
+
+                analysisHtml = `
+                    <div style="display: flex; gap: 24px; margin-top: 16px;">
+                        <div style="flex: 1; border: 1px solid #4a5568; border-radius: 8px; padding: 16px; font-size: 18px;">
+                            <h4 style="font-size: 22px; font-weight: 600; color: #a5b4fc; margin-bottom: 12px; border-bottom: 1px solid #4a5568; padding-bottom: 8px;">デッキデータ</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap-x: 20px; gap-y: 6px;">
+                                <span>メイン:</span> <span style="font-weight: 600;">${analysis.mainDeckCount}枚</span>
+                                <span>ストラクト:</span> <span style="font-weight: 600;">${analysis.structDeckCount}枚</span>
+                                <span>ユニット:</span> <span style="font-weight: 600;">${analysis.unitCount}枚</span>
+                                <span>タクト:</span> <span style="font-weight: 600;">${analysis.tactCount}枚</span>
+                                <span>グランド:</span> <span style="font-weight: 600;">${analysis.grandCount}枚</span>
+                                <span>平均コスト:</span> <span style="font-weight: 600;">${analysis.avgCost}</span>
+                                <span style="grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid #4a5568;">トップタグ:</span> 
+                                <span style="grid-column: 1 / -1; font-weight: 600;">${analysis.topTags}</span>
+                            </div>
+                        </div>
+                        <div style="flex: 1; border: 1px solid #4a5568; border-radius: 8px; padding: 16px; font-size: 18px;">
+                            <h4 style="font-size: 22px; font-weight: 600; color: #fcd34d; margin-bottom: 12px; border-bottom: 1px solid #4a5568; padding-bottom: 8px;">コア情報</h4>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                ${coreInfoHtml}
+                            </div>
+                        </div>
+                    </div>`;
+            }
 
             let html = `
                 <div style="text-align: center;">
@@ -2083,19 +2232,26 @@
                     <div style="font-size: 24px; color: #9ca3af; margin-top: 8px;">${worlds.join(' / ')}</div>
                 </div>
                 
-                <div style="display: flex; margin-top: 32px; gap: 32px; min-height: 350px;">
-                    <div style="flex: 1; border: 1px solid #4a5568; border-radius: 8px; padding: 24px;">
-                        <div id="deck-desc-for-image" style="white-space: pre-wrap; word-break: break-all;">${description}</div>
+                <div style="display: flex; margin-top: 24px; gap: 32px; min-height: 350px;">
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                         <div style="flex-shrink: 1; border: 1px solid #4a5568; border-radius: 8px; padding: 24px; max-height: 100px; overflow: hidden;">
+                            <div id="deck-desc-for-image" style="white-space: pre-wrap; word-break: break-all; font-size: 20px;">${description}</div>
+                        </div>
+                        ${analysisHtml}
                     </div>
-                    <div style="flex-shrink: 0; text-align: center;">`;
+                    <div style="flex-shrink: 0; text-align: center; width: 250px;">`;
             
             if (coreCard) {
                 html += `<img src="${getCardImageUrl(coreCard)}" style="width: 250px; height: 350px; object-fit: cover; border-radius: 12px; border: 2px solid #f59e0b;" crossorigin="anonymous">
-                         <p style="font-weight: 600; margin-top: 8px;">${coreCard.name}</p>`;
+                         <p style="font-weight: 600; margin-top: 8px; font-size: 22px;">${coreCard.name}</p>`;
             } else {
                 html += `<div style="width: 250px; height: 350px; border-radius: 12px; background-color: #2d3748; display: flex; align-items: center; justify-content: center; color: #9ca3af;">コアなし</div>`;
             }
-            html += `</div></div>`;
+            html += `</div>
+                    <div style="flex-shrink: 0; width: 500px;">
+                        <img src="${costCurveImage}" style="width: 100%; height: auto;">
+                    </div>
+                </div>`;
 
             const createCardGrid = (title, cardIds, rows, cols) => {
                 let gridHtml = `<div style="margin-top: 32px;">
@@ -2129,6 +2285,7 @@
 
             const adjustFontSize = (elementId, initialSize, minSize) => {
                 const el = document.getElementById(elementId);
+                if (!el) return;
                 let currentSize = initialSize;
                 el.style.fontSize = `${currentSize}px`;
                 while (el.scrollHeight > el.clientHeight && currentSize > minSize) {
@@ -2138,7 +2295,7 @@
             };
 
             adjustFontSize('deck-title-for-image', 80, 24);
-            adjustFontSize('deck-desc-for-image', 24, 12);
+            adjustFontSize('deck-desc-for-image', 20, 12);
 
             try {
                 const canvas = await html2canvas(container, {
@@ -2163,6 +2320,10 @@
         
         // --- データ同期機能 ---
         async function openSyncModal() {
+             if (!currentUser) {
+                await showAlert("接続が確立されていません。少し待ってから再試行してください。");
+                return;
+            }
             logToConsole("データ同期モーダルを開きます。バージョンリストを取得中...");
             const syncListEl = getEl('syncList');
             syncListEl.innerHTML = '<p class="text-gray-400">バージョン履歴を読み込んでいます...</p>';
@@ -2184,18 +2345,31 @@
                     
                     const versionEl = document.createElement('div');
                     versionEl.className = 'bg-gray-900/50 p-4 rounded-lg flex justify-between items-center';
+                    
+                    let deleteBtnHtml = '';
+                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || data.authorName === '匿名ユーザー')) {
+                        deleteBtnHtml = `<button data-doc-id="${docSnap.id}" class="delete-version-btn bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-3 rounded-lg text-xs ml-4">削除</button>`;
+                    }
+
                     versionEl.innerHTML = `
-                        <div>
-                            <p class="font-bold text-lg">${timestamp}</p>
-                            <p class="text-sm text-gray-400">カード: ${data.cardCount || 0}枚, デッキ: ${data.deckCount || 0}個, 作成者UID: ${data.authorUid || '不明'}</p>
+                        <div class="flex-grow">
+                            <p class="font-bold text-lg">${data.name || '無名のバージョン'}</p>
+                            <p class="text-sm text-gray-400">${timestamp} by ${data.authorName || '不明'}</p>
+                            <p class="text-sm text-gray-400">カード: ${data.cardCount || 0}枚, デッキ: ${data.deckCount || 0}個</p>
                         </div>
-                        <button data-doc-id="${docSnap.id}" class="load-version-btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">このバージョンを読込む</button>
+                        <div>
+                            <button data-doc-id="${docSnap.id}" class="load-version-btn bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">このバージョンを読込む</button>
+                            ${deleteBtnHtml}
+                        </div>
                     `;
                     syncListEl.appendChild(versionEl);
                 });
 
                 document.querySelectorAll('.load-version-btn').forEach(btn => {
                     btn.onclick = () => loadVersionFromServer(btn.dataset.docId, true);
+                });
+                document.querySelectorAll('.delete-version-btn').forEach(btn => {
+                    btn.onclick = () => deleteVersionFromServer(btn.dataset.docId);
                 });
 
             } catch (e) {
@@ -2204,6 +2378,38 @@
                 syncListEl.innerHTML = '<p class="text-red-400">バージョン履歴の読み込みに失敗しました。</p>';
             }
         }
+        
+        async function deleteVersionFromServer(versionId) {
+            const confirmed = await showConfirm("本当にこのバージョンを削除しますか？\nこの操作は元に戻せません。");
+            if (!confirmed) return;
+
+            logToConsole(`バージョン(ID: ${versionId})の削除を開始...`);
+            try {
+                const batch = writeBatch(db);
+                
+                // Delete the main version document
+                const versionRef = doc(db, "versions", versionId);
+                batch.delete(versionRef);
+
+                // Find and delete all associated chunks
+                const q = query(collection(db, "version_chunks"), where("versionId", "==", versionId));
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+                logToConsole(`バージョン(ID: ${versionId})の削除が完了しました。`);
+                await showAlert("バージョンを削除しました。");
+                openSyncModal(); // Refresh the list
+
+            } catch (e) {
+                console.error("バージョン削除エラー:", e);
+                logToConsole(`バージョン削除エラー: ${e.message}`, "ERROR");
+                await showAlert("データの削除中にエラーが発生しました。");
+            }
+        }
+
 
         async function loadVersionFromServer(versionId, showConfirmation = true) {
             if (showConfirmation) {
@@ -2305,10 +2511,68 @@
             });
         }
 
+        // --- Authentication ---
+        async function signInWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                // onAuthStateChanged will handle the rest
+            } catch (error) {
+                console.error("Googleログインエラー:", error);
+                logToConsole(`Googleログインエラー: ${error.message}`, "ERROR");
+                await showAlert("Googleログインに失敗しました。");
+            }
+        }
+
+        async function logout() {
+            try {
+                await signOut(auth);
+                // onAuthStateChanged will handle the rest, which will sign in anonymously
+            } catch (error) {
+                console.error("ログアウトエラー:", error);
+                logToConsole(`ログアウトエラー: ${error.message}`, "ERROR");
+            }
+        }
+        
+        function updateUIForUser(user) {
+            const loginBtn = getEl('loginBtn');
+            const userInfo = getEl('userInfo');
+            
+            if (user && !user.isAnonymous) {
+                // User is signed in with Google
+                loginBtn.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                getEl('userName').textContent = user.displayName;
+                getEl('userPhoto').src = user.photoURL;
+            } else {
+                // User is anonymous or logged out
+                loginBtn.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+            }
+        }
+
+
         // --- イベントリスナー ---
         function setupEventListeners() {
             // Header Buttons
-            getEl('saveDataBtn').onclick = saveDataToServer;
+            getEl('loginBtn').onclick = signInWithGoogle;
+            getEl('logoutBtn').onclick = logout;
+            
+            getEl('saveDataBtn').onclick = () => {
+                 if (!currentUser) {
+                    showAlert("接続が確立されていません。少し待ってから再試行してください。");
+                    return;
+                }
+                if (currentUser.isAnonymous) {
+                    const defaultName = `匿名ユーザーの保存 (${new Date().toLocaleDateString()})`;
+                    saveDataToServer(defaultName);
+                } else {
+                    saveDataModal.style.display = 'flex';
+                    getEl('saveNameInput').value = '';
+                    getEl('saveNameInput').focus();
+                }
+            };
+
             getEl('syncDataBtn').onclick = openSyncModal;
             getEl('importAllDataBtn').onclick = importAllDataFromFile;
             getEl('exportAllBtn').onclick = exportAllData;
@@ -2370,38 +2634,47 @@
             getEl('closeUsageModal').onclick = () => usageModal.style.display = 'none';
             getEl('closeSyncModal').onclick = () => syncModal.style.display = 'none';
             getEl('closeConsoleModalBtn').onclick = () => consoleModal.style.display = 'none';
+            getEl('cancelSaveDataBtn').onclick = () => saveDataModal.style.display = 'none';
+            getEl('confirmSaveDataBtn').onclick = () => {
+                const saveName = getEl('saveNameInput').value;
+                saveDataToServer(saveName);
+            };
             getEl('clearConsoleBtn').onclick = () => { consoleOutput.value = ''; logToConsole("コンソールをクリアしました。"); };
             getEl('showUidBtn').onclick = () => {
                 if (currentUser) {
                     logToConsole(`あなたのUID: ${currentUser.uid}`);
                     showAlert(`あなたのUIDはコンソールに表示されました。\n\n${currentUser.uid}`);
                 } else {
-                    logToConsole("まだログインしていません。", "WARN");
+                    logToConsole("ログインしていません。", "WARN");
                 }
             };
         }
 
         // --- 初期化処理 ---
         window.onload = async () => {
-            if (auth) {
-                try {
-                    await signInAnonymously(auth);
-                    onAuthStateChanged(auth, user => {
-                        if (user) {
-                            currentUser = user;
-                            logToConsole(`匿名ユーザーとしてログイン成功 (UID: ${user.uid})`);
-                            loadLatestDataFromServer();
-                        } else {
-                            currentUser = null;
-                            logToConsole("ユーザーがログアウトしました。", "WARN");
-                        }
-                    });
-                } catch (e) {
-                    console.error("匿名ログインエラー:", e);
-                    logToConsole(`匿名ログインに失敗: ${e.message}`, "ERROR");
-                    await showAlert("データベースへの接続に失敗しました。");
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in (Google or anonymous)
+                    currentUser = user;
+                    updateUIForUser(user);
+                    if (user.isAnonymous) {
+                        logToConsole(`匿名ユーザーとして接続 (UID: ${user.uid})`);
+                    } else {
+                        logToConsole(`ログイン成功: ${user.displayName} (UID: ${user.uid})`);
+                    }
+                    await loadLatestDataFromServer();
+                } else {
+                    // No user is signed in, so sign in anonymously
+                    try {
+                        await signInAnonymously(auth);
+                        // The onAuthStateChanged listener will be triggered again with the new anonymous user.
+                    } catch (error) {
+                        console.error("匿名ログインエラー:", error);
+                        logToConsole(`匿名ログインに失敗: ${error.message}`, "ERROR");
+                        await showAlert("データベースへの接続に失敗しました。");
+                    }
                 }
-            }
+            });
             setupEventListeners();
         };
     </script>
