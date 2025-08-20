@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DM：THREADSWORLD</title>
+    <title>デッキメーカー（世界観設定機能追加版）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -145,28 +145,30 @@
     <input type="file" id="deck-import-input" class="hidden" accept=".json">
     <input type="file" id="card-image-input" class="hidden" accept="image/*">
     <input type="file" id="all-data-import-input" class="hidden" accept=".json">
+    <input type="file" id="card-import-input" class="hidden" accept=".json">
 
     <!-- メインコンテンツ -->
     <div id="app" class="min-h-screen flex flex-col">
         <!-- ヘッダー -->
-        <header class="bg-gray-900 shadow-lg p-4 flex justify-between items-center z-20">
-            <h1 class="text-2xl font-bold text-white">デッキメーカー</h1>
-            <div class="flex items-center space-x-4">
+        <header class="bg-gray-900 shadow-lg p-4 flex flex-wrap justify-between items-center z-20">
+            <h1 class="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-0">デッキメーカー</h1>
+            <div class="flex items-center space-x-2 sm:space-x-4">
                 <div class="flex flex-col items-end space-y-2">
                     <!-- Main Actions -->
-                    <div class="flex items-center space-x-2">
-                        <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ同期</button>
-                        <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">データ保存</button>
-                        <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">世界観</button>
-                        <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                            新しいカードを追加
+                    <div class="flex items-center flex-wrap justify-end gap-2">
+                        <button id="syncDataBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm">データ同期</button>
+                        <button id="saveDataBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm">データ保存</button>
+                        <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm">世界観</button>
+                        <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm">
+                            新カード
                         </button>
-                        <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-                            新しいデッキを作成
+                        <button id="newDeckBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm">
+                            新デッキ
                         </button>
                     </div>
                     <!-- Utility and Other Actions -->
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center flex-wrap justify-end gap-2">
+                        <button id="importCardBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">カード読込</button>
                         <button id="importAllDataBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ読込</button>
                         <button id="exportAllBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ書出</button>
                         <button id="howToUseBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">使用方法</button>
@@ -175,13 +177,15 @@
                 </div>
                 <!-- User Auth Section -->
                 <div id="user-auth-status" class="flex items-center">
-                    <button id="loginBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    <button id="loginBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm">
                         Googleログイン
                     </button>
-                    <div id="userInfo" class="hidden flex items-center space-x-3">
-                        <img id="userPhoto" class="w-10 h-10 rounded-full" alt="User photo">
-                        <span id="userName" class="text-white font-semibold"></span>
-                        <button id="logoutBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">ログアウト</button>
+                    <div id="userInfo" class="hidden flex items-center space-x-2">
+                        <img id="userPhoto" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full" alt="User photo">
+                        <div class="text-right">
+                           <span id="userName" class="text-white font-semibold text-xs sm:text-sm block"></span>
+                           <button id="logoutBtn" class="text-gray-400 hover:text-white text-xs transition-colors">ログアウト</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -389,6 +393,13 @@
                             <ul class="list-['-_'] list-inside ml-4 mt-2 space-y-2">
                                 <li><strong>読込:</strong> PCに保存されているバックアップファイル（`deck_data.json`）を読み込み、現在のデータを完全に上書きします。</li>
                                 <li><strong>書出:</strong> 現在の全データをPCに`deck_data.json`としてダウンロードします。</li>
+                            </ul>
+                        </li>
+                         <li>
+                            <strong>カード読込/書出:</strong>
+                            <ul class="list-['-_'] list-inside ml-4 mt-2 space-y-2">
+                                <li><strong>読込:</strong> ヘッダーの「カード読込」から、カード単体のデータファイル（`.json`）を読み込めます。</li>
+                                <li><strong>書出:</strong> カードライブラリの各カードの左上にあるエクスポート（↑）ボタンから、カード単体のデータを書き出せます。</li>
                             </ul>
                         </li>
                     </ul>
@@ -1113,6 +1124,13 @@
                 editBtn.className = 'text-xs p-1 rounded-full bg-gray-600 hover:bg-gray-500 opacity-50 hover:opacity-100';
                 editBtn.onclick = (e) => { e.stopPropagation(); openCardModal(card); };
                 buttonContainer.appendChild(editBtn);
+                
+                const exportBtn = document.createElement('button');
+                exportBtn.innerHTML = '&#128228;';
+                exportBtn.title = "エクスポート";
+                exportBtn.className = 'text-xs p-1 rounded-full bg-sky-600 hover:bg-sky-500 opacity-50 hover:opacity-100';
+                exportBtn.onclick = (e) => { e.stopPropagation(); exportSingleCard(card.id); };
+                buttonContainer.appendChild(exportBtn);
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.innerHTML = '&#128465;';
@@ -1878,6 +1896,20 @@
             a.click();
             URL.revokeObjectURL(url);
         }
+
+        async function exportSingleCard(cardId) {
+            const card = allCards.find(c => c.id === cardId);
+            if (!card) { await showAlert('エクスポートするカードが見つかりません。'); return; }
+            const dataStr = JSON.stringify(card, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${card.name.replace(/[\\/:"*?<>|]/g, '_') || 'card'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            logToConsole(`カード「${card.name}」をエクスポートしました。`);
+        }
         
         function importAllDataFromFile() {
             const fileInput = getEl('all-data-import-input');
@@ -1909,6 +1941,44 @@
                     } catch (error) { 
                         await showAlert('ファイルの読み込みに失敗しました。'); 
                         logToConsole(`ファイルインポートエラー: ${error.message}`, "ERROR");
+                    }
+                    fileInput.value = '';
+                };
+                reader.readAsText(file);
+            };
+            fileInput.click();
+        }
+
+        function importSingleCardFromFile() {
+            const fileInput = getEl('card-import-input');
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const card = JSON.parse(event.target.result);
+                        // Basic validation
+                        if (card.id && card.name && card.type) {
+                            const existingIndex = allCards.findIndex(c => c.id === card.id);
+                            if (existingIndex > -1) {
+                                const confirmed = await showConfirm(`カード「${card.name}」は既に存在します。上書きしますか？`);
+                                if (confirmed) {
+                                    allCards[existingIndex] = card;
+                                    logToConsole(`カード「${card.name}」を上書きしました。`);
+                                    refreshAllUI();
+                                }
+                            } else {
+                                allCards.push(card);
+                                logToConsole(`新規カード「${card.name}」をインポートしました。`);
+                                refreshAllUI();
+                            }
+                        } else {
+                            await showAlert('カードファイルの形式が正しくありません。');
+                        }
+                    } catch (error) { 
+                        await showAlert('カードファイルの読み込みに失敗しました。'); 
+                        logToConsole(`カードインポートエラー: ${error.message}`, "ERROR");
                     }
                     fileInput.value = '';
                 };
@@ -2347,14 +2417,15 @@
                     versionEl.className = 'bg-gray-900/50 p-4 rounded-lg flex justify-between items-center';
                     
                     let deleteBtnHtml = '';
-                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || data.authorName === '匿名ユーザー' || data.authorName === '不明')) {
+                    const authorName = data.authorName || '不明';
+                    if (currentUser && !currentUser.isAnonymous && (currentUser.uid === data.authorUid || authorName === '匿名ユーザー' || authorName === '不明')) {
                         deleteBtnHtml = `<button data-doc-id="${docSnap.id}" class="delete-version-btn bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-3 rounded-lg text-xs ml-4">削除</button>`;
                     }
 
                     versionEl.innerHTML = `
                         <div class="flex-grow">
                             <p class="font-bold text-lg">${data.name || '無名のバージョン'}</p>
-                            <p class="text-sm text-gray-400">${timestamp} by ${data.authorName || '不明'}</p>
+                            <p class="text-sm text-gray-400">${timestamp} by ${authorName}</p>
                             <p class="text-sm text-gray-400">カード: ${data.cardCount || 0}枚, デッキ: ${data.deckCount || 0}個</p>
                         </div>
                         <div>
@@ -2575,6 +2646,7 @@
 
             getEl('syncDataBtn').onclick = openSyncModal;
             getEl('importAllDataBtn').onclick = importAllDataFromFile;
+            getEl('importCardBtn').onclick = importSingleCardFromFile;
             getEl('exportAllBtn').onclick = exportAllData;
             getEl('newCardBtn').onclick = () => openCardModal();
             getEl('newDeckBtn').onclick = createNewDeck;
