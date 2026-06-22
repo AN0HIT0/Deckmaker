@@ -189,6 +189,7 @@
             border-radius: 0.75rem;
             max-width: 100%;
             word-wrap: break-word;
+            position: relative;
         }
         .chat-bubble.current-user-bubble {
             background-color: #4f46e5; /* Indigo-600 */
@@ -205,6 +206,161 @@
         }
         .chat-share-bubble:hover {
             background-color: #4338ca;
+        }
+        /* システムメッセージ */
+        .chat-system-message {
+            text-align: center;
+            max-width: 100% !important;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .chat-system-bubble {
+            background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(16,185,129,0.15));
+            border: 1px solid rgba(79,70,229,0.3);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        /* リアクション */
+        .chat-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .chat-reaction-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            border: 1px solid #4b5563;
+            background: #1f2937;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: #d1d5db;
+        }
+        .chat-reaction-btn:hover {
+            border-color: #6366f1;
+            background: #312e81;
+        }
+        .chat-reaction-btn.reacted {
+            border-color: #6366f1;
+            background: rgba(99,102,241,0.25);
+        }
+        .chat-reaction-btn .reaction-count {
+            font-size: 0.65rem;
+            color: #9ca3af;
+        }
+        /* リアクション追加ボタン */
+        .chat-add-reaction {
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 0.65rem;
+            border: 1px dashed #4b5563;
+            color: #6b7280;
+            background: transparent;
+        }
+        .chat-message-container:hover .chat-add-reaction {
+            opacity: 1;
+        }
+        .chat-add-reaction:hover {
+            border-color: #6366f1;
+            color: #a5b4fc;
+        }
+        /* 返信プレビュー */
+        .chat-reply-preview {
+            background: rgba(0,0,0,0.3);
+            border-left: 3px solid #6366f1;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: #9ca3af;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .chat-reply-preview .reply-author {
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+        /* 返信バー（入力欄上部） */
+        .chat-reply-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #1e1b4b;
+            border-top: 1px solid #4338ca;
+            font-size: 0.8rem;
+            color: #c7d2fe;
+            animation: slideDown 0.15s ease;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .chat-reply-bar .reply-close {
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.15s;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .chat-reply-bar .reply-close:hover { color: #ef4444; }
+        /* 絵文字ピッカー */
+        .emoji-picker-popup {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            z-index: 50;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .emoji-picker-popup .emoji-category {
+            margin-bottom: 0.5rem;
+        }
+        .emoji-picker-popup .emoji-category-title {
+            font-size: 0.65rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+        .emoji-picker-popup .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 2px;
+        }
+        .emoji-picker-popup .emoji-btn {
+            padding: 4px;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            text-align: center;
+            font-size: 1.1rem;
+            transition: background 0.1s;
+            border: none;
+            background: transparent;
+        }
+        .emoji-picker-popup .emoji-btn:hover {
+            background: #374151;
         }
         .unread-badge {
             position: absolute;
@@ -264,7 +420,14 @@
     <div id="app" class="min-h-screen flex flex-col">
         <!-- ヘッダー -->
         <header class="bg-gray-900 shadow-lg p-4 flex flex-wrap justify-between items-center z-20">
-            <h1 class="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-0">デッキメーカー</h1>
+            <div class="flex items-center mb-2 sm:mb-0 gap-4">
+                <h1 class="text-xl sm:text-2xl font-bold text-white hidden sm:block">スレッズワールド</h1>
+                <!-- App Mode Switcher -->
+                <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
+                    <button id="modeSearchBtn" class="px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow">カード図鑑</button>
+                    <button id="modeDeckBtn" class="px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white">デッキ構築</button>
+                </div>
+            </div>
             <div class="flex items-center space-x-2 sm:space-x-4">
                 <div class="flex flex-col items-end space-y-2">
                     <!-- Main Actions -->
@@ -304,10 +467,16 @@
         </header>
 
         <!-- メインエリア -->
-        <main class="flex-grow flex p-4 gap-4 overflow-hidden flex-col md:flex-row">
+        <!-- モバイル用デッキ構築時タブナビゲーション (hidden by default) -->
+        <div id="mobileTabNav" class="md:hidden hidden bg-gray-800 border-b border-gray-700 p-2 flex justify-center gap-2 z-10">
+            <button id="mobileTabDeckBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-gray-700 text-white transition-colors">デッキ</button>
+            <button id="mobileTabLibraryBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors">ライブラリ</button>
+        </div>
+
+        <main id="mainContainer" class="flex-grow flex p-4 gap-4 overflow-hidden flex-col md:flex-row">
             
             <!-- 左パネル: デッキリストとデッキエディタ -->
-            <div class="w-full md:w-2/5 flex flex-col gap-4">
+            <div id="deckPanel" class="w-full md:w-2/5 flex flex-col gap-4">
                 <!-- デッキリスト -->
                 <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex-shrink-0">
                     <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">デッキリスト</h2>
@@ -424,7 +593,7 @@
             </div>
 
             <!-- 右パネル: カードライブラリ -->
-            <div class="w-full md:w-3/5 flex flex-col">
+            <div id="libraryPanel" class="w-full md:w-3/5 flex flex-col">
                 <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col flex-grow h-full">
                     <h2 class="text-xl font-bold mb-2 border-b border-gray-700 pb-2">カードライブラリ</h2>
                      
@@ -436,6 +605,7 @@
                             <select id="rarityFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
                             <select id="tagFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
                             <select id="resourceFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                            <input type="number" id="totalCostFilter" placeholder="総コスト" class="p-2 w-24 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" min="0">
                         </div>
                         <div class="flex justify-between items-center gap-4">
                             <div class="flex-grow">
@@ -453,6 +623,19 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- アクションモード トグルスイッチ -->
+                        <div class="mb-3">
+                            <label class="text-xs text-gray-400 block mb-1">カードタップ時の動作:</label>
+                            <div class="flex space-x-1">
+                                <button id="actionModeNormalBtn" class="flex-1 py-1.5 px-1 bg-indigo-600 text-white rounded text-xs font-bold border border-indigo-500 shadow-inner transition-colors">通常</button>
+                                <button id="actionModeEditBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">編集</button>
+                                <button id="actionModeShareBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">共有</button>
+                                <button id="actionModeExportBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">出力</button>
+                                <button id="actionModeDeleteBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-red-400 rounded text-xs font-medium hover:bg-red-900/50 border border-gray-600 transition-colors">削除</button>
+                            </div>
+                        </div>
+
                         <input type="text" id="cardSearch" placeholder="キーワードで検索..." class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <div id="searchOptions" class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-300 pt-1">
                             <label class="flex items-center space-x-2 cursor-pointer">
@@ -502,7 +685,10 @@
     <!-- Chat Panel -->
     <div id="chat-panel" class="fixed top-0 right-0 h-full w-full max-w-md bg-gray-800 shadow-2xl z-[1040] transform translate-x-full border-l-2 border-gray-700 flex flex-col">
         <div class="flex justify-between items-center p-4 bg-gray-900">
-            <h2 class="text-xl font-bold text-white">チャット</h2>
+            <div class="flex items-center gap-2">
+                <h2 class="text-xl font-bold text-white">チャット</h2>
+                <span id="chatOnlineCount" class="text-xs text-green-400 bg-green-900/40 px-2 py-0.5 rounded-full hidden">● 0人</span>
+            </div>
             <button id="close-chat" class="text-gray-400 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -512,10 +698,21 @@
         <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-4">
             <!-- Messages will be appended here -->
         </div>
-        <div class="p-4 bg-gray-900">
-            <form id="chat-form" class="flex space-x-2">
+        <!-- 返信バー（返信中に表示） -->
+        <div id="chatReplyBar" class="chat-reply-bar hidden">
+            <svg class="w-4 h-4 flex-shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+            <span id="chatReplyText" class="truncate flex-1">返信先...</span>
+            <button id="chatReplyCancelBtn" class="reply-close">✕</button>
+        </div>
+        <div class="p-4 bg-gray-900 relative">
+            <!-- 絵文字ピッカー -->
+            <div id="emojiPickerPopup" class="emoji-picker-popup hidden"></div>
+            <form id="chat-form" class="flex space-x-2 items-end">
+                <button type="button" id="chatEmojiBtn" class="text-gray-400 hover:text-yellow-400 transition-colors p-2 flex-shrink-0" title="絵文字">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
                 <input type="text" id="chat-input" placeholder="メッセージを入力..." class="flex-grow p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" autocomplete="off">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">送信</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex-shrink-0">送信</button>
             </form>
         </div>
     </div>
@@ -639,6 +836,7 @@
                             <option value="タクト">タクト</option>
                             <option value="グランド">グランド</option>
                             <option value="ストラクト">ストラクト</option>
+                            <option value="フォートレス">フォートレス</option>
                         </select>
                         <select id="cardRarity" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                             <option value="通常">通常</option>
@@ -846,6 +1044,12 @@
         </div>
     </div>
 
+    <!-- 同期インジケーター -->
+    <div id="syncIndicator" class="fixed bottom-4 left-4 z-[2000] flex items-center gap-2 px-3 py-1.5 rounded-full shadow-lg transition-all duration-300 opacity-0 pointer-events-none transform translate-y-2 bg-gray-800 border border-gray-700">
+        <span id="syncIcon" class="w-4 h-4 rounded-full border-2 border-t-transparent border-gray-300 animate-spin"></span>
+        <span id="syncText" class="text-xs font-medium text-gray-300">同期中...</span>
+    </div>
+
     <!-- アラートモーダル -->
     <div id="alertModal" class="fixed inset-0 z-[1060] flex items-center justify-center hidden modal-backdrop">
         <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md mx-auto border border-gray-700">
@@ -923,6 +1127,133 @@
         let currentDeck = null; 
         let costChart = null;
         let typeDistributionChart = null;
+        let appMode = localStorage.getItem('sw_appMode') || 'search'; // 'search' or 'deck'
+        let mobileActiveTab = 'library'; // 'deck' or 'library'
+        let currentActionMode = 'normal'; // 'normal', 'edit', 'share', 'export', 'delete'
+
+        function updateActionModeUI() {
+            const btns = {
+                'normal': getEl('actionModeNormalBtn'),
+                'edit': getEl('actionModeEditBtn'),
+                'share': getEl('actionModeShareBtn'),
+                'export': getEl('actionModeExportBtn'),
+                'delete': getEl('actionModeDeleteBtn')
+            };
+            
+            // 全て非アクティブ化
+            Object.values(btns).forEach(btn => {
+                if(btn) {
+                    btn.className = btn.className.replace('bg-indigo-600', 'bg-gray-700').replace('text-white', 'text-gray-300').replace('text-red-100', 'text-red-400').replace('shadow-inner', '');
+                    if(!btn.className.includes('bg-gray-700')) btn.classList.add('bg-gray-700');
+                }
+            });
+
+            // 選択中のものをアクティブ化
+            const activeBtn = btns[currentActionMode];
+            if (activeBtn) {
+                if (currentActionMode === 'delete') {
+                    activeBtn.className = activeBtn.className.replace('bg-gray-700', 'bg-red-600').replace('text-red-400', 'text-red-100').replace('hover:bg-red-900/50', '');
+                    activeBtn.classList.add('shadow-inner');
+                } else {
+                    activeBtn.className = activeBtn.className.replace('bg-gray-700', 'bg-indigo-600').replace('text-gray-300', 'text-white').replace('hover:bg-gray-600', '');
+                    activeBtn.classList.add('shadow-inner');
+                }
+            }
+        }
+
+        // --- アクションモードに基づくクリック処理 ---
+        async function handleCardAction(card, defaultActionFn) {
+            if (currentActionMode === 'normal') {
+                if (defaultActionFn) defaultActionFn();
+            } else if (currentActionMode === 'edit') {
+                openCardModal(card);
+            } else if (currentActionMode === 'share') {
+                sendChatMessage({ type: 'card', cardId: card.id });
+                showAlert(`カード「${card.name}」をチャットで共有しました。`);
+            } else if (currentActionMode === 'export') {
+                exportSingleCard(card.id);
+            } else if (currentActionMode === 'delete') {
+                if (!currentUser) {
+                    showAlert("カードの削除はログインしているユーザーのみ実行できます。");
+                    return;
+                }
+                const confirmed = await showConfirm(`「${card.name}」を削除モードで削除しますか？\nこの操作は取り消せません。`);
+                if (!confirmed) return;
+                deleteCard(card.id, card.name);
+            }
+        }
+
+        // --- モード切替のUI更新関数 ---
+        function updateAppModeUI() {
+            const modeSearchBtn = getEl('modeSearchBtn');
+            const modeDeckBtn = getEl('modeDeckBtn');
+            const deckPanel = getEl('deckPanel');
+            const libraryPanel = getEl('libraryPanel');
+            const mobileTabNav = getEl('mobileTabNav');
+            const mainContainer = getEl('mainContainer');
+
+            if (!modeSearchBtn) return; // Not initialized yet
+
+            if (appMode === 'search') {
+                modeSearchBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow';
+                modeDeckBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white';
+                
+                deckPanel.classList.add('hidden');
+                deckPanel.classList.remove('md:flex');
+                
+                libraryPanel.className = 'w-full flex flex-col'; // Take full width
+                mobileTabNav.classList.add('hidden');
+                
+                // Allow scrolling on mobile in search mode if needed
+                mainContainer.classList.remove('overflow-hidden');
+
+                // カード図鑑では列数を1.5倍にする
+                const cardLibrary = getEl('cardLibrary');
+                if (cardLibrary) {
+                    cardLibrary.className = 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto flex-grow content-start image-only-mode';
+                }
+            } else {
+                // Deck mode
+                modeDeckBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow';
+                modeSearchBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white';
+                
+                libraryPanel.className = 'w-full md:w-3/5 flex flex-col';
+                mainContainer.classList.add('overflow-hidden');
+
+                // デッキモードでは元の列数に戻す
+                const cardLibrary = getEl('cardLibrary');
+                if (cardLibrary) {
+                    cardLibrary.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-grow content-start image-only-mode';
+                }
+
+                // Mobile specific handling
+                if (window.innerWidth < 768) { // md breakpoint
+                    mobileTabNav.classList.remove('hidden');
+                    if (mobileActiveTab === 'deck') {
+                        deckPanel.classList.remove('hidden');
+                        deckPanel.classList.add('flex');
+                        libraryPanel.classList.add('hidden');
+                        getEl('mobileTabDeckBtn').className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-gray-700 text-white transition-colors';
+                        getEl('mobileTabLibraryBtn').className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors';
+                    } else {
+                        deckPanel.classList.add('hidden');
+                        deckPanel.classList.remove('flex');
+                        libraryPanel.classList.remove('hidden');
+                        libraryPanel.classList.add('flex');
+                        getEl('mobileTabLibraryBtn').className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-gray-700 text-white transition-colors';
+                        getEl('mobileTabDeckBtn').className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors';
+                    }
+                } else {
+                    // Desktop
+                    mobileTabNav.classList.add('hidden');
+                    deckPanel.classList.remove('hidden');
+                    deckPanel.classList.add('md:flex');
+                    libraryPanel.classList.remove('hidden');
+                }
+            }
+        }
+
+        window.addEventListener('resize', updateAppModeUI);
         let testDeck = [];
         let unsubscribeChat = null;
         let unreadMessageCount = 0;
@@ -942,6 +1273,28 @@
         };
         const NEUTRAL_WORLD_NAME = 'ニュートラル';
         
+        // --- キーワード効果辞書 ---
+        const KEYWORD_GLOSSARY = {
+            '装甲': '値だけダメージを軽減する。',
+            '貫通': '値だけ[装甲]を無視する。',
+            '衝撃': '与ダメージ時：対象はレストする',
+            '帯電': '攻撃時：電(数はアクトコスト総量)を支払い、装甲を無視する',
+            '機動': '移動してもレストしない(ただし一度のみ)',
+            '連撃': '連続で〇回攻撃できる(何回攻撃しても攻撃後にレストする)',
+            '航空': '航空を持たず、かつ攻撃力が◯以下のユニットから反撃されず、攻撃されない。',
+            '対空': '値だけ[航空]を無視する',
+            '曲射': '〇列先に反撃を受けずに攻撃できる',
+            '伝説': 'このカードはデッキに一枚しか入れられない',
+            '神話': 'この効果を持つカードはデッキに一枚しか入れられない',
+            '警戒': '自分のターン終了時にレストが解除される',
+            '守護': '相手の[曲射]または[航空]のないユニットは、両隣のユニットを攻撃できない',
+            '自爆': 'このユニットを破壊：隣接するユニットに〇だけダメージを与える',
+            '奇襲': '敵の支配下でないなら第2列に出撃できる',
+            '不動': '移動不可',
+            '不攻': '攻撃不可',
+            '魔の代わりに[魂]で支払うことができる': '魂で支払う時、墓地のカードをその数だけ除外する。',
+            '巨撃': '攻撃対象の横のユニットにもダメージを与える(反撃は受けない)'
+        };
         // --- DOM要素のキャッシュ ---
         const getEl = (id) => document.getElementById(id);
         const cardLibrary = getEl('cardLibrary');
@@ -994,6 +1347,7 @@
         const rarityFilter = getEl('rarityFilter');
         const tagFilter = getEl('tagFilter');
         const resourceFilter = getEl('resourceFilter');
+        const totalCostFilter = getEl('totalCostFilter');
         const sortBy = getEl('sortBy');
         const imageOnlyToggle = getEl('imageOnlyToggle');
         const popularTags = getEl('popularTags');
@@ -1014,6 +1368,52 @@
             const logEntry = `[${timestamp}] [${type}] ${message}\n`;
             consoleOutput.value += logEntry;
             consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // --- 同期状態インジケーター表示 ---
+        let syncTimeout = null;
+        function showSyncStatus(status, duration = 0) {
+            const syncIndicator = getEl('syncIndicator');
+            const syncIcon = getEl('syncIcon');
+            const syncText = getEl('syncText');
+            if (!syncIndicator) return;
+            
+            clearTimeout(syncTimeout);
+            syncIndicator.classList.remove('opacity-0', 'translate-y-2');
+            syncIndicator.classList.add('opacity-100', 'translate-y-0');
+
+            if (status === 'syncing') {
+                syncIcon.className = 'w-4 h-4 rounded-full border-2 border-t-transparent border-blue-400 animate-spin';
+                syncText.textContent = 'データ更新中...';
+                syncText.className = 'text-xs font-medium text-blue-400';
+                syncIndicator.className = 'fixed bottom-4 left-4 z-[2000] flex items-center gap-2 px-3 py-1.5 rounded-full shadow-lg transition-all duration-300 bg-gray-800 border border-blue-900/50 opacity-100 translate-y-0';
+            } else if (status === 'success') {
+                syncIcon.className = 'w-4 h-4 flex items-center justify-center text-green-400';
+                syncIcon.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
+                syncText.textContent = '同期完了';
+                syncText.className = 'text-xs font-medium text-green-400';
+                syncIndicator.className = 'fixed bottom-4 left-4 z-[2000] flex items-center gap-2 px-3 py-1.5 rounded-full shadow-lg transition-all duration-300 bg-gray-800 border border-green-900/50 opacity-100 translate-y-0';
+                
+                if (duration > 0) {
+                    syncTimeout = setTimeout(() => {
+                        syncIndicator.classList.remove('opacity-100', 'translate-y-0');
+                        syncIndicator.classList.add('opacity-0', 'translate-y-2');
+                    }, duration);
+                }
+            } else if (status === 'error') {
+                syncIcon.className = 'w-4 h-4 flex items-center justify-center text-red-400';
+                syncIcon.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                syncText.textContent = 'エラー';
+                syncText.className = 'text-xs font-medium text-red-400';
+                syncIndicator.className = 'fixed bottom-4 left-4 z-[2000] flex items-center gap-2 px-3 py-1.5 rounded-full shadow-lg transition-all duration-300 bg-gray-800 border border-red-900/50 opacity-100 translate-y-0';
+                
+                if (duration > 0) {
+                    syncTimeout = setTimeout(() => {
+                        syncIndicator.classList.remove('opacity-100', 'translate-y-0');
+                        syncIndicator.classList.add('opacity-0', 'translate-y-2');
+                    }, duration);
+                }
+            }
         }
 
         // --- UI更新の集中管理 ---
@@ -1126,7 +1526,7 @@
             }
 
             // Cards Listener
-            onSnapshot(collection(db, "cards"), (snapshot) => {
+            onSnapshot(collection(db, "cards"), { includeMetadataChanges: true }, (snapshot) => {
                 allCards = [];
                 snapshot.forEach(docSnap => {
                     let card = docSnap.data();
@@ -1139,10 +1539,15 @@
                     allCards.push(card);
                 });
                 refreshAllUI();
+                if (snapshot.metadata.hasPendingWrites) {
+                    showSyncStatus('syncing');
+                } else {
+                    showSyncStatus('success', 2000);
+                }
             });
 
             // Decks Listener
-            onSnapshot(collection(db, "decks"), (snapshot) => {
+            onSnapshot(collection(db, "decks"), { includeMetadataChanges: true }, (snapshot) => {
                 allDecks = [];
                 snapshot.forEach(docSnap => {
                     allDecks.push(docSnap.data());
@@ -1159,20 +1564,41 @@
                     }
                 }
                 refreshAllUI();
+                if (snapshot.metadata.hasPendingWrites) {
+                    showSyncStatus('syncing');
+                } else {
+                    showSyncStatus('success', 2000);
+                }
             });
 
             // Worlds Listener
-            onSnapshot(collection(db, "worlds"), (snapshot) => {
+            onSnapshot(collection(db, "worlds"), { includeMetadataChanges: true }, (snapshot) => {
                 allWorlds = [];
                 snapshot.forEach(docSnap => {
                     allWorlds.push(docSnap.data());
                 });
                 refreshAllUI();
+                if (snapshot.metadata.hasPendingWrites) {
+                    showSyncStatus('syncing');
+                } else {
+                    showSyncStatus('success', 2000);
+                }
             });
         }
         
         // --- フィルターとソートのオプション更新 ---
         function updateAndRenderFilters() {
+            // 現在の選択状態を保存
+            const currentTag = tagFilter.value;
+            const currentWorld = worldFilter.value;
+            const currentType = typeFilter.value;
+            const currentRarity = rarityFilter.value;
+            const currentResource = resourceFilter.value;
+            const currentTotalCost = totalCostFilter.value;
+            const currentSort = sortBy.value;
+            const currentDeckWorld1 = deckWorld1.value;
+            const currentDeckWorld2 = deckWorld2.value;
+
             const tagCounts = {};
             const worlds = new Set([NEUTRAL_WORLD_NAME]);
             allCards.forEach(card => {
@@ -1189,7 +1615,7 @@
             deckWorld2.innerHTML = `<option value="">世界2を選択</option>` + worldOptions;
             worldFilter.innerHTML = `<option value="">すべての世界</option>` + worldOptions;
             
-            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option>`;
+            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option><option value="フォートレス">フォートレス</option>`;
             rarityFilter.innerHTML = `<option value="">すべてのレアリティ</option><option value="通常">通常</option><option value="伝説">伝説</option><option value="神話">神話</option>`;
             
             let resourceOptionsHTML = `<option value="">すべての資源(固定コスト)</option>`;
@@ -1207,6 +1633,17 @@
             });
             
             sortBy.innerHTML = `<option value="name_asc">カード名順</option><option value="attack_desc">攻撃力 (高い順)</option><option value="attack_asc">攻撃力 (低い順)</option><option value="defense_desc">体力 (高い順)</option><option value="defense_asc">体力 (低い順)</option><option value="total_cost_desc">プレイコスト総量 (高い順)</option><option value="total_cost_asc">プレイコスト総量 (低い順)</option>`;
+
+            // 選択状態を復元
+            if (currentTag) tagFilter.value = currentTag;
+            if (currentWorld) worldFilter.value = currentWorld;
+            if (currentType) typeFilter.value = currentType;
+            if (currentRarity) rarityFilter.value = currentRarity;
+            if (currentResource) resourceFilter.value = currentResource;
+            if (currentTotalCost) totalCostFilter.value = currentTotalCost;
+            if (currentSort) sortBy.value = currentSort;
+            if (currentDeckWorld1) deckWorld1.value = currentDeckWorld1;
+            if (currentDeckWorld2) deckWorld2.value = currentDeckWorld2;
         }
         
         // --- コスト表示エレメント作成 ---
@@ -1340,83 +1777,47 @@
                 </div>`;
             
             if (context === 'library') {
-                cardEl.classList.add('group');
+                if (appMode === 'deck') {
+                    cardEl.classList.add('group');
+                    // Hover overlay (Add/Remove/Edit)
+                    const overlay = document.createElement('div');
+                    overlay.className = 'absolute inset-0 bg-black/60 rounded-md flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10';
 
-                // Hover overlay (Add/Remove/Edit)
-                const overlay = document.createElement('div');
-                overlay.className = 'absolute inset-0 bg-black/60 rounded-md flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10';
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-green-600 rounded-full text-white transition-colors';
+                    addBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 4.293a1 1 0 00-1.414 0l-6 6a1 1 0 001.414 1.414L10 6.414l5.293 5.293a1 1 0 001.414-1.414l-6-6z"></path></svg>`;
+                    addBtn.title = "1枚追加";
+                    addBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        addCardToDeck(card.id);
+                    };
 
-                const addBtn = document.createElement('button');
-                addBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-green-600 rounded-full text-white transition-colors';
-                addBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 4.293a1 1 0 00-1.414 0l-6 6a1 1 0 001.414 1.414L10 6.414l5.293 5.293a1 1 0 001.414-1.414l-6-6z"></path></svg>`;
-                addBtn.title = "1枚追加";
-                addBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    addCardToDeck(card.id);
-                };
+                    const editBtnOverlay = document.createElement('button');
+                    editBtnOverlay.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-blue-600 rounded-full text-white transition-colors';
+                    editBtnOverlay.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
+                    editBtnOverlay.title = "詳細";
+                    editBtnOverlay.onclick = (e) => {
+                        e.stopPropagation();
+                        openShareDetailModal({ type: 'card', data: card });
+                    };
 
-                const editBtnOverlay = document.createElement('button');
-                editBtnOverlay.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-blue-600 rounded-full text-white transition-colors';
-                editBtnOverlay.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
-                editBtnOverlay.title = "詳細";
-                editBtnOverlay.onclick = (e) => {
-                    e.stopPropagation();
-                    openShareDetailModal({ type: 'card', data: card });
-                };
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-red-600 rounded-full text-white transition-colors';
+                    removeBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.293 15.707a1 1 0 001.414 0l6-6a1 1 0 00-1.414-1.414L10 13.586 4.707 8.293a1 1 0 00-1.414 1.414l6 6z"></path></svg>`;
+                    removeBtn.title = "1枚減少";
+                    removeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        let section = 'main';
+                        if (card.type === 'コア') section = 'core';
+                        else if (card.type === 'ストラクト') section = 'struct';
+                        removeCardFromDeck(card.id, section);
+                    };
 
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'w-8 h-8 flex items-center justify-center bg-gray-700/80 hover:bg-red-600 rounded-full text-white transition-colors';
-                removeBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.293 15.707a1 1 0 001.414 0l6-6a1 1 0 00-1.414-1.414L10 13.586 4.707 8.293a1 1 0 00-1.414 1.414l6 6z"></path></svg>`;
-                removeBtn.title = "1枚減少";
-                removeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    let section = 'main';
-                    if (card.type === 'コア') section = 'core';
-                    else if (card.type === 'ストラクト') section = 'struct';
-                    removeCardFromDeck(card.id, section);
-                };
-
-                overlay.appendChild(addBtn);
-                overlay.appendChild(editBtnOverlay);
-                overlay.appendChild(removeBtn);
-                cardEl.appendChild(overlay);
-
-                // Small buttons top-left (Export, Share, Delete)
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'absolute top-1 left-1 flex flex-col gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity';
-                
-                const editSmallBtn = document.createElement('button');
-                editSmallBtn.innerHTML = '&#9998;';
-                editSmallBtn.title = "編集";
-                editSmallBtn.className = 'text-xs p-1 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors';
-                editSmallBtn.onclick = (e) => { e.stopPropagation(); openCardModal(card); };
-                buttonContainer.appendChild(editSmallBtn);
-
-                const exportBtn = document.createElement('button');
-                exportBtn.innerHTML = '&#128228;';
-                exportBtn.title = "エクスポート";
-                exportBtn.className = 'text-xs p-1 rounded-full bg-sky-600 hover:bg-sky-500 text-white transition-colors';
-                exportBtn.onclick = (e) => { e.stopPropagation(); exportSingleCard(card.id); };
-                buttonContainer.appendChild(exportBtn);
-
-                const shareBtn = document.createElement('button');
-                shareBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>`;
-                shareBtn.title = "チャットで共有";
-                shareBtn.className = 'text-xs p-1 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition-colors';
-                shareBtn.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    sendChatMessage({ type: 'card', cardId: card.id });
-                    showAlert(`カード「${card.name}」をチャットで共有しました。`);
-                };
-                buttonContainer.appendChild(shareBtn);
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.innerHTML = '&#128465;';
-                deleteBtn.title = "削除";
-                deleteBtn.className = 'text-xs p-1 rounded-full bg-red-700 hover:bg-red-600 text-white transition-colors';
-                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteCard(card.id, card.name); };
-                buttonContainer.appendChild(deleteBtn);
-                cardEl.appendChild(buttonContainer);
+                    overlay.appendChild(addBtn);
+                    overlay.appendChild(editBtnOverlay);
+                    overlay.appendChild(removeBtn);
+                    cardEl.appendChild(overlay);
+                }
             }
             cardEl.appendChild(cardInner);
             return cardEl;
@@ -1555,21 +1956,8 @@
             const rarityValue = rarityFilter.value;
             const tagValue = tagFilter.value;
             const resourceValue = resourceFilter.value;
+            const totalCostValue = totalCostFilter.value;
             const sortValue = sortBy.value;
-
-            const filterFn = c => 
-                (!worldValue || c.world === worldValue) &&
-                (!typeValue || c.type === typeValue) &&
-                (!rarityValue || c.rarity === rarityValue) &&
-                (!tagValue || (c.tags && c.tags.includes(tagValue))) &&
-                (!resourceValue || (c.costs?.play && c.costs.play[resourceValue] > 0)) &&
-                (!searchValue || checkedFields.some(field => {
-                    const fieldValue = c[field];
-                    if (Array.isArray(fieldValue)) {
-                        return fieldValue.join(',').toLowerCase().includes(searchValue);
-                    }
-                    return (fieldValue?.toString() || '').toLowerCase().includes(searchValue);
-                }));
 
             const getTotalPlayCost = card => {
                 const fixedCost = Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0);
@@ -1582,6 +1970,21 @@
                 return fixedCost + choiceCost;
             };
 
+            const filterFn = c => 
+                (!worldValue || c.world === worldValue) &&
+                (!typeValue || c.type === typeValue) &&
+                (!rarityValue || c.rarity === rarityValue) &&
+                (!tagValue || (c.tags && c.tags.includes(tagValue))) &&
+                (!resourceValue || (c.costs?.play && c.costs.play[resourceValue] > 0)) &&
+                (!totalCostValue || getTotalPlayCost(c) === parseInt(totalCostValue)) &&
+                (!searchValue || checkedFields.some(field => {
+                    const fieldValue = c[field];
+                    if (Array.isArray(fieldValue)) {
+                        return fieldValue.join(',').toLowerCase().includes(searchValue);
+                    }
+                    return (fieldValue?.toString() || '').toLowerCase().includes(searchValue);
+                }));
+
             const sortFns = {
                 'attack_desc': (a, b) => (b.attack || -1) - (a.attack || -1),
                 'attack_asc': (a, b) => (a.attack || -1) - (b.attack || -1),
@@ -1593,7 +1996,14 @@
             };
 
             const sortedCards = allCards.filter(filterFn).sort(sortFns[sortValue] || sortFns['name_asc']);
-            sortedCards.forEach(card => cardLibrary.appendChild(createCardElement(card, 'library')));
+            sortedCards.forEach(card => {
+                const el = createCardElement(card, 'library');
+                const defaultAction = appMode === 'search' 
+                    ? () => openShareDetailModal({ type: 'card', data: card })
+                    : () => addCardToDeck(card.id);
+                el.onclick = () => handleCardAction(card, defaultAction);
+                cardLibrary.appendChild(el);
+            });
         }
 
         // --- デッキ描画 ---
@@ -2042,7 +2452,8 @@
                     await batch.commit();
                 }
 
-                logToConsole(`カード「${cardName}」を削除しました。`);
+                const userName = currentUser ? (currentUser.displayName || '匿名ユーザー') : '不明なユーザー';
+                logToConsole(`${userName} が 「${cardName}」 を削除しました。`);
                 await showAlert(`「${cardName}」を削除しました。`);
             } catch(e) {
                 console.error("カード削除エラー:", e);
@@ -2820,8 +3231,9 @@
             unsubscribeChat = onSnapshot(q, (querySnapshot) => {
                 const messages = [];
                 let newMessagesCount = 0;
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    data.docId = docSnap.id; // リアクション・返信用にドキュメントIDを保持
                     messages.push(data);
                     // Check for new messages if chat panel is closed
                     if (chatPanel.classList.contains('translate-x-full') && data.timestamp && data.timestamp.toMillis() > (window.lastReadTimestamp || 0)) {
@@ -2848,16 +3260,101 @@
             }
         }
 
+        // --- チャット返信状態 ---
+        let chatReplyTarget = null; // { msgId, authorName, previewText }
+
+        function setChatReply(msgId, authorName, previewText) {
+            chatReplyTarget = { msgId, authorName, previewText };
+            const bar = getEl('chatReplyBar');
+            const text = getEl('chatReplyText');
+            text.innerHTML = `<span class="reply-author">${authorName}</span> へ返信: ${previewText.substring(0, 50)}${previewText.length > 50 ? '…' : ''}`;
+            bar.classList.remove('hidden');
+            chatInput.focus();
+        }
+
+        function clearChatReply() {
+            chatReplyTarget = null;
+            getEl('chatReplyBar').classList.add('hidden');
+        }
+
+        // --- 絵文字ピッカー ---
+        const EMOJI_CATEGORIES = {
+            '顔': ['😀','😂','🥰','😎','🤔','😱','😤','🥳','😴','🤣','😅','😊','😇','🙂','😉','😋','😜','🤪','😝','🤩','🥺','😭','😈'],
+            '手・ジェスチャー': ['👍','👎','👏','🙌','🤝','✌️','🤞','👊','💪','🫡','🫶','🙏'],
+            'ハート': ['❤️','🧡','💛','💚','💙','💜','🖤','💖','💗','💘','💝'],
+            'ゲーム': ['⚔️','🛡️','🏹','🎮','🎯','🃏','🎲','👑','💎','🔥','⚡','💀','🌟','✨','💫','🎪'],
+            'リアクション': ['👀','💯','🔥','⭐','❗','❓','✅','❌','🚀','💡','📌','🎉']
+        };
+
+        function buildEmojiPicker(onSelect) {
+            const popup = getEl('emojiPickerPopup');
+            popup.innerHTML = '';
+            for (const [category, emojis] of Object.entries(EMOJI_CATEGORIES)) {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'emoji-category';
+                catDiv.innerHTML = `<div class="emoji-category-title">${category}</div>`;
+                const grid = document.createElement('div');
+                grid.className = 'emoji-grid';
+                emojis.forEach(emoji => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'emoji-btn';
+                    btn.textContent = emoji;
+                    btn.onclick = () => {
+                        onSelect(emoji);
+                        popup.classList.add('hidden');
+                    };
+                    grid.appendChild(btn);
+                });
+                catDiv.appendChild(grid);
+                popup.appendChild(catDiv);
+            }
+        }
+
+        // リアクション用の代表絵文字（クイックリアクション）
+        const QUICK_REACTIONS = ['👍','❤️','😂','🔥','👀','⚔️'];
+
+        async function toggleReaction(msgDocId, emoji) {
+            if (!currentUser || !msgDocId) return;
+            const msgRef = doc(db, "chat", msgDocId);
+            try {
+                const msgSnap = await getDoc(msgRef);
+                if (!msgSnap.exists()) return;
+                const data = msgSnap.data();
+                const reactions = data.reactions || {};
+                const emojiReactions = reactions[emoji] || [];
+                const uid = currentUser.uid;
+                if (emojiReactions.includes(uid)) {
+                    // リアクション解除
+                    reactions[emoji] = emojiReactions.filter(u => u !== uid);
+                    if (reactions[emoji].length === 0) delete reactions[emoji];
+                } else {
+                    // リアクション追加
+                    reactions[emoji] = [...emojiReactions, uid];
+                }
+                await updateDoc(msgRef, { reactions });
+            } catch (e) {
+                console.error("リアクション更新エラー:", e);
+            }
+        }
+
         async function sendChatMessage(payload) {
              if (!currentUser) return;
              try {
-                await addDoc(collection(db, "chat"), {
+                const msgData = {
                     ...payload,
                     authorName: currentUser.isAnonymous ? "匿名ユーザー" : currentUser.displayName,
                     authorUid: currentUser.uid,
                     authorPhotoURL: currentUser.photoURL || `https://placehold.co/40x40/718096/e2e8f0?text=${(currentUser.displayName || 'A').charAt(0)}`,
-                    timestamp: serverTimestamp()
-                });
+                    timestamp: serverTimestamp(),
+                    reactions: {}
+                };
+                // 返信情報があれば付与
+                if (chatReplyTarget) {
+                    msgData.replyTo = chatReplyTarget;
+                    clearChatReply();
+                }
+                await addDoc(collection(db, "chat"), msgData);
             } catch (e) {
                 console.error("メッセージ送信エラー:", e);
                 logToConsole(`メッセージ送信エラー: ${e.message}`, "ERROR");
@@ -2871,10 +3368,48 @@
             return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
         }
 
+        function formatDateHeader(timestamp) {
+            if (!timestamp || !timestamp.toDate) return '';
+            const date = timestamp.toDate();
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) return '今日';
+            if (date.toDateString() === yesterday.toDateString()) return '昨日';
+            return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+        }
+
         function renderChatMessages(messages) {
             chatMessages.innerHTML = '';
+            let lastDateStr = '';
+
             messages.forEach(msg => {
-                const isCurrentUser = msg.authorUid === currentUser.uid;
+                // --- 日付区切り ---
+                const dateStr = msg.timestamp ? formatDateHeader(msg.timestamp) : '';
+                if (dateStr && dateStr !== lastDateStr) {
+                    lastDateStr = dateStr;
+                    const dateSep = document.createElement('div');
+                    dateSep.className = 'flex items-center justify-center my-3';
+                    dateSep.innerHTML = `<div class="flex-1 h-px bg-gray-700"></div>
+                        <span class="px-3 text-xs text-gray-500 font-medium">${dateStr}</span>
+                        <div class="flex-1 h-px bg-gray-700"></div>`;
+                    chatMessages.appendChild(dateSep);
+                }
+
+                // --- システムメッセージ ---
+                if (msg.type === 'system') {
+                    const sysDiv = document.createElement('div');
+                    sysDiv.className = 'chat-system-message flex justify-center';
+                    sysDiv.innerHTML = `<div class="chat-system-bubble">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        ${msg.text}
+                    </div>`;
+                    chatMessages.appendChild(sysDiv);
+                    return;
+                }
+
+                const isCurrentUser = msg.authorUid === currentUser?.uid;
                 
                 const msgContainer = document.createElement('div');
                 msgContainer.className = 'chat-message-container' + (isCurrentUser ? ' current-user' : '');
@@ -2896,7 +3431,15 @@
 
                 const bubble = document.createElement('div');
                 
-                // Handle different message types
+                // --- 返信プレビュー ---
+                let replyPreviewEl = null;
+                if (msg.replyTo) {
+                    replyPreviewEl = document.createElement('div');
+                    replyPreviewEl.className = 'chat-reply-preview';
+                    replyPreviewEl.innerHTML = `<span class="reply-author">${msg.replyTo.authorName}</span>: ${msg.replyTo.previewText || ''}`;
+                }
+
+                // --- メッセージ本体 ---
                 if (msg.type === 'card' && msg.cardId) {
                     const card = allCards.find(c => c.id === msg.cardId);
                     const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(card?.name || '?')}`;
@@ -2908,10 +3451,14 @@
 
                 } else if (msg.type === 'deck' && msg.deckData) {
                     bubble.className = 'chat-bubble chat-share-bubble' + (isCurrentUser ? ' current-user-bubble' : ' other-user-bubble');
+                    const deckCardCount = (msg.deckData.mainDeckCardIds?.length || 0) + (msg.deckData.structDeckCardIds?.length || 0) + (msg.deckData.coreCardId ? 1 : 0);
                     bubble.innerHTML = `
                         <div class="flex items-center gap-2">
                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z" /></svg>
-                            <span>デッキ: <strong>${msg.deckData.name || '無名のデッキ'}</strong></span>
+                            <div>
+                                <span class="font-semibold">${msg.deckData.name || '無名のデッキ'}</span>
+                                <span class="text-xs opacity-70 ml-1">(${deckCardCount}枚)</span>
+                            </div>
                         </div>`;
                     bubble.onclick = () => openShareDetailModal({ type: 'deck', data: msg.deckData });
                 } else {
@@ -2919,15 +3466,58 @@
                     bubble.textContent = msg.text;
                 }
 
+                // --- リアクション表示 ---
+                const reactionsDiv = document.createElement('div');
+                reactionsDiv.className = 'chat-reactions';
+                const reactions = msg.reactions || {};
+                Object.entries(reactions).forEach(([emoji, uids]) => {
+                    if (!uids || uids.length === 0) return;
+                    const rBtn = document.createElement('button');
+                    const isReacted = uids.includes(currentUser?.uid);
+                    rBtn.className = 'chat-reaction-btn' + (isReacted ? ' reacted' : '');
+                    rBtn.innerHTML = `${emoji} <span class="reaction-count">${uids.length}</span>`;
+                    rBtn.onclick = () => { if(msg.docId) toggleReaction(msg.docId, emoji); };
+                    reactionsDiv.appendChild(rBtn);
+                });
+
+                // リアクション追加ボタン（+😀）
+                const addReactionBtn = document.createElement('button');
+                addReactionBtn.className = 'chat-add-reaction';
+                addReactionBtn.textContent = '+😀';
+                addReactionBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    showQuickReactionPicker(e.target, msg.docId);
+                };
+                reactionsDiv.appendChild(addReactionBtn);
+
+                // --- タイムスタンプ ---
                 const timestampSpan = document.createElement('span');
                 timestampSpan.className = 'text-xs text-gray-500';
                 timestampSpan.textContent = formatTimestamp(msg.timestamp);
 
+                // --- 返信ボタン ---
+                const replyBtn = document.createElement('button');
+                replyBtn.className = 'chat-add-reaction';
+                replyBtn.textContent = '↩';
+                replyBtn.title = '返信';
+                replyBtn.onclick = () => {
+                    const previewText = msg.type === 'card' ? `[カード共有]` : msg.type === 'deck' ? `[デッキ: ${msg.deckData?.name}]` : (msg.text || '').substring(0, 60);
+                    setChatReply(msg.docId, msg.authorName, previewText);
+                };
+
+                // --- DOM組み立て ---
                 contentDiv.appendChild(authorName);
+                if (replyPreviewEl) contentDiv.appendChild(replyPreviewEl);
                 contentDiv.appendChild(bubble);
+                contentDiv.appendChild(reactionsDiv);
+
+                const actionRow = document.createElement('div');
+                actionRow.className = 'flex items-center gap-1';
+                actionRow.appendChild(timestampSpan);
+                actionRow.appendChild(replyBtn);
 
                 contentWrapper.appendChild(contentDiv);
-                contentWrapper.appendChild(timestampSpan);
+                contentWrapper.appendChild(actionRow);
 
                 msgContainer.appendChild(authorImg);
                 msgContainer.appendChild(contentWrapper);
@@ -2936,6 +3526,47 @@
             });
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+
+        // --- クイックリアクションポップアップ ---
+        function showQuickReactionPicker(targetEl, msgDocId) {
+            // 既存のポップアップを削除
+            document.querySelectorAll('.quick-reaction-popup').forEach(el => el.remove());
+            
+            const popup = document.createElement('div');
+            popup.className = 'quick-reaction-popup';
+            popup.style.cssText = 'position:absolute;background:#1f2937;border:1px solid #4b5563;border-radius:999px;padding:4px 8px;display:flex;gap:2px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.4);';
+
+            QUICK_REACTIONS.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.style.cssText = 'border:none;background:transparent;cursor:pointer;font-size:1.1rem;padding:2px 4px;border-radius:4px;transition:background 0.1s;';
+                btn.textContent = emoji;
+                btn.onmouseenter = () => btn.style.background = '#374151';
+                btn.onmouseleave = () => btn.style.background = 'transparent';
+                btn.onclick = () => {
+                    if(msgDocId) toggleReaction(msgDocId, emoji);
+                    popup.remove();
+                };
+                popup.appendChild(btn);
+            });
+
+            // ポップアップの位置決め
+            targetEl.style.position = 'relative';
+            targetEl.parentElement.style.position = 'relative';
+            targetEl.parentElement.appendChild(popup);
+            popup.style.bottom = '100%';
+            popup.style.left = '0';
+            popup.style.marginBottom = '4px';
+
+            // 外側クリックで閉じる
+            const closeHandler = (e) => {
+                if (!popup.contains(e.target)) {
+                    popup.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+
         
         // --- 共有アイテム詳細表示 ---
         function createCardTextDetailHtml(card) {
@@ -2997,6 +3628,35 @@
                                </div>`;
             }
 
+            // --- キーワード効果の自動探知と追加 ---
+            const textToParse = (card.description || '') + ' ' + (card.flavorText || '');
+            const foundKeywords = new Set();
+            const keywordRegex = /\[([^\]]+)\]/g; // [〇〇] を探す正規表現
+            let match;
+            while ((match = keywordRegex.exec(textToParse)) !== null) {
+                const fullKeyword = match[1];
+                // 末尾の数字（半角・全角・丸数字）を取り除いた基本キーワードを取得 (例: "装甲2" or "装甲①" -> "装甲")
+                const baseKeyword = fullKeyword.replace(/[0-9０-９①-⑳]+$/, '');
+                if (KEYWORD_GLOSSARY[baseKeyword]) {
+                    foundKeywords.add(baseKeyword);
+                } else if (KEYWORD_GLOSSARY[fullKeyword]) {
+                    foundKeywords.add(fullKeyword);
+                }
+            }
+
+            if (foundKeywords.size > 0) {
+                detailHtml += `<div class="bg-gray-800/80 p-3 rounded-lg border border-gray-600 mt-4">
+                                <h4 class="font-semibold text-cyan-300 mb-2 text-sm flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    キーワード解説
+                                </h4>
+                                <ul class="text-sm space-y-2 text-gray-300">`;
+                for (const kw of foundKeywords) {
+                    detailHtml += `<li><strong class="text-indigo-400">[${kw}]</strong>: ${KEYWORD_GLOSSARY[kw]}</li>`;
+                }
+                detailHtml += `</ul></div>`;
+            }
+
             detailHtml += '</div>';
             return detailHtml;
         }
@@ -3011,15 +3671,25 @@
                 const card = item.data;
                 titleEl.textContent = `カード詳細: ${card.name}`;
                 
+                const isGrand = card.type === 'グランド';
                 const defaultImage = `https://placehold.co/400x560/2d3748/e2e8f0?text=${encodeURIComponent(card.name)}`;
                 const imageUrl = card.imageUrl || defaultImage;
 
+                const layoutClasses = 'flex flex-col md:flex-row gap-6 h-full';
+                const imageContainerClasses = 'w-full md:w-1/2 flex-shrink-0 flex items-center justify-center';
+                const infoContainerClasses = 'w-full md:w-1/2 overflow-y-auto pr-2 pb-4';
+                
+                // 画像自体を横向き（90度回転）にするスタイルを追加しつつ、レイアウトは左右分割に戻す
+                const imageStyle = isGrand 
+                    ? 'max-height: 35vh; max-width: 100%; object-fit: contain; transform: rotate(90deg);' 
+                    : 'max-height: 70vh; max-width: 100%; object-fit: contain;';
+
                 bodyEl.innerHTML = `
-                    <div class="flex flex-col md:flex-row gap-6 h-full">
-                        <div class="w-full md:w-1/2 flex-shrink-0 flex items-start justify-center">
-                            <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="max-w-full rounded-lg shadow-lg" style="max-height: 70vh; object-fit: contain;">
+                    <div class="${layoutClasses}">
+                        <div class="${imageContainerClasses}">
+                            <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="rounded-lg shadow-lg" style="${imageStyle}">
                         </div>
-                        <div class="w-full md:w-1/2 overflow-y-auto pr-2">
+                        <div class="${infoContainerClasses}">
                             ${createCardTextDetailHtml(card)}
                         </div>
                     </div>
@@ -3106,6 +3776,41 @@
             getEl('worldLoreBtn').onclick = openWorldLoreModal;
             getEl('consoleBtn').onclick = () => consoleModal.style.display = 'flex';
 
+            // App Mode Switcher
+            getEl('modeSearchBtn').onclick = () => {
+                appMode = 'search';
+                localStorage.setItem('sw_appMode', 'search');
+                updateAppModeUI();
+                renderCardLibrary(); // 更新してクリックイベントを再割り当て
+            };
+            getEl('modeDeckBtn').onclick = () => {
+                appMode = 'deck';
+                localStorage.setItem('sw_appMode', 'deck');
+                updateAppModeUI();
+                renderCardLibrary(); // 更新してクリックイベントを再割り当て
+            };
+
+            // Action Mode Switcher
+            const setActionMode = (mode) => {
+                currentActionMode = mode;
+                updateActionModeUI();
+            };
+            getEl('actionModeNormalBtn').onclick = () => setActionMode('normal');
+            getEl('actionModeEditBtn').onclick = () => setActionMode('edit');
+            getEl('actionModeShareBtn').onclick = () => setActionMode('share');
+            getEl('actionModeExportBtn').onclick = () => setActionMode('export');
+            getEl('actionModeDeleteBtn').onclick = () => setActionMode('delete');
+
+            // Mobile Tabs
+            getEl('mobileTabDeckBtn').onclick = () => {
+                mobileActiveTab = 'deck';
+                updateAppModeUI();
+            };
+            getEl('mobileTabLibraryBtn').onclick = () => {
+                mobileActiveTab = 'library';
+                updateAppModeUI();
+            };
+
             // Card Modal
             getEl('cancelCard').onclick = () => cardModal.style.display = 'none';
             cardForm.onsubmit = saveCard;
@@ -3149,7 +3854,7 @@
             };
 
             // Library Filters
-            [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
+            [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, totalCostFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
             searchOptions.forEach(checkbox => checkbox.onchange = renderCardLibrary);
 
             imageOnlyToggle.addEventListener('change', (e) => {
@@ -3207,10 +3912,29 @@
                     chatInput.value = '';
                 }
             };
+
+            // 絵文字ピッカー
+            getEl('chatEmojiBtn').onclick = () => {
+                const popup = getEl('emojiPickerPopup');
+                if (popup.classList.contains('hidden')) {
+                    buildEmojiPicker((emoji) => {
+                        chatInput.value += emoji;
+                        chatInput.focus();
+                    });
+                    popup.classList.remove('hidden');
+                } else {
+                    popup.classList.add('hidden');
+                }
+            };
+
+            // 返信キャンセル
+            getEl('chatReplyCancelBtn').onclick = () => clearChatReply();
         }
 
         // --- 初期化処理 ---
         window.onload = async () => {
+            updateAppModeUI(); // 初期モードのUI反映
+            updateActionModeUI(); // 初期アクションモードのUI反映
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     // User is signed in (Google or anonymous)
