@@ -980,7 +980,7 @@
             </div>
 
             <div id="drawInterface" class="hidden flex-grow flex flex-col min-h-0">
-                <div id="handDisplayArea" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4 overflow-y-auto flex-grow p-2 bg-gray-900/50 rounded-lg content-start"></div>
+                <div id="handDisplayArea" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4 overflow-y-auto flex-grow p-2 bg-gray-900/50 rounded-lg content-start image-only-mode"></div>
                 <div class="flex justify-center mt-4">
                     <button id="drawOneMoreBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">1枚引く</button>
                 </div>
@@ -2827,7 +2827,16 @@
             }
             const cardId = testDeck.pop();
             const card = allCards.find(c => c.id === cardId);
-            if (card) getEl('handDisplayArea').appendChild(createCardElement(card, 'hand'));
+            if (card) {
+                const el = createCardElement(card, 'hand');
+                const inner = el.querySelector('.card');
+                if (inner) {
+                    inner.classList.remove('cursor-default');
+                    inner.classList.add('cursor-pointer');
+                }
+                el.onclick = () => openShareDetailModal({ type: 'card', data: card });
+                getEl('handDisplayArea').appendChild(el);
+            }
             
             getEl('drawDeckInfo').textContent = `山札: ${testDeck.length}枚`;
             
