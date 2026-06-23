@@ -836,7 +836,12 @@
                             <option value="タクト">タクト</option>
                             <option value="グランド">グランド</option>
                             <option value="ストラクト">ストラクト</option>
-                            <option value="フォートレス">フォートレス</option>
+                            <option value="フォート">フォート</option>
+                        </select>
+                        <select id="tactSubType" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden">
+                            <option value="通常" selected>通常</option>
+                            <option value="永続">永続</option>
+                            <option value="速攻">速攻</option>
                         </select>
                         <select id="cardRarity" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                             <option value="通常">通常</option>
@@ -1616,7 +1621,7 @@
             deckWorld2.innerHTML = `<option value="">世界2を選択</option>` + worldOptions;
             worldFilter.innerHTML = `<option value="">すべての世界</option>` + worldOptions;
             
-            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option><option value="フォートレス">フォートレス</option>`;
+            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option><option value="フォート">フォート</option>`;
             rarityFilter.innerHTML = `<option value="">すべてのレアリティ</option><option value="通常">通常</option><option value="伝説">伝説</option><option value="神話">神話</option>`;
             
             let resourceOptionsHTML = `<option value="">すべての資源(固定コスト)</option>`;
@@ -1909,10 +1914,10 @@
             const editBtn = document.createElement('button');
             editBtn.className = 'w-10 h-10 flex items-center justify-center bg-gray-700/80 hover:bg-blue-600 rounded-full text-white';
             editBtn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
-            editBtn.title = "編集";
+            editBtn.title = "詳細";
             editBtn.onclick = (e) => {
                 e.stopPropagation();
-                openCardModal(card);
+                openShareDetailModal({ type: 'card', data: card });
             };
 
             const removeBtn = document.createElement('button');
@@ -2064,10 +2069,10 @@
             typeDistributionChart = new Chart(typeDistributionCanvas.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['ユニット', 'タクト', 'グランド'],
+                    labels: ['ユニット', 'タクト', 'グランド', 'フォート'],
                     datasets: [{
-                        data: [typeCounts['ユニット'] || 0, typeCounts['タクト'] || 0, typeCounts['グランド'] || 0],
-                        backgroundColor: ['#f59e0b', '#3b82f6', '#14b8a6'],
+                        data: [typeCounts['ユニット'] || 0, typeCounts['タクト'] || 0, typeCounts['グランド'] || 0, typeCounts['フォート'] || 0],
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#14b8a6', '#9333ea'],
                         borderColor: '#4a5568',
                     }]
                 },
