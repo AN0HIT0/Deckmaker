@@ -468,15 +468,15 @@
 
         <!-- メインエリア -->
         <!-- モバイル用デッキ構築時タブナビゲーション (hidden by default) -->
-        <div id="mobileTabNav" class="md:hidden hidden bg-gray-800 border-b border-gray-700 p-2 flex justify-center gap-2 z-10">
+        <div id="mobileTabNav" class="md:hidden hidden bg-gray-800 border-b border-gray-700 p-2 flex justify-center gap-2 z-50 sticky top-0 flex-shrink-0">
             <button id="mobileTabDeckBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-gray-700 text-white transition-colors">デッキ</button>
             <button id="mobileTabLibraryBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors">ライブラリ</button>
         </div>
 
-        <main id="mainContainer" class="flex-grow flex p-4 gap-4 overflow-hidden flex-col md:flex-row">
+        <main id="mainContainer" class="flex-grow flex p-4 gap-4 overflow-hidden flex-col md:flex-row min-h-0">
             
             <!-- 左パネル: デッキリストとデッキエディタ -->
-            <div id="deckPanel" class="w-full md:w-2/5 flex flex-col gap-4">
+            <div id="deckPanel" class="w-full md:w-2/5 flex flex-col gap-4 min-h-0">
                 <!-- デッキリスト -->
                 <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex-shrink-0">
                     <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">デッキリスト</h2>
@@ -485,8 +485,8 @@
                     </div>
                 </div>
                 <!-- デッキエディタ -->
-                <div id="deckEditor" class="bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col flex-grow overflow-hidden">
-                    <div id="deckEditorContent" class="hidden h-full flex flex-col">
+                <div id="deckEditor" class="bg-gray-800 rounded-lg shadow-xl p-6 flex flex-col flex-grow overflow-hidden min-h-0">
+                    <div id="deckEditorContent" class="hidden h-full flex flex-col overflow-y-auto">
                         <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-3 flex-shrink-0 flex-wrap">
                             <input id="deckNameInput" type="text" class="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 mb-2 md:mb-0" value="新規デッキ">
                             <div class="flex items-center gap-2 flex-wrap">
@@ -516,7 +516,7 @@
                                 <div id="coreDeck" class="p-2 bg-gray-900/50 rounded-lg deck-section flex gap-4 items-start"></div>
                             </div>
                             <div class="mt-4">
-                                <h3 class="text-lg font-semibold text-sky-400 mb-2">メインデッキ (<span id="mainDeckCount">0</span>/40枚)</h3>
+                                <h3 class="text-lg font-semibold text-sky-400 mb-2">メインデッキ (<span id="mainDeckCount">0</span>枚 / 40〜60枚)</h3>
                                 <div id="mainDeck" class="p-2 bg-gray-900/50 rounded-lg grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 deck-section"></div>
                             </div>
                             <div class="mt-4">
@@ -593,8 +593,8 @@
             </div>
 
             <!-- 右パネル: カードライブラリ -->
-            <div id="libraryPanel" class="w-full md:w-3/5 flex flex-col">
-                <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col flex-grow h-full">
+            <div id="libraryPanel" class="w-full md:w-3/5 flex flex-col min-h-0">
+                <div class="bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col flex-grow h-full min-h-0">
                     <h2 class="text-xl font-bold mb-2 border-b border-gray-700 pb-2">カードライブラリ</h2>
                      
                     <!-- Filter Section -->
@@ -625,7 +625,7 @@
                         </div>
                         
                         <!-- アクションモード トグルスイッチ -->
-                        <div class="mb-3 sticky top-0 z-30 bg-gray-800/95 backdrop-blur-sm py-2 shadow-md -mx-4 px-4 border-b border-gray-700">
+                        <div id="actionModeContainer" class="mb-3 sticky top-0 z-30 bg-gray-800/95 backdrop-blur-sm py-2 shadow-md -mx-4 px-4 border-b border-gray-700">
                             <label class="text-xs text-gray-400 block mb-1">カードタップ時の動作:</label>
                             <div class="flex space-x-1">
                                 <button id="actionModeNormalBtn" class="flex-1 py-1.5 px-1 bg-indigo-600 text-white rounded text-xs font-bold border border-indigo-500 shadow-inner transition-colors">通常</button>
@@ -836,7 +836,7 @@
                             <option value="タクト">タクト</option>
                             <option value="グランド">グランド</option>
                             <option value="ストラクト">ストラクト</option>
-                            <option value="フォート">フォート</option>
+                            <option value="フォートレス">フォートレス</option>
                         </select>
                         <select id="cardRarity" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                             <option value="通常">通常</option>
@@ -1201,29 +1201,29 @@
                 deckPanel.classList.add('hidden');
                 deckPanel.classList.remove('md:flex');
                 
-                libraryPanel.className = 'w-full flex flex-col'; // Take full width
+                libraryPanel.className = 'w-full flex flex-col min-h-0'; // Take full width
                 mobileTabNav.classList.add('hidden');
                 
-                // Allow scrolling on mobile in search mode if needed
-                mainContainer.classList.remove('overflow-hidden');
+                getEl('actionModeContainer').classList.remove('hidden');
 
                 // カード図鑑では列数を1.5倍にする
                 const cardLibrary = getEl('cardLibrary');
                 if (cardLibrary) {
-                    cardLibrary.className = 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto flex-grow content-start image-only-mode';
+                    cardLibrary.className = 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto flex-grow content-start image-only-mode min-h-0';
                 }
             } else {
                 // Deck mode
                 modeDeckBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow';
                 modeSearchBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white';
                 
-                libraryPanel.className = 'w-full md:w-3/5 flex flex-col';
-                mainContainer.classList.add('overflow-hidden');
+                libraryPanel.className = 'w-full md:w-3/5 flex flex-col min-h-0';
+                
+                getEl('actionModeContainer').classList.add('hidden');
 
                 // デッキモードでは元の列数に戻す
                 const cardLibrary = getEl('cardLibrary');
                 if (cardLibrary) {
-                    cardLibrary.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-grow content-start image-only-mode';
+                    cardLibrary.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-grow content-start image-only-mode min-h-0';
                 }
 
                 // Mobile specific handling
@@ -1268,7 +1268,8 @@
             magic: { label: '魔', colorHex: '#c084fc' },  // Purple-400
         };
         const DECK_LIMITS = {
-            MAIN: 40,
+            MAIN_MIN: 40,
+            MAIN_MAX: 60,
             STRUCT: 20,
         };
         const NEUTRAL_WORLD_NAME = 'ニュートラル';
@@ -1615,7 +1616,7 @@
             deckWorld2.innerHTML = `<option value="">世界2を選択</option>` + worldOptions;
             worldFilter.innerHTML = `<option value="">すべての世界</option>` + worldOptions;
             
-            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option><option value="フォート">フォート</option>`;
+            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option><option value="フォートレス">フォートレス</option>`;
             rarityFilter.innerHTML = `<option value="">すべてのレアリティ</option><option value="通常">通常</option><option value="伝説">伝説</option><option value="神話">神話</option>`;
             
             let resourceOptionsHTML = `<option value="">すべての資源(固定コスト)</option>`;
@@ -1747,18 +1748,18 @@
             if (card.rarity === '神話') cardInner.classList.add('rarity-mythic');
             
             const playCostDisplay = createCostDisplay(card.costs, 'play').outerHTML;
-            const actCostDisplay = (card.type === 'ユニット' || card.type === 'フォート') ? createCostDisplay(card.costs, 'act').outerHTML : '';
+            const actCostDisplay = (card.type === 'ユニット') ? createCostDisplay(card.costs, 'act').outerHTML : '';
             
             const defaultImage = `https://placehold.co/200x280/4a5568/e2e8f0?text=${encodeURIComponent(card.name)}`;
             const imageUrl = card.imageUrl || defaultImage;
             
             const descriptionHTML = card.description ? `<p class="whitespace-pre-wrap ${theme.text}">${card.description}</p>` : '';
             const flavorHTML = card.flavorText ? `<p class="italic ${theme.subtleText} whitespace-pre-wrap mt-1">${card.flavorText}</p>` : '';
-            const unitStatsHTML = (card.type === 'ユニット' || card.type === 'フォート') ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
+            const unitStatsHTML = card.type === 'ユニット' ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
 
             cardInner.innerHTML = `
                 <div class="card-content-wrapper flex flex-col w-full h-full">
-                    <p class="font-bold text-center text-[10px] ${theme.text} opacity-80 mb-1">${card.type}</p>
+                    <p class="font-bold text-center text-[10px] ${theme.text} opacity-80 mb-1">${card.type === 'タクト' && card.tactSubType ? `タクト(${card.tactSubType})` : (card.type || '不明')}</p>
                     <div class="relative">
                         <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="w-full h-28 object-cover rounded-md">
                         <div class="absolute top-1 right-1 bg-black/50 rounded-full px-2 py-0.5">${playCostDisplay}</div>
@@ -2084,7 +2085,7 @@
                 totalCost += Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
                 if (card.rarity === '伝説') legendaryCount.add(card.id);
                 if (card.rarity === '神話') mythicCount.add(card.id);
-                if (card.type === 'ユニット' || card.type === 'フォート') {
+                if (card.type === 'ユニット') {
                     unitCount++;
                     totalAttack += card.attack || 0;
                     totalDefense += card.defense || 0;
@@ -2138,7 +2139,7 @@
             const cardsInDeck = [...(currentDeck.mainDeckCardIds || []), ...(currentDeck.structDeckCardIds || [])].map(id => allCards.find(c => c.id === id)).filter(Boolean);
             const totalCosts = cardsInDeck.reduce((acc, card) => {
                 Object.entries(card.costs?.play || {}).forEach(([key, val]) => acc[key] = (acc[key] || 0) + val);
-                if (card.type === 'ユニット' || card.type === 'フォート') {
+                if (card.type === 'ユニット') {
                     Object.entries(card.costs?.act || {}).forEach(([key, val]) => acc[key] = (acc[key] || 0) + val);
                 }
                 return acc;
@@ -2183,7 +2184,7 @@
                     for (const key in card.costs.play) {
                         totalConsumption[key] += card.costs.play[key] || 0;
                     }
-                    if ((card.type === 'ユニット' || card.type === 'フォート') && card.costs.act) {
+                    if (card.type === 'ユニット' && card.costs.act) {
                         for (const key in card.costs.act) {
                             totalConsumption[key] += card.costs.act[key] || 0;
                         }
@@ -2298,6 +2299,7 @@
                 getEl('cardId').value = card.id;
                 getEl('cardName').value = card.name;
                 cardTypeSelect.value = card.type || '';
+                getEl('tactSubType').value = card.tactSubType || '通常';
                 getEl('cardRarity').value = card.rarity || '通常';
                 getEl('cardWorld').value = card.world || '';
                 getEl('cardTags').value = card.tags ? card.tags.join(', ') : '';
@@ -2309,7 +2311,7 @@
                     const capKey = key.charAt(0).toUpperCase() + key.slice(1);
                     if (card.costs?.play) getEl(`playCost${capKey}`).value = card.costs.play[key] || '';
                     if (card.generates) getEl(`generates${capKey}`).value = card.generates[key] || '';
-                    if ((card.type === 'ユニット' || card.type === 'フォート') && card.costs?.act) getEl(`actCost${capKey}`).value = card.costs.act[key] || '';
+                    if (card.type === 'ユニット' && card.costs?.act) getEl(`actCost${capKey}`).value = card.costs.act[key] || '';
                     if (card.type === 'コア' && card.initialResources) getEl(`initialResource${capKey}`).value = card.initialResources[key] || '';
                 });
 
@@ -2324,7 +2326,7 @@
                     imagePreview.style.display = 'block';
                 }
 
-                if (card.type === 'ユニット' || card.type === 'フォート') {
+                if (card.type === 'ユニット') {
                     card.costs?.choiceAct?.forEach(c => {
                         const options = Array.isArray(c) ? c : c.options;
                         if(options) choiceActContainer.appendChild(createChoiceCostInputRow(options));
@@ -2377,7 +2379,9 @@
 
             const cardData = {
                 id: getEl('cardId').value || `card_${Date.now()}`,
-                name: getEl('cardName').value, type: cardType, rarity: getEl('cardRarity').value,
+                name: getEl('cardName').value, type: cardType,
+                tactSubType: cardType === 'タクト' ? getEl('tactSubType').value : null,
+                rarity: getEl('cardRarity').value,
                 world: getEl('cardWorld').value.trim() || NEUTRAL_WORLD_NAME,
                 tags: getEl('cardTags').value.split(',').map(t => t.trim()).filter(Boolean),
                 roles: getEl('cardRoles').value.split(',').map(t => t.trim()).filter(Boolean),
@@ -2394,7 +2398,7 @@
                     cardData.generates[key] = parseInt(getEl(`generates${capKey}`).value) || 0;
                 });
             }
-            if (cardType === 'ユニット' || cardType === 'フォート') {
+            if (cardType === 'ユニット') {
                 cardData.attack = parseInt(getEl('cardAttack').value) || null;
                 cardData.defense = parseInt(getEl('cardDefense').value) || null;
                 Object.keys(costTypes).forEach(key => cardData.costs.act[key] = parseInt(getEl(`actCost${key.charAt(0).toUpperCase() + key.slice(1)}`).value) || 0);
@@ -2482,22 +2486,39 @@
             deckWorld2.value = currentDeck.worlds?.[1] || '';
             renderDeckContents();
         }
-        async function saveDeck() {
+        let autoSaveTimeout = null;
+        async function saveDeck(silent = false) {
             if (!currentDeck) return;
             const deckName = deckNameInput.value.trim();
             if (!deckName) {
-                await showAlert('デッキ名を入力してください。');
+                if (!silent) await showAlert('デッキ名を入力してください。');
                 return;
             }
             updateCurrentDeckFromUI();
+            
+            const btn = getEl('saveDeckBtn');
+            if (btn) btn.textContent = '保存中...';
+
             try {
                 await setDoc(doc(db, "decks", currentDeck.id), currentDeck);
-                logToConsole(`デッキ「${deckName}」を保存しました。`);
-                await showAlert('デッキを保存しました！');
+                if (btn) {
+                    btn.textContent = '保存済み';
+                    setTimeout(() => { if (btn.textContent === '保存済み') btn.textContent = '保存'; }, 2000);
+                }
+                if (!silent) {
+                    logToConsole(`デッキ「${deckName}」を保存しました。`);
+                    await showAlert('デッキを保存しました！');
+                }
             } catch(e) {
                 console.error("デッキ保存エラー:", e);
-                await showAlert("デッキの保存に失敗しました。");
+                if (btn) btn.textContent = '保存失敗';
+                if (!silent) await showAlert("デッキの保存に失敗しました。");
             }
+        }
+
+        function triggerAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => saveDeck(true), 1000);
         }
         async function deleteDeck() {
             if (!currentDeck) return;
@@ -2523,7 +2544,8 @@
             
             const mainDeckIds = currentDeck.mainDeckCardIds || [];
             const structDeckIds = currentDeck.structDeckCardIds || [];
-            if ((card.type === 'ユニット' || card.type === 'フォート' || card.type === 'タクト' || card.type === 'グランド') && mainDeckIds.length >= DECK_LIMITS.MAIN) { await showAlert(`メインデッキは${DECK_LIMITS.MAIN}枚までです。`); return; }
+
+            if (card.type !== 'コア' && card.type !== 'ストラクト' && mainDeckIds.length >= DECK_LIMITS.MAIN_MAX) { await showAlert(`メインデッキは${DECK_LIMITS.MAIN_MAX}枚までです。`); return; }
             if (card.type === 'ストラクト' && structDeckIds.length >= DECK_LIMITS.STRUCT) { await showAlert(`ストラクトデッキは${DECK_LIMITS.STRUCT}枚までです。`); return; }
             
             const deckCounts = getDeckCardCounts(); 
@@ -2545,7 +2567,7 @@
                     if (currentDeck.coreCardId) { await showAlert('コアカードはすでにデッキに存在します。'); return; } 
                     currentDeck.coreCardId = card.id; 
                     break;
-                case 'ユニット': case 'フォート': case 'タクト': case 'グランド':
+                case 'ユニット': case 'タクト': case 'グランド':
                     currentDeck.mainDeckCardIds = [...mainDeckIds, card.id];
                     break;
                 case 'ストラクト': 
@@ -2553,6 +2575,7 @@
                     break;
             }
             renderDeckContents();
+            triggerAutoSave();
         }
         function getDeckCardCounts() {
             if (!currentDeck) return { legendaryCount: 0, mythicCount: 0, cardCounts: {} };
@@ -2576,6 +2599,7 @@
                 if (index > -1) currentDeck.structDeckCardIds.splice(index, 1);
             }
             renderDeckContents();
+            triggerAutoSave();
         }
         function updateDeckCount() {
             if (currentDeck) {
@@ -2583,7 +2607,7 @@
                 const structCurrent = (currentDeck.structDeckCardIds || []).length;
                 mainDeckCount.textContent = mainCurrent;
                 structDeckCount.textContent = structCurrent;
-                mainDeckCount.parentElement.classList.toggle('text-red-400', mainCurrent > DECK_LIMITS.MAIN);
+                mainDeckCount.parentElement.classList.toggle('text-red-400', mainCurrent < DECK_LIMITS.MAIN_MIN || mainCurrent > DECK_LIMITS.MAIN_MAX);
                 structDeckCount.parentElement.classList.toggle('text-red-400', structCurrent > DECK_LIMITS.STRUCT);
             }
         }
@@ -3605,7 +3629,7 @@
                                 ${(card.type === 'ユニット' || card.type === 'フォート') ? `<p class="text-xl font-bold text-yellow-300">${card.attack || 0} / ${card.defense || 0}</p>` : ''}
                            </div>`;
             detailHtml += `<div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                            <p><strong>タイプ:</strong> ${card.type || 'N/A'}</p>
+                            <p><strong>タイプ:</strong> ${card.type === 'タクト' && card.tactSubType ? `タクト(${card.tactSubType})` : (card.type || 'N/A')}</p>
                             <p><strong>レアリティ:</strong> ${card.rarity || 'N/A'}</p>
                             <p><strong>世界:</strong> ${card.world || 'N/A'}</p>
                             <p><strong>タグ:</strong> ${(card.tags || []).join(', ') || 'なし'}</p>
@@ -3830,6 +3854,7 @@
             cardForm.onsubmit = saveCard;
             cardTypeSelect.onchange = (e) => {
                 const type = e.target.value;
+                getEl('tactSubType').classList.toggle('hidden', type !== 'タクト');
                 getEl('unitStatsContainer').classList.toggle('hidden', type !== 'ユニット' && type !== 'フォート');
                 getEl('coreStatsContainer').classList.toggle('hidden', type !== 'コア');
                 getEl('playCostContainer').classList.toggle('hidden', type === 'コア');
@@ -3851,12 +3876,15 @@
             getEl('addChoiceActCostBtn').onclick = () => getEl('choiceActCostContainer').appendChild(createChoiceCostInputRow());
 
             // Deck Editor
-            getEl('saveDeckBtn').onclick = saveDeck;
+            getEl('saveDeckBtn').onclick = () => saveDeck(false);
             getEl('deleteDeckBtn').onclick = deleteDeck;
             getEl('exportDeckBtn').onclick = exportSingleDeck;
             getEl('exportImageBtn').onclick = exportDeckAsImage;
-            deckWorld1.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
-            deckWorld2.onchange = () => { if(currentDeck) updateCurrentDeckFromUI(); };
+            
+            deckNameInput.addEventListener('input', triggerAutoSave);
+            deckDescriptionInput.addEventListener('input', triggerAutoSave);
+            deckWorld1.addEventListener('change', triggerAutoSave);
+            deckWorld2.addEventListener('change', triggerAutoSave);
             getEl('shareDeckBtn').onclick = () => {
                 if (currentDeck) {
                     updateCurrentDeckFromUI();
