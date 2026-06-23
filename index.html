@@ -2020,14 +2020,36 @@
             deckList.querySelectorAll('.deck-list-item').forEach(el => el.onclick = () => loadDeckIntoEditor(el.dataset.deckId));
         }
 
+        function sortDeckCards(cards) {
+            const typeOrder = { 'ユニット': 1, 'フォート': 2, 'タクト': 3, 'グランド': 4 };
+            return cards.sort((a, b) => {
+                const orderA = typeOrder[a.type] || 99;
+                const orderB = typeOrder[b.type] || 99;
+                if (orderA !== orderB) return orderA - orderB;
+
+                const getCost = (card) => {
+                    const playCost = Object.values(card.costs?.play || {}).reduce((sum, val) => sum + val, 0);
+                    const choiceCost = (card.costs?.choice || []).reduce((sum, c) => sum + (c.options?.reduce((s, o) => s + (o.amount || 0), 0) || 0), 0);
+                    return playCost + choiceCost;
+                };
+                const costA = getCost(a);
+                const costB = getCost(b);
+                if (costA !== costB) return costA - costB;
+
+                return (a.name || '').localeCompare(b.name || '');
+            });
+        }
+
         function renderDeckContents() {
             if (!currentDeck) return;
             const renderSection = (element, cardIds, sectionName) => {
                 element.innerHTML = '';
                 const cardCounts = (cardIds || []).reduce((acc, id) => ({...acc, [id]: (acc[id] || 0) + 1 }), {});
-                Object.keys(cardCounts).sort((a,b) => (allCards.find(c=>c.id===a)?.name || '').localeCompare(allCards.find(c=>c.id===b)?.name || '')).forEach(cardId => {
-                    const card = allCards.find(c => c.id === cardId);
-                    if(card) element.appendChild(createDeckCardElement(card, cardCounts[cardId], sectionName));
+                const uniqueCardIds = Object.keys(cardCounts);
+                const cardsToSort = uniqueCardIds.map(id => allCards.find(c => c.id === id)).filter(Boolean);
+                
+                sortDeckCards(cardsToSort).forEach(card => {
+                    element.appendChild(createDeckCardElement(card, cardCounts[card.id], sectionName));
                 });
             };
             
@@ -3113,10 +3135,10 @@
                                     <h3 style="font-size: 28px; font-weight: 600; margin-bottom: 16px; border-bottom: 2px solid #4a5568; padding-bottom: 8px;">${title} (${cardIds.length}枚)</h3>
                                     <div style="display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 12px;">`;
                 
-                const sortedCards = cardIds
+                const cardsToSort = cardIds
                     .map(id => allCards.find(c => c.id === id))
-                    .filter(Boolean)
-                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    .filter(Boolean);
+                const sortedCards = sortDeckCards(cardsToSort);
 
                 for(let i = 0; i < rows * cols; i++) {
                     const card = sortedCards[i];
@@ -3132,7 +3154,7 @@
                 return gridHtml;
             };
 
-            html += createCardGrid('メインデッキ', currentDeck.mainDeckCardIds || [], 4, 10);
+            html += createCardGrid('メインデッキ', currentDeck.mainDeckCardIds || [], 6, 10);
             html += createCardGrid('ストラクトデッキ', currentDeck.structDeckCardIds || [], 2, 10);
 
             container.innerHTML = html;
