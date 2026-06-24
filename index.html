@@ -392,8 +392,16 @@
         .image-only-mode .card-content-wrapper > p:first-child,
         .image-only-mode .card-content-wrapper > h4,
         .image-only-mode .card-content-wrapper > .card-text-box,
-        .image-only-mode .card-content-wrapper > div:last-child {
+        .image-only-mode .card-content-wrapper > .card-stats-row {
             display: none !important;
+        }
+        .image-only-mode .limit-badge {
+            position: absolute !important;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            margin: 0 !important;
         }
         .image-only-mode .card-content-wrapper > .relative {
             height: 100%;
@@ -1857,9 +1865,9 @@
 
             let limitBadgeHTML = '';
             if (card.limit === 0) {
-                limitBadgeHTML = `<div class="mt-1 text-center bg-red-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-red-800">禁止</div>`;
+                limitBadgeHTML = `<div class="mt-1 text-center bg-red-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-red-800 limit-badge">禁止</div>`;
             } else if (card.limit === 1) {
-                limitBadgeHTML = `<div class="mt-1 text-center bg-yellow-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-yellow-800">制限</div>`;
+                limitBadgeHTML = `<div class="mt-1 text-center bg-yellow-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-yellow-800 limit-badge">制限</div>`;
             }
 
             cardInner.innerHTML = `
@@ -1871,7 +1879,7 @@
                     </div>
                     <h4 class="font-bold text-sm truncate ${theme.heading} mt-1">${card.name}</h4>
                     <div class="card-text-box text-xs text-left p-1 ${theme.textBoxBg} rounded my-1 h-20 overflow-y-auto">${descriptionHTML}${flavorHTML}</div>
-                    <div class="mt-auto flex justify-between items-end gap-2 min-h-[40px]">
+                    <div class="mt-auto flex justify-between items-end gap-2 min-h-[40px] card-stats-row">
                         <div class="text-left text-xs min-w-0 flex-1">
                             <p class="${theme.subtleText} truncate">${card.rarity || '通常'}</p>
                             <p class="text-xs ${theme.accent1} truncate" title="${card.world}">${card.world || ''}</p>
