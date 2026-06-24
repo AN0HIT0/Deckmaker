@@ -1753,14 +1753,14 @@
             if (card.rarity === '神話') cardInner.classList.add('rarity-mythic');
             
             const playCostDisplay = createCostDisplay(card.costs, 'play').outerHTML;
-            const actCostDisplay = (card.type === 'ユニット') ? createCostDisplay(card.costs, 'act').outerHTML : '';
+            const actCostDisplay = (card.type === 'ユニット' || card.type === 'フォート') ? createCostDisplay(card.costs, 'act').outerHTML : '';
             
             const defaultImage = `https://placehold.co/200x280/4a5568/e2e8f0?text=${encodeURIComponent(card.name)}`;
             const imageUrl = card.imageUrl || defaultImage;
             
             const descriptionHTML = card.description ? `<p class="whitespace-pre-wrap ${theme.text}">${card.description}</p>` : '';
             const flavorHTML = card.flavorText ? `<p class="italic ${theme.subtleText} whitespace-pre-wrap mt-1">${card.flavorText}</p>` : '';
-            const unitStatsHTML = card.type === 'ユニット' ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
+            const unitStatsHTML = (card.type === 'ユニット' || card.type === 'フォート') ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
 
             cardInner.innerHTML = `
                 <div class="card-content-wrapper flex flex-col w-full h-full">
@@ -2112,7 +2112,7 @@
                 totalCost += Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0) + (card.costs?.choice || []).reduce((s, c) => s + (c.amount || 0), 0);
                 if (card.rarity === '伝説') legendaryCount.add(card.id);
                 if (card.rarity === '神話') mythicCount.add(card.id);
-                if (card.type === 'ユニット') {
+                if (card.type === 'ユニット' || card.type === 'フォート') {
                     unitCount++;
                     totalAttack += card.attack || 0;
                     totalDefense += card.defense || 0;
@@ -2121,8 +2121,8 @@
 
             const summaryHTML = `
                 <div class="flex justify-between"><span>平均プレイコスト:</span> <span class="font-bold text-white">${(totalCost / mainDeckCards.length || 0).toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>平均攻撃力 (ユニット):</span> <span class="font-bold text-white">${(totalAttack / unitCount || 0).toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>平均体力 (ユニット):</span> <span class="font-bold text-white">${(totalDefense / unitCount || 0).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>平均攻撃力 (ユニット/フォート):</span> <span class="font-bold text-white">${(totalAttack / unitCount || 0).toFixed(2)}</span></div>
+                <div class="flex justify-between"><span>平均体力 (ユニット/フォート):</span> <span class="font-bold text-white">${(totalDefense / unitCount || 0).toFixed(2)}</span></div>
                 <div class="flex justify-between mt-2 pt-2 border-t border-gray-700"><span>伝説カード:</span> <span class="font-bold text-white">${legendaryCount.size} 種類</span></div>
                 <div class="flex justify-between"><span>神話カード:</span> <span class="font-bold text-white">${mythicCount.size} 種類</span></div>
             `;
@@ -2166,7 +2166,7 @@
             const cardsInDeck = [...(currentDeck.mainDeckCardIds || []), ...(currentDeck.structDeckCardIds || [])].map(id => allCards.find(c => c.id === id)).filter(Boolean);
             const totalCosts = cardsInDeck.reduce((acc, card) => {
                 Object.entries(card.costs?.play || {}).forEach(([key, val]) => acc[key] = (acc[key] || 0) + val);
-                if (card.type === 'ユニット') {
+                if (card.type === 'ユニット' || card.type === 'フォート') {
                     Object.entries(card.costs?.act || {}).forEach(([key, val]) => acc[key] = (acc[key] || 0) + val);
                 }
                 return acc;
@@ -2211,7 +2211,7 @@
                     for (const key in card.costs.play) {
                         totalConsumption[key] += card.costs.play[key] || 0;
                     }
-                    if (card.type === 'ユニット' && card.costs.act) {
+                    if ((card.type === 'ユニット' || card.type === 'フォート') && card.costs.act) {
                         for (const key in card.costs.act) {
                             totalConsumption[key] += card.costs.act[key] || 0;
                         }
@@ -2338,7 +2338,7 @@
                     const capKey = key.charAt(0).toUpperCase() + key.slice(1);
                     if (card.costs?.play) getEl(`playCost${capKey}`).value = card.costs.play[key] || '';
                     if (card.generates) getEl(`generates${capKey}`).value = card.generates[key] || '';
-                    if (card.type === 'ユニット' && card.costs?.act) getEl(`actCost${capKey}`).value = card.costs.act[key] || '';
+                    if ((card.type === 'ユニット' || card.type === 'フォート') && card.costs?.act) getEl(`actCost${capKey}`).value = card.costs.act[key] || '';
                     if (card.type === 'コア' && card.initialResources) getEl(`initialResource${capKey}`).value = card.initialResources[key] || '';
                 });
 
@@ -2353,7 +2353,7 @@
                     imagePreview.style.display = 'block';
                 }
 
-                if (card.type === 'ユニット') {
+                if (card.type === 'ユニット' || card.type === 'フォート') {
                     card.costs?.choiceAct?.forEach(c => {
                         const options = Array.isArray(c) ? c : c.options;
                         if(options) choiceActContainer.appendChild(createChoiceCostInputRow(options));
@@ -2425,7 +2425,7 @@
                     cardData.generates[key] = parseInt(getEl(`generates${capKey}`).value) || 0;
                 });
             }
-            if (cardType === 'ユニット') {
+            if (cardType === 'ユニット' || cardType === 'フォート') {
                 cardData.attack = parseInt(getEl('cardAttack').value) || null;
                 cardData.defense = parseInt(getEl('cardDefense').value) || null;
                 Object.keys(costTypes).forEach(key => cardData.costs.act[key] = parseInt(getEl(`actCost${key.charAt(0).toUpperCase() + key.slice(1)}`).value) || 0);
@@ -2594,7 +2594,7 @@
                     if (currentDeck.coreCardId) { await showAlert('コアカードはすでにデッキに存在します。'); return; } 
                     currentDeck.coreCardId = card.id; 
                     break;
-                case 'ユニット': case 'タクト': case 'グランド':
+                case 'ユニット': case 'タクト': case 'グランド': case 'フォート':
                     currentDeck.mainDeckCardIds = [...mainDeckIds, card.id];
                     break;
                 case 'ストラクト': 
@@ -3004,6 +3004,7 @@
                 unitCount: typeCounts['ユニット'] || 0,
                 tactCount: typeCounts['タクト'] || 0,
                 grandCount: typeCounts['グランド'] || 0,
+                fortCount: typeCounts['フォート'] || 0,
                 avgCost: (totalCost / mainDeckCards.length || 0).toFixed(2),
                 topTags: topTags.join(', ') || 'なし',
                 coreCard: coreCard
@@ -3098,6 +3099,7 @@
                                 <span>ユニット:</span> <span style="font-weight: 600;">${analysis.unitCount}枚</span>
                                 <span>タクト:</span> <span style="font-weight: 600;">${analysis.tactCount}枚</span>
                                 <span>グランド:</span> <span style="font-weight: 600;">${analysis.grandCount}枚</span>
+                                <span>フォート:</span> <span style="font-weight: 600;">${analysis.fortCount}枚</span>
                                 <span>平均コスト:</span> <span style="font-weight: 600;">${analysis.avgCost}</span>
                                 <span style="grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid #4a5568;">トップタグ:</span> 
                                 <span style="grid-column: 1 / -1; font-weight: 600;">${analysis.topTags}</span>
