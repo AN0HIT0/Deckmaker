@@ -495,6 +495,7 @@
                         <div class="flex justify-between items-center mb-2 border-b border-gray-700 pb-3 flex-shrink-0 flex-wrap">
                             <input id="deckNameInput" type="text" class="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 mb-2 md:mb-0" value="新規デッキ">
                             <div class="flex items-center gap-2 flex-wrap">
+                                <button id="viewDeckHistoryBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm hidden">履歴</button>
                                 <button id="shareDeckBtn" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">チャットで共有</button>
                                 <button id="testDrawBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">テストドロー</button>
                                 <button id="exportDeckBtn" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">エクスポート</button>
@@ -980,9 +981,12 @@
                 </div>
 
                 <!-- ボタン -->
-                <div class="md:col-span-2 mt-4 flex justify-end space-x-4">
-                    <button type="button" id="cancelCard" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">キャンセル</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                <div class="md:col-span-2 mt-4 flex justify-between space-x-4">
+                    <button type="button" id="viewCardHistoryBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors hidden">変更履歴</button>
+                    <div class="flex space-x-4">
+                        <button type="button" id="cancelCard" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">キャンセル</button>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1167,6 +1171,19 @@
             <div id="announcementList" class="flex-grow overflow-y-auto pr-2 space-y-4">
                 <!-- Announcements will be populated here -->
                 <div class="text-center text-gray-400 py-4">読み込み中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 履歴表示モーダル -->
+    <div id="historyModal" class="fixed inset-0 z-[1080] flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-4xl mx-auto border border-gray-700 flex flex-col" style="max-height: 85vh;">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                <h2 id="historyModalTitle" class="text-2xl font-bold">変更履歴</h2>
+                <button type="button" id="closeHistoryModalBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+            <div id="historyList" class="flex-grow overflow-y-auto p-2 min-h-0 space-y-4">
+                <!-- 履歴アイテム -->
             </div>
         </div>
     </div>
@@ -2458,9 +2475,12 @@
                     getEl('coreHandLimit').value = card.handLimit || '';
                     getEl('coreDefeatCondition').value = card.defeatCondition || '';
                 }
+                getEl('viewCardHistoryBtn').classList.remove('hidden');
+                getEl('viewCardHistoryBtn').onclick = () => loadHistory('card', card.id, card.name);
             } else {
                  getEl('cardId').value = '';
                  getEl('cardLimit').value = '4';
+                 getEl('viewCardHistoryBtn').classList.add('hidden');
             }
             if (isAdmin) {
                 getEl('cardLimit').classList.remove('hidden');
@@ -2539,6 +2559,15 @@
 
             try {
                 await setDoc(doc(db, "cards", cardData.id), cardData);
+                
+                // カード履歴保存
+                await addDoc(collection(db, "card_history"), {
+                    cardId: cardData.id,
+                    cardData: cardData,
+                    updatedBy: currentUser ? currentUser.uid : 'anonymous',
+                    updatedAt: serverTimestamp()
+                });
+                
                 logToConsole(`カード「${cardData.name}」を保存しました。`);
                 cardModal.style.display = 'none';
             } catch(e) {
@@ -2614,6 +2643,15 @@
             deckWorld1.value = currentDeck.worlds?.[0] || '';
             deckWorld2.value = currentDeck.worlds?.[1] || '';
             getEl('deckIsPrivateCheckbox').checked = currentDeck.isPrivate || false;
+            
+            const histBtn = getEl('viewDeckHistoryBtn');
+            if (currentDeck.id.startsWith('deck_')) {
+                histBtn.classList.add('hidden');
+            } else {
+                histBtn.classList.remove('hidden');
+                histBtn.onclick = () => loadHistory('deck', currentDeck.id, currentDeck.name);
+            }
+            
             renderDeckContents();
         }
         let autoSaveTimeout = null;
@@ -2631,6 +2669,21 @@
 
             try {
                 await setDoc(doc(db, "decks", currentDeck.id), currentDeck);
+                
+                // デッキ履歴保存 (30分のスロットル)
+                const lastHistoryKey = `sw_lastDeckHistory_${currentDeck.id}`;
+                const lastHistoryTime = localStorage.getItem(lastHistoryKey);
+                const now = Date.now();
+                if (!lastHistoryTime || (now - parseInt(lastHistoryTime)) > 30 * 60 * 1000) {
+                    await addDoc(collection(db, "deck_history"), {
+                        deckId: currentDeck.id,
+                        deckData: currentDeck,
+                        updatedBy: currentUser ? currentUser.uid : 'anonymous',
+                        updatedAt: serverTimestamp()
+                    });
+                    localStorage.setItem(lastHistoryKey, now.toString());
+                }
+
                 if (btn) {
                     btn.textContent = '保存済み';
                     setTimeout(() => { if (btn.textContent === '保存済み') btn.textContent = '保存'; }, 2000);
@@ -4374,6 +4427,58 @@
                 }
             });
             setupEventListeners();
+            
+            getEl('closeHistoryModalBtn').onclick = () => getEl('historyModal').style.display = 'none';
+        };
+
+        // --- 履歴読み込み処理 ---
+        window.loadHistory = async function(type, id, name) {
+            getEl('historyModalTitle').textContent = `「${name}」の変更履歴`;
+            const listEl = getEl('historyList');
+            listEl.innerHTML = '<p class="text-center text-gray-400">読み込み中...</p>';
+            getEl('historyModal').style.display = 'flex';
+
+            try {
+                const collectionName = type === 'card' ? 'card_history' : 'deck_history';
+                const idField = type === 'card' ? 'cardId' : 'deckId';
+                const q = query(collection(db, collectionName), where(idField, "==", id), orderBy("updatedAt", "desc"), limit(50));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    listEl.innerHTML = '<p class="text-center text-gray-400 mt-4">履歴がありません。</p>';
+                    return;
+                }
+
+                let html = '';
+                querySnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const date = data.updatedAt ? new Date(data.updatedAt.toMillis()).toLocaleString('ja-JP') : '不明な日時';
+                    const userId = data.updatedBy;
+                    let contentDesc = '';
+                    if (type === 'card') {
+                        contentDesc = `カード名: ${data.cardData?.name || '不明'}, タイプ: ${data.cardData?.type || '不明'}, 制限: ${data.cardData?.limit ?? '4'}`;
+                    } else {
+                        const mainCount = (data.deckData?.mainDeckCardIds || []).length;
+                        const structCount = (data.deckData?.structDeckCardIds || []).length;
+                        contentDesc = `デッキ名: ${data.deckData?.name || '不明'}, メイン: ${mainCount}枚, ストラクト: ${structCount}枚`;
+                    }
+                    html += `
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-400">日時: ${date}</span>
+                            <span class="text-xs text-indigo-400" title="ユーザーID">更新者: ${userId.substring(0,8)}...</span>
+                        </div>
+                        <div class="text-sm text-gray-300">
+                            ${contentDesc}
+                        </div>
+                    </div>`;
+                });
+                listEl.innerHTML = html;
+
+            } catch (error) {
+                console.error("履歴読み込みエラー:", error);
+                listEl.innerHTML = '<p class="text-center text-red-500 mt-4">履歴の読み込みに失敗しました。</p>';
+            }
         };
     </script>
 </body>
