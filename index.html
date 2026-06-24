@@ -433,6 +433,7 @@
                     <!-- Main Actions -->
                     <div class="flex items-center flex-wrap justify-end gap-2">
 
+                        <button id="adminPanelBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm hidden">ユーザー管理</button>
                         <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm">世界観</button>
                         <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm">
                             新カード
@@ -443,6 +444,10 @@
                     </div>
                     <!-- Utility and Other Actions -->
                     <div class="flex items-center flex-wrap justify-end gap-2">
+                        <button id="announcementBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs relative">
+                            お知らせ
+                            <span id="announcementBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center hidden"></span>
+                        </button>
                         <button id="importCardBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">カード読込</button>
                         <button id="importAllDataBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ読込</button>
                         <button id="exportAllBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-1 px-2 rounded-lg transition-colors text-xs">全データ書出</button>
@@ -494,20 +499,34 @@
                                 <button id="testDrawBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">テストドロー</button>
                                 <button id="exportDeckBtn" class="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">エクスポート</button>
                                 <button id="exportImageBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm">画像として出力</button>
-                                <button id="saveDeckBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
-                                <button id="deleteDeckBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">削除</button>
+                                <button id="deleteDeckBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors hidden">削除</button>
                             </div>
                         </div>
-                        <textarea id="deckDescriptionInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm flex-shrink-0" placeholder="デッキの説明..."></textarea>
-                        
-                        <!-- 世界選択 -->
-                        <div class="mb-4 flex-shrink-0">
-                             <label class="text-sm font-semibold text-gray-300 mb-2 block">使用する世界 (2つまで)</label>
-                             <div class="grid grid-cols-2 gap-4">
-                                 <select id="deckWorld1" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                                 <select id="deckWorld2" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                             </div>
-                        </div>
+                        <!-- デッキ設定（折りたたみ） -->
+                        <details class="mb-4 flex-shrink-0 bg-gray-800 rounded-lg border border-gray-700">
+                            <summary class="p-3 font-semibold text-gray-300 cursor-pointer hover:bg-gray-700 transition-colors rounded-lg">デッキ詳細設定・世界観</summary>
+                            <div class="p-3 border-t border-gray-700">
+                                <textarea id="deckDescriptionInput" class="w-full bg-gray-900 rounded-lg p-2 mb-4 text-sm" placeholder="デッキの説明..."></textarea>
+                                
+                                <!-- 世界選択 -->
+                                <div class="mb-4">
+                                     <label class="text-sm font-semibold text-gray-300 mb-2 block">使用する世界 (2つまで)</label>
+                                     <div class="grid grid-cols-2 gap-4">
+                                         <select id="deckWorld1" class="p-2 bg-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                                         <select id="deckWorld2" class="p-2 bg-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
+                                     </div>
+                                </div>
+                                
+                                <!-- 非公開設定 -->
+                                <div>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="deckIsPrivateCheckbox" class="sr-only peer">
+                                        <div class="relative w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                        <span class="ml-3 text-sm font-medium text-gray-300">非公開にする（自分と管理者のみ閲覧可能）</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </details>
 
                         <div class="flex-grow overflow-y-auto pr-2">
                             <!-- デッキセクション -->
@@ -848,6 +867,11 @@
                             <option value="伝説">伝説</option>
                             <option value="神話">神話</option>
                         </select>
+                        <select id="cardLimit" class="p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden" title="カードの投入枚数制限 (管理者専用)">
+                            <option value="4" selected>通常 (制限なし)</option>
+                            <option value="1">制限 (1枚のみ)</option>
+                            <option value="0">禁止 (投入不可)</option>
+                        </select>
                     </div>
                     <input type="text" id="cardWorld" placeholder="世界 (例: 帝国, ニュートラル)" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <input type="text" id="cardTags" placeholder="タグをカンマ(,)区切りで入力" class="p-3 w-full bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -1095,6 +1119,58 @@
     </div>
 
 
+    <!-- User Admin Modal -->
+    <div id="adminPanelModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-4xl mx-auto border border-gray-700 h-[80vh] flex flex-col">
+            <h2 class="text-2xl font-bold mb-4 flex-shrink-0 text-white">ユーザー管理 (管理者限定)</h2>
+            <div class="flex-grow overflow-y-auto pr-2 mb-4">
+                <table class="w-full text-left text-sm text-gray-300">
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-700 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-4 py-3">表示名</th>
+                            <th scope="col" class="px-4 py-3">メールアドレス</th>
+                            <th scope="col" class="px-4 py-3">種類</th>
+                            <th scope="col" class="px-4 py-3">管理者権限</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersTableBody" class="divide-y divide-gray-700">
+                        <!-- Users will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-2 flex-shrink-0">
+                <button id="closeAdminPanelBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcements Modal -->
+    <div id="announcementModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-2xl mx-auto border border-gray-700 h-[70vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3 flex-shrink-0">
+                <h2 class="text-2xl font-bold text-white">お知らせ</h2>
+                <div class="flex gap-2">
+                    <button id="createAnnouncementBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm hidden">＋ 新規作成</button>
+                    <button id="closeAnnouncementBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm">閉じる</button>
+                </div>
+            </div>
+            
+            <div id="announcementCreateSection" class="hidden mb-4 p-4 bg-gray-900/50 rounded-lg border border-gray-600 flex-shrink-0">
+                <input type="text" id="announcementTitleInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm text-white" placeholder="お知らせのタイトル">
+                <textarea id="announcementContentInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm text-white h-24" placeholder="お知らせの内容"></textarea>
+                <div class="flex justify-end gap-2">
+                    <button id="cancelCreateAnnouncementBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm">キャンセル</button>
+                    <button id="submitAnnouncementBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm">投稿</button>
+                </div>
+            </div>
+
+            <div id="announcementList" class="flex-grow overflow-y-auto pr-2 space-y-4">
+                <!-- Announcements will be populated here -->
+                <div class="text-center text-gray-400 py-4">読み込み中...</div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Firebase SDK のインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
@@ -1115,7 +1191,7 @@
         // --- ★★★ 設定ここまで ★★★ ---
 
         // Firebaseの初期化
-        let app, db, auth, currentUser = null;
+        let app, db, auth, currentUser = null, isAdmin = false;
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -2014,9 +2090,15 @@
 
         // --- デッキ描画 ---
         function renderDeckList() {
-            deckList.innerHTML = allDecks.length === 0 
+            const visibleDecks = allDecks.filter(deck => {
+                if (isAdmin) return true; // 管理者は全て見える
+                if (deck.author === (currentUser ? currentUser.uid : null)) return true; // 自分のデッキは見える
+                return !deck.isPrivate; // 他人のデッキは非公開なら見えない
+            });
+            
+            deckList.innerHTML = visibleDecks.length === 0 
                 ? '<p class="text-gray-500">デッキがありません。</p>'
-                : allDecks.map(deck => `<div class="p-3 rounded-lg cursor-pointer deck-list-item" data-deck-id="${deck.id}">${deck.name}</div>`).join('');
+                : visibleDecks.map(deck => `<div class="p-3 rounded-lg cursor-pointer deck-list-item" data-deck-id="${deck.id}">${deck.name} ${deck.isPrivate ? '<span class="text-xs bg-gray-700 px-1 rounded">非公開</span>' : ''}</div>`).join('');
             deckList.querySelectorAll('.deck-list-item').forEach(el => el.onclick = () => loadDeckIntoEditor(el.dataset.deckId));
         }
 
@@ -2328,6 +2410,7 @@
                 cardTypeSelect.value = card.type || '';
                 getEl('tactSubType').value = card.tactSubType || '通常';
                 getEl('cardRarity').value = card.rarity || '通常';
+                getEl('cardLimit').value = card.limit !== undefined ? card.limit : '4';
                 getEl('cardWorld').value = card.world || '';
                 getEl('cardTags').value = card.tags ? card.tags.join(', ') : '';
                 getEl('cardRoles').value = card.roles ? card.roles.join(', ') : '';
@@ -2369,6 +2452,12 @@
                 }
             } else {
                  getEl('cardId').value = '';
+                 getEl('cardLimit').value = '4';
+            }
+            if (isAdmin) {
+                getEl('cardLimit').classList.remove('hidden');
+            } else {
+                getEl('cardLimit').classList.add('hidden');
             }
             cardTypeSelect.dispatchEvent(new Event('change'));
             cardModal.style.display = 'flex';
@@ -2409,6 +2498,7 @@
                 name: getEl('cardName').value, type: cardType,
                 tactSubType: cardType === 'タクト' ? getEl('tactSubType').value : null,
                 rarity: getEl('cardRarity').value,
+                limit: parseInt(getEl('cardLimit').value),
                 world: getEl('cardWorld').value.trim() || NEUTRAL_WORLD_NAME,
                 tags: getEl('cardTags').value.split(',').map(t => t.trim()).filter(Boolean),
                 roles: getEl('cardRoles').value.split(',').map(t => t.trim()).filter(Boolean),
@@ -2451,6 +2541,10 @@
         
         // --- デッキ操作 ---
         async function deleteCard(cardId, cardName) {
+            if (!isAdmin) {
+                await showAlert("カードの削除は管理者のみ実行できます。");
+                return;
+            }
             const confirmed = await showConfirm(`「${cardName}」をライブラリから完全に削除しますか？\nこのカードはすべてのデッキからも削除されます。この操作は元に戻せません。`);
             if (!confirmed) return;
 
@@ -2492,7 +2586,7 @@
             }
         }
         function createNewDeck() {
-            currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, mainDeckCardIds: [], structDeckCardIds: [] };
+            currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, mainDeckCardIds: [], structDeckCardIds: [], isPrivate: false };
             logToConsole("新規デッキの作成を開始します。");
             showDeckEditor();
         }
@@ -2511,6 +2605,7 @@
             deckDescriptionInput.value = currentDeck.description || '';
             deckWorld1.value = currentDeck.worlds?.[0] || '';
             deckWorld2.value = currentDeck.worlds?.[1] || '';
+            getEl('deckIsPrivateCheckbox').checked = currentDeck.isPrivate || false;
             renderDeckContents();
         }
         let autoSaveTimeout = null;
@@ -2578,6 +2673,11 @@
             const deckCounts = getDeckCardCounts(); 
             const cardCountInDeck = deckCounts.cardCounts[cardId] || 0;
             
+            if (card.limit === 0) {
+                await showAlert(`「${card.name}」は禁止カードに指定されているためデッキに入れられません。`);
+                return;
+            }
+
             if (card.type !== 'コア') {
                 if (card.rarity === '神話') {
                     if (deckCounts.mythicCount > 0 && cardCountInDeck < 1) { await showAlert(`神話カードはデッキに1種類までです。`); return; }
@@ -2585,8 +2685,11 @@
                 } else if (card.rarity === '伝説') {
                     if (deckCounts.legendaryCount >= 4 && cardCountInDeck < 1) { await showAlert('伝説カードは合計4種類までです。'); return; } 
                     if (cardCountInDeck >= 1) { await showAlert(`伝説カード「${card.name}」は1枚までです。`); return; } 
-                } else if (card.type !== 'ストラクト' && cardCountInDeck >= 4) { 
-                    await showAlert(`「${card.name}」は4枚までです。`); return; 
+                }
+                
+                const customLimit = card.limit !== undefined ? card.limit : 4;
+                if (cardCountInDeck >= customLimit) { 
+                    await showAlert(`「${card.name}」は${customLimit}枚までです。`); return; 
                 }
             }
             switch(card.type) {
@@ -2792,6 +2895,7 @@
             currentDeck.name = deckNameInput.value;
             currentDeck.description = deckDescriptionInput.value;
             currentDeck.worlds = [deckWorld1.value, deckWorld2.value].filter(Boolean);
+            currentDeck.isPrivate = getEl('deckIsPrivateCheckbox').checked;
         }
 
         // --- テストドロー関連 (グローバルヘルパー) ---
@@ -3281,6 +3385,180 @@
                 loginBtn.classList.remove('hidden');
                 userInfo.classList.add('hidden');
             }
+
+            // Admin features
+            if (isAdmin) {
+                getEl('adminPanelBtn')?.classList.remove('hidden');
+                getEl('actionModeDeleteBtn')?.classList.remove('hidden');
+            } else {
+                getEl('adminPanelBtn')?.classList.add('hidden');
+                getEl('actionModeDeleteBtn')?.classList.add('hidden');
+                // Ensure non-admins are not stuck in an unauthorized mode
+                if (currentActionMode === 'delete') {
+                    setActionMode('normal');
+                }
+            }
+            
+            // All users (or logged-in users) can edit, create cards, and delete decks now
+            getEl('newCardBtn')?.classList.remove('hidden');
+            getEl('deleteDeckBtn')?.classList.remove('hidden');
+            getEl('worldLoreBtn')?.classList.remove('hidden');
+            getEl('actionModeEditBtn')?.classList.remove('hidden');
+
+            // For cards currently displayed, we might need to re-render to hide edit/delete buttons
+            if (appMode === 'search') {
+                renderCardLibrary();
+            } else {
+                renderDeckContents();
+            }
+        }
+
+        // --- 管理者パネル機能 ---
+        async function openAdminPanel() {
+            if (!isAdmin) return;
+            getEl('adminPanelModal').classList.remove('hidden');
+            await renderAdminUsers();
+        }
+
+        async function renderAdminUsers() {
+            const tbody = getEl('adminUsersTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center">読み込み中...</td></tr>';
+            try {
+                const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                tbody.innerHTML = '';
+                
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const isCurrentUser = data.uid === currentUser.uid;
+                    const isSystemAdmin = data.email === 'anohitodayoanohito@gmail.com';
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-700/50 transition-colors';
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-white">${data.displayName}</td>
+                        <td class="px-4 py-3">${data.email || 'N/A'}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${data.isAnonymous ? 'bg-gray-600 text-gray-300' : 'bg-blue-600 text-blue-100'}">
+                                ${data.isAnonymous ? '匿名' : 'Google'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" ${data.isAdmin ? 'checked' : ''} ${isCurrentUser || isSystemAdmin ? 'disabled' : ''} onchange="toggleUserAdminStatus('${data.uid}', this.checked, '${data.displayName}')">
+                                <div class="relative w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${(isCurrentUser || isSystemAdmin) ? 'opacity-50 cursor-not-allowed' : ''}"></div>
+                                <span class="ml-3 text-sm font-medium text-gray-300">${data.isAdmin ? '管理者' : '一般'}</span>
+                            </label>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("ユーザー一覧取得エラー:", e);
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center text-red-400">ユーザーの取得に失敗しました。</td></tr>';
+            }
+        }
+
+        window.toggleUserAdminStatus = async function(uid, newStatus, displayName) {
+            try {
+                const userRef = doc(db, "users", uid);
+                await updateDoc(userRef, { isAdmin: newStatus });
+                logToConsole(`ユーザー「${displayName}」の管理者権限を ${newStatus ? '付与' : '剥奪'} しました。`);
+            } catch (e) {
+                console.error("権限更新エラー:", e);
+                showAlert("権限の更新に失敗しました。");
+                await renderAdminUsers(); // revert toggle visually
+            }
+        };
+
+        // --- お知らせ機能 ---
+        async function openAnnouncementModal() {
+            getEl('announcementModal').classList.remove('hidden');
+            if (isAdmin) {
+                getEl('createAnnouncementBtn').classList.remove('hidden');
+            } else {
+                getEl('createAnnouncementBtn').classList.add('hidden');
+            }
+            getEl('announcementBadge').classList.add('hidden'); // 開いたらバッジを消す
+            await renderAnnouncements();
+        }
+
+        async function renderAnnouncements() {
+            const listEl = getEl('announcementList');
+            listEl.innerHTML = '<div class="text-center text-gray-400 py-4">読み込み中...</div>';
+            try {
+                const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                listEl.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    listEl.innerHTML = '<div class="text-center text-gray-400 py-4">現在お知らせはありません。</div>';
+                    return;
+                }
+                
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const dateStr = data.createdAt ? data.createdAt.toDate().toLocaleString() : '最近';
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-900/50 p-4 rounded-lg border border-gray-600';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-bold text-blue-400">${data.title}</h3>
+                            <span class="text-xs text-gray-400">${dateStr}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm whitespace-pre-wrap">${data.content}</p>
+                    `;
+                    listEl.appendChild(div);
+                });
+            } catch (e) {
+                console.error("お知らせ取得エラー:", e);
+                listEl.innerHTML = '<div class="text-center text-red-400 py-4">取得に失敗しました。</div>';
+            }
+        }
+
+        async function submitAnnouncement() {
+            const titleInput = getEl('announcementTitleInput');
+            const contentInput = getEl('announcementContentInput');
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            
+            if (!title || !content) {
+                showAlert("タイトルと内容を入力してください。");
+                return;
+            }
+            
+            getEl('submitAnnouncementBtn').textContent = '送信中...';
+            try {
+                await addDoc(collection(db, "announcements"), {
+                    title: title,
+                    content: content,
+                    createdBy: currentUser.uid,
+                    createdAt: serverTimestamp()
+                });
+                titleInput.value = '';
+                contentInput.value = '';
+                getEl('announcementCreateSection').classList.add('hidden');
+                await renderAnnouncements();
+            } catch (e) {
+                console.error("お知らせ作成エラー:", e);
+                showAlert("お知らせの作成に失敗しました。");
+            } finally {
+                getEl('submitAnnouncementBtn').textContent = '投稿';
+            }
+        }
+
+        function checkUnreadAnnouncements() {
+            // 最新1件だけ取得してバッジを表示する簡易チェック
+            const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
+            onSnapshot(q, (snapshot) => {
+                if (!snapshot.empty) {
+                    const latest = snapshot.docs[0].data();
+                    const lastRead = localStorage.getItem('sw_lastReadAnnouncement');
+                    if (!lastRead || (latest.createdAt && latest.createdAt.toMillis() > parseInt(lastRead))) {
+                        getEl('announcementBadge').classList.remove('hidden');
+                    }
+                }
+            });
         }
 
         // --- チャット機能 ---
@@ -3839,7 +4117,15 @@
 
         // --- イベントリスナー ---
         function setupEventListeners() {
-            // Header Buttons
+            getEl('announcementBtn').onclick = () => {
+                openAnnouncementModal();
+                localStorage.setItem('sw_lastReadAnnouncement', Date.now().toString());
+            };
+            getEl('closeAnnouncementBtn').onclick = () => getEl('announcementModal').classList.add('hidden');
+            getEl('createAnnouncementBtn').onclick = () => getEl('announcementCreateSection').classList.toggle('hidden');
+            getEl('cancelCreateAnnouncementBtn').onclick = () => getEl('announcementCreateSection').classList.add('hidden');
+            getEl('submitAnnouncementBtn').onclick = submitAnnouncement;
+
             getEl('loginBtn').onclick = signInWithGoogle;
             getEl('logoutBtn').onclick = logout;
             
@@ -3848,6 +4134,8 @@
             getEl('exportAllBtn').onclick = exportAllData;
             getEl('newCardBtn').onclick = () => openCardModal();
             getEl('newDeckBtn').onclick = createNewDeck;
+            getEl('adminPanelBtn').onclick = openAdminPanel;
+            getEl('closeAdminPanelBtn').onclick = () => getEl('adminPanelModal').classList.add('hidden');
             getEl('howToUseBtn').onclick = () => usageModal.style.display = 'flex';
             getEl('worldLoreBtn').onclick = openWorldLoreModal;
             getEl('consoleBtn').onclick = () => consoleModal.style.display = 'flex';
@@ -3914,7 +4202,6 @@
             getEl('addChoiceActCostBtn').onclick = () => getEl('choiceActCostContainer').appendChild(createChoiceCostInputRow());
 
             // Deck Editor
-            getEl('saveDeckBtn').onclick = () => saveDeck(false);
             getEl('deleteDeckBtn').onclick = deleteDeck;
             getEl('exportDeckBtn').onclick = exportSingleDeck;
             getEl('exportImageBtn').onclick = exportDeckAsImage;
@@ -3923,6 +4210,7 @@
             deckDescriptionInput.addEventListener('input', triggerAutoSave);
             deckWorld1.addEventListener('change', triggerAutoSave);
             deckWorld2.addEventListener('change', triggerAutoSave);
+            getEl('deckIsPrivateCheckbox').addEventListener('change', triggerAutoSave);
             getEl('shareDeckBtn').onclick = () => {
                 if (currentDeck) {
                     updateCurrentDeckFromUI();
@@ -4019,14 +4307,52 @@
                 if (user) {
                     // User is signed in (Google or anonymous)
                     currentUser = user;
+                    
+                    // Firestoreへのユーザー登録と権限確認
+                    const userRef = doc(db, "users", user.uid);
+                    try {
+                        const userSnap = await getDoc(userRef);
+                        const userEmail = user.email || '';
+                        let isFirstAdmin = false;
+                        if (userEmail === 'anohitodayoanohito@gmail.com') {
+                            isFirstAdmin = true;
+                        }
+
+                        if (!userSnap.exists()) {
+                            await setDoc(userRef, {
+                                uid: user.uid,
+                                displayName: user.displayName || '匿名ユーザー',
+                                email: userEmail,
+                                isAnonymous: user.isAnonymous,
+                                isAdmin: isFirstAdmin,
+                                lastLogin: serverTimestamp(),
+                                createdAt: serverTimestamp()
+                            });
+                            isAdmin = isFirstAdmin;
+                        } else {
+                            const userData = userSnap.data();
+                            if (isFirstAdmin && !userData.isAdmin) {
+                                await updateDoc(userRef, { isAdmin: true });
+                                isAdmin = true;
+                            } else {
+                                isAdmin = userData.isAdmin || false;
+                            }
+                            await updateDoc(userRef, { lastLogin: serverTimestamp(), displayName: user.displayName || userData.displayName });
+                        }
+                    } catch (e) {
+                        console.error("ユーザー情報の取得/更新エラー", e);
+                        isAdmin = false;
+                    }
+
                     updateUIForUser(user);
                     if (user.isAnonymous) {
                         logToConsole(`匿名ユーザーとして接続 (UID: ${user.uid})`);
                     } else {
-                        logToConsole(`ログイン成功: ${user.displayName} (UID: ${user.uid})`);
+                        logToConsole(`ログイン成功: ${user.displayName} (UID: ${user.uid})${isAdmin ? ' [管理者]' : ''}`);
                     }
                     await setupRealtimeListeners();
                     setupChatListener(); // チャットを開始
+                    checkUnreadAnnouncements(); // お知らせバッジの監視を開始
                 } else {
                     // No user is signed in, so sign in anonymously
                     try {
