@@ -434,6 +434,8 @@
                 <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
                     <button id="modeSearchBtn" class="px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow">カード図鑑</button>
                     <button id="modeDeckBtn" class="px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white">デッキ構築</button>
+                    <button id="modeDeckListBtn" class="px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white text-emerald-300">デッキ一覧</button>
+                    <button id="modeWorldBtn" class="px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white text-purple-300">世界観一覧</button>
                 </div>
             </div>
             <div class="flex items-center space-x-2 sm:space-x-4">
@@ -442,7 +444,7 @@
                     <div class="flex items-center flex-wrap justify-end gap-2">
 
                         <button id="adminPanelBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm hidden">ユーザー管理</button>
-                        <button id="worldLoreBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-xs sm:text-sm">世界観</button>
+                        
                         <button id="newCardBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg transition-colors text-xs sm:text-sm">
                             新カード
                         </button>
@@ -483,6 +485,7 @@
         <div id="mobileTabNav" class="md:hidden hidden bg-gray-800 border-b border-gray-700 p-2 flex justify-center gap-2 z-50 sticky top-0 flex-shrink-0">
             <button id="mobileTabDeckBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-gray-700 text-white transition-colors">デッキ</button>
             <button id="mobileTabLibraryBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors">ライブラリ</button>
+            <button id="mobileTabWorldBtn" class="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors text-purple-300">世界観一覧</button>
         </div>
 
         <main id="mainContainer" class="flex-grow flex p-4 gap-4 overflow-hidden flex-col md:flex-row min-h-0">
@@ -696,7 +699,36 @@
                 </div>
             </div>
             
-        </main>
+        
+            <!-- 世界観パネル -->
+            <div id="worldLorePanel" class="w-full flex flex-col md:flex-row gap-4 min-h-0 hidden">
+                <!-- 左: 世界リスト -->
+                <div class="w-full md:w-1/3 bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col min-h-0 border border-gray-700">
+                    <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2 text-purple-400">世界観一覧</h2>
+                    <div id="worldLoreList" class="overflow-y-auto flex-grow space-y-2 pr-2">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+                <!-- 右: 詳細とカード -->
+                <div class="w-full md:w-2/3 bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col min-h-0 border border-gray-700 relative">
+                    <!-- BG Image overlay for atmosphere -->
+                    <div id="worldLoreDetailBg" class="absolute inset-0 bg-cover bg-center opacity-10 rounded-lg hidden pointer-events-none"></div>
+                    <div class="relative z-10 flex flex-col h-full overflow-hidden">
+                        <div class="flex justify-between items-start mb-2">
+                            <h2 id="worldLoreDetailTitle" class="text-3xl font-bold text-white drop-shadow-md">世界を選択してください</h2>
+                        </div>
+                        <p id="worldLoreDetailAuthor" class="text-sm text-gray-400 mb-4"></p>
+                        <div id="worldLoreDetailDesc" class="text-gray-300 whitespace-pre-wrap flex-shrink-0 mb-6 max-h-[30vh] overflow-y-auto leading-relaxed border-b border-gray-700 pb-4">
+                            左のリストから世界を選ぶと、詳細と所属カードが表示されます。
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-200 mb-3 hidden" id="worldLoreCardsTitle">所属カード</h3>
+                        <div id="worldLoreCardsGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 overflow-y-auto flex-grow content-start image-only-mode">
+                            <!-- Cards injected here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+</main>
     </div>
     
     <!-- Chat Toggle Button -->
@@ -933,18 +965,7 @@
         </div>
     </div>
 
-    <!-- 世界観モーダル -->
-    <div id="worldLoreModal" class="fixed inset-0 z-[1050] flex items-start justify-center hidden modal-backdrop overflow-y-auto pt-10 pb-10">
-        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 w-full max-w-5xl mx-auto border border-gray-700">
-            <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-3">
-                <h2 class="text-2xl font-bold">世界観</h2>
-                <button type="button" id="closeWorldLoreModal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">閉じる</button>
-            </div>
-            <div id="worldLoreList" class="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
-                <!-- 世界観リストがここに表示されます -->
-            </div>
-        </div>
-    </div>
+    
 
     <!-- 世界編集モーダル -->
     <div id="editWorldModal" class="fixed inset-0 z-[1050] flex items-center justify-center hidden modal-backdrop">
@@ -1527,7 +1548,7 @@ window.renderUsageModal = function(type = 'manual') {
         let currentDeck = null; 
         let costChart = null;
         let typeDistributionChart = null;
-        let appMode = localStorage.getItem('sw_appMode') || 'search'; // 'search' or 'deck'
+        let appMode = localStorage.getItem('sw_appMode') || 'search'; // 'search', 'deck', or 'world'
         let mobileActiveTab = 'library'; // 'deck' or 'library'
         let currentActionMode = 'normal'; // 'normal', 'edit', 'share', 'export', 'delete'
 
@@ -1586,48 +1607,58 @@ window.renderUsageModal = function(type = 'manual') {
         // --- モード切替のUI更新関数 ---
         function updateAppModeUI() {
             const modeSearchBtn = getEl('modeSearchBtn');
+            const modeWorldBtn = getEl('modeWorldBtn');
+            const modeDeckListBtn = getEl('modeDeckListBtn');
+            const worldLorePanel = getEl('worldLorePanel');
+            const deckListSection = getEl('deckListSection');
             const modeDeckBtn = getEl('modeDeckBtn');
             const deckPanel = getEl('deckPanel');
             const libraryPanel = getEl('libraryPanel');
             const mobileTabNav = getEl('mobileTabNav');
             const mainContainer = getEl('mainContainer');
 
-            if (!modeSearchBtn) return; // Not initialized yet
+            if (!modeSearchBtn) return;
+
+            // Reset all tab buttons to inactive
+            const inactiveClass = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white';
+            modeSearchBtn.className = inactiveClass;
+            modeDeckBtn.className = inactiveClass;
+            if (modeDeckListBtn) modeDeckListBtn.className = inactiveClass;
+            if (modeWorldBtn) modeWorldBtn.className = inactiveClass;
+
+            // Hide all panels first
+            deckPanel.classList.add('hidden');
+            deckPanel.classList.remove('md:flex', 'flex');
+            libraryPanel.classList.add('hidden');
+            if (worldLorePanel) worldLorePanel.classList.add('hidden');
+            if (deckListSection) deckListSection.classList.add('hidden');
+            mobileTabNav.classList.add('hidden');
+            getEl('actionModeContainer').classList.add('hidden');
 
             if (appMode === 'search') {
                 modeSearchBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow';
-                modeDeckBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white';
                 
-                deckPanel.classList.add('hidden');
-                deckPanel.classList.remove('md:flex');
-                
-                libraryPanel.className = 'w-full flex flex-col min-h-0'; // Take full width
-                mobileTabNav.classList.add('hidden');
+                libraryPanel.classList.remove('hidden');
+                libraryPanel.className = 'w-full flex flex-col min-h-0';
                 
                 getEl('actionModeContainer').classList.remove('hidden');
 
-                // カード図鑑では列数を1.5倍にする
                 const cardLibrary = getEl('cardLibrary');
                 if (cardLibrary) {
-                    cardLibrary.className = 'grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 overflow-y-auto flex-grow content-start image-only-mode min-h-0';
+                    cardLibrary.className = 'grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4 overflow-y-auto flex-grow content-start image-only-mode min-h-0';
                 }
-            } else {
-                // Deck mode
+            } else if (appMode === 'deck') {
                 modeDeckBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-indigo-600 text-white shadow';
-                modeSearchBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors text-gray-400 hover:text-white';
                 
+                libraryPanel.classList.remove('hidden');
                 libraryPanel.className = 'w-full md:w-3/5 flex flex-col min-h-0';
-                
-                getEl('actionModeContainer').classList.add('hidden');
 
-                // デッキモードでは元の列数に戻す
                 const cardLibrary = getEl('cardLibrary');
                 if (cardLibrary) {
                     cardLibrary.className = 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-grow content-start image-only-mode min-h-0';
                 }
 
-                // Mobile specific handling
-                if (window.innerWidth < 768) { // md breakpoint
+                if (window.innerWidth < 768) {
                     mobileTabNav.classList.remove('hidden');
                     if (mobileActiveTab === 'deck') {
                         deckPanel.classList.remove('hidden');
@@ -1643,13 +1674,24 @@ window.renderUsageModal = function(type = 'manual') {
                         getEl('mobileTabLibraryBtn').className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-gray-700 text-white transition-colors';
                         getEl('mobileTabDeckBtn').className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-gray-400 hover:bg-gray-700 transition-colors';
                     }
+                    // Mobile world btn inactive
+                    const mbWorldBtn = getEl('mobileTabWorldBtn');
+                    if (mbWorldBtn) { mbWorldBtn.className = 'flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-transparent text-purple-300 hover:bg-gray-700 transition-colors'; mbWorldBtn.textContent = '世界観一覧'; }
                 } else {
-                    // Desktop
                     mobileTabNav.classList.add('hidden');
                     deckPanel.classList.remove('hidden');
                     deckPanel.classList.add('md:flex');
                     libraryPanel.classList.remove('hidden');
                 }
+            } else if (appMode === 'deckList') {
+                if (modeDeckListBtn) modeDeckListBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-emerald-600 text-white shadow';
+                if (deckListSection) deckListSection.classList.remove('hidden');
+            } else if (appMode === 'world') {
+                if (modeWorldBtn) modeWorldBtn.className = 'px-3 sm:px-4 py-1.5 rounded-md text-sm font-semibold transition-colors bg-purple-600 text-white shadow';
+                
+                if (worldLorePanel) worldLorePanel.classList.remove('hidden');
+                
+                renderWorldLorePanel();
             }
         }
 
@@ -2046,50 +2088,6 @@ window.renderUsageModal = function(type = 'manual') {
             if (currentDeckWorld1) deckWorld1.value = currentDeckWorld1;
             if (currentDeckWorld2) deckWorld2.value = currentDeckWorld2;
         }
-        
-        // --- コスト表示エレメント作成 ---
-        function createCostDisplay(costs, forSection = 'play') {
-            const costContainer = document.createElement('div');
-            costContainer.className = 'flex items-center gap-1.5 text-base font-bold flex-wrap justify-end';
-            const fixedCosts = costs?.[forSection] || {};
-            const choiceCosts = (forSection === 'play' ? costs?.choice : costs?.choiceAct) || [];
-            let hasAnyCost = false;
-
-            Object.entries(fixedCosts).forEach(([key, value]) => {
-                if (value > 0) {
-                    const costEl = document.createElement('span');
-                    costEl.textContent = value;
-                    costEl.style.color = costTypes[key].colorHex;
-                    costContainer.appendChild(costEl);
-                    hasAnyCost = true;
-                }
-            });
-
-            choiceCosts.forEach(choice => {
-                if (Array.isArray(choice) && choice.length === 2) {
-                    const [cost1, cost2] = choice;
-                    if (cost1.amount > 0 && cost2.amount > 0) {
-                        const choiceEl = document.createElement('span');
-                        choiceEl.className = 'flex items-baseline gap-x-0';
-                        choiceEl.innerHTML = `
-                            <span style="color:${costTypes[cost1.type].colorHex}">${cost1.amount}</span>
-                            <span class="text-gray-400 text-sm mx-px">/</span>
-                            <span style="color:${costTypes[cost2.type].colorHex}">${cost2.amount}</span>`;
-                        costContainer.appendChild(choiceEl);
-                        hasAnyCost = true;
-                    }
-                }
-            });
-
-            if (!hasAnyCost && Object.keys(fixedCosts).length > 0) {
-                const costEl = document.createElement('span');
-                costEl.textContent = '0';
-                costEl.style.color = '#FFFFFF';
-                costContainer.appendChild(costEl);
-            }
-            return costContainer;
-        }
-
         // --- 画像処理 ---
         function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
@@ -2118,6 +2116,55 @@ window.renderUsageModal = function(type = 'manual') {
         }
 
         // --- カード描画 ---
+
+        // --- コスト表示エレメント作成 ---
+        function createCostDisplay(costs, forSection = 'play') {
+            const costContainer = document.createElement('div');
+            costContainer.className = 'flex items-center gap-1.5 text-base font-bold flex-wrap justify-end';
+            const fixedCosts = costs?.[forSection] || {};
+            const choiceCosts = (forSection === 'play' ? costs?.choice : costs?.choiceAct) || [];
+            let hasAnyCost = false;
+
+            Object.entries(fixedCosts).forEach(([key, value]) => {
+                if (value > 0) {
+                    const costEl = document.createElement('span');
+                    costEl.textContent = value;
+                    costEl.style.color = costTypes[key]?.colorHex || '#fff';
+                    costContainer.appendChild(costEl);
+                    hasAnyCost = true;
+                }
+            });
+
+            choiceCosts.forEach(choice => {
+                if (!choice.options || choice.options.length === 0) return;
+                const choiceEl = document.createElement('div');
+                choiceEl.className = 'flex items-center gap-1 border border-gray-500 rounded px-1';
+                choice.options.forEach((opt, idx) => {
+                    if (idx > 0) {
+                        const separator = document.createElement('span');
+                        separator.textContent = '/';
+                        separator.className = 'text-gray-400 text-xs';
+                        choiceEl.appendChild(separator);
+                    }
+                    const optEl = document.createElement('span');
+                    optEl.textContent = opt.amount;
+                    optEl.style.color = costTypes[opt.type]?.colorHex || '#fff';
+                    choiceEl.appendChild(optEl);
+                });
+                costContainer.appendChild(choiceEl);
+                hasAnyCost = true;
+            });
+
+            if (!hasAnyCost) {
+                const emptyEl = document.createElement('span');
+                emptyEl.textContent = '0';
+                emptyEl.className = 'text-gray-400';
+                costContainer.appendChild(emptyEl);
+            }
+
+            return costContainer;
+        }
+
         function createCardElement(card, context) {
             const cardEl = document.createElement('div');
             cardEl.dataset.cardId = card.id;
@@ -2158,15 +2205,22 @@ window.renderUsageModal = function(type = 'manual') {
             const unitStatsHTML = (card.type === 'ユニット' || card.type === 'フォート') ? `<div class="text-lg font-bold bg-black/40 px-3 py-0.5 rounded ${theme.heading}">${card.attack || 0}/${card.defense || 0}</div>` : '';
 
             let limitBadgeHTML = '';
+            let borderClass = '';
             if (card.limit === 0) {
+                borderClass = 'border-4 border-red-600 rounded-lg box-border';
                 limitBadgeHTML = `<div class="mt-1 text-center bg-red-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-red-800 limit-badge">禁止</div>`;
             } else if (card.limit === 1) {
+                borderClass = 'border-4 border-yellow-500 rounded-lg box-border';
                 limitBadgeHTML = `<div class="mt-1 text-center bg-yellow-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-yellow-800 limit-badge">制限</div>`;
             } else if (card.limit === 2) {
+                borderClass = 'border-4 border-orange-500 rounded-lg box-border';
                 limitBadgeHTML = `<div class="mt-1 text-center bg-orange-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-orange-800 limit-badge">準制限</div>`;
             } else if (card.limit === 3) {
+                borderClass = 'border-4 border-lime-500 rounded-lg box-border';
                 limitBadgeHTML = `<div class="mt-1 text-center bg-lime-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-lime-800 limit-badge">仮制限</div>`;
             }
+
+            cardInner.className += ' ' + borderClass;
 
             cardInner.innerHTML = `
                 <div class="card-content-wrapper flex flex-col w-full h-full">
@@ -3054,9 +3108,14 @@ window.renderUsageModal = function(type = 'manual') {
                     if (cardCountInDeck >= 1) { await showAlert(`伝説カード「${card.name}」は1枚までです。`); return; } 
                 }
                 
-                const customLimit = card.limit !== undefined ? card.limit : 4;
+                let customLimit = card.limit !== undefined ? card.limit : (card.type === 'ストラクト' ? Infinity : 4);
+                if (card.limit !== undefined) {
+                     customLimit = card.limit;
+                } else {
+                     customLimit = card.type === 'ストラクト' ? Infinity : 4;
+                }
                 if (cardCountInDeck >= customLimit) { 
-                    await showAlert(`「${card.name}」は${customLimit}枚までです。`); return; 
+                    await showAlert(`「${card.name}」は${customLimit === Infinity ? '無制限' : customLimit + '枚'}までです。`); return; 
                 }
             }
             switch(card.type) {
@@ -3358,19 +3417,27 @@ window.renderUsageModal = function(type = 'manual') {
             allWorlds.sort((a, b) => a.name.localeCompare(b.name));
         }
 
-        function openWorldLoreModal() {
+        
+
+        function renderWorldLorePanel() {
             renderWorldLoreList();
-            worldLoreModal.style.display = 'flex';
         }
 
         function renderWorldLoreList() {
             const listEl = getEl('worldLoreList');
             listEl.innerHTML = '';
             
-            const worldsToDisplay = allWorlds.filter(w => w.name !== NEUTRAL_WORLD_NAME);
+            const worldsToDisplay = [];
+            const _seenWorldNames = new Set();
+            allWorlds.filter(w => w.name !== NEUTRAL_WORLD_NAME).forEach(w => {
+                if (!_seenWorldNames.has(w.name)) {
+                    _seenWorldNames.add(w.name);
+                    worldsToDisplay.push(w);
+                }
+            });
 
             if (worldsToDisplay.length === 0) {
-                listEl.innerHTML = '<p class="text-gray-500">ニュートラル以外の世界がまだありません。カードを作成すると自動的に追加されます。</p>';
+                listEl.innerHTML = '<p class="text-gray-500 text-center py-8">ニュートラル以外の世界がまだありません。<br>カードを作成すると自動的に追加されます。</p>';
                 return;
             }
 
@@ -3378,28 +3445,98 @@ window.renderUsageModal = function(type = 'manual') {
                 const representativeCard = allCards.find(c => c.id === world.representativeCardId);
                 const defaultImage = `https://placehold.co/100x140/2d3748/e2e8f0?text=${encodeURIComponent(world.name)}`;
                 const imageUrl = representativeCard?.imageUrl || defaultImage;
+                const cardCount = allCards.filter(c => c.world === world.name).length;
 
                 const worldEl = document.createElement('div');
-                worldEl.className = 'bg-gray-900/50 p-4 rounded-lg flex gap-6 items-start';
+                worldEl.className = 'flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:bg-purple-900/30 border border-transparent hover:border-purple-700';
                 worldEl.innerHTML = `
-                    <div class="flex-shrink-0 w-24">
-                        <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${world.name}" class="w-full object-cover rounded-md">
-                        <p class="text-xs text-center mt-1 text-gray-400 truncate" title="${representativeCard?.name || '未設定'}">${representativeCard?.name || '代表カード未設定'}</p>
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-xl font-bold text-purple-300">${world.name}</h3>
-                            <button data-world-name="${world.name}" class="edit-world-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg text-sm">編集</button>
-                        </div>
-                        <p class="text-gray-300 whitespace-pre-wrap">${world.description || 'この世界の詳細な説明はまだありません...'}</p>
+                    <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${world.name}" class="w-12 h-16 object-cover rounded-md flex-shrink-0 border border-gray-600">
+                    <div class="flex-grow min-w-0">
+                        <h3 class="font-bold text-purple-300 truncate">${world.name}</h3>
+                        <p class="text-xs text-gray-400">${cardCount} 枚のカード</p>
                     </div>
                 `;
+                worldEl.onclick = () => showWorldDetail(world.name);
                 listEl.appendChild(worldEl);
             });
 
-            document.querySelectorAll('.edit-world-btn').forEach(btn => {
-                btn.onclick = () => openEditWorldModal(btn.dataset.worldName);
+            // Add edit buttons for admin/editors
+            // (edit functionality kept in existing openEditWorldModal)
+        }
+
+        function showWorldDetail(worldName) {
+            const world = allWorlds.find(w => w.name === worldName);
+            if (!world) return;
+
+            // Highlight selected item in list
+            const listItems = getEl('worldLoreList').querySelectorAll('div[class*="cursor-pointer"]');
+            listItems.forEach(item => {
+                item.classList.remove('bg-purple-900/40', 'border-purple-600');
+                item.classList.add('border-transparent');
             });
+            // Find the clicked item and highlight it
+            listItems.forEach(item => {
+                if (item.querySelector('h3')?.textContent === worldName) {
+                    item.classList.add('bg-purple-900/40', 'border-purple-600');
+                    item.classList.remove('border-transparent');
+                }
+            });
+
+            // Update detail pane
+            const titleEl = getEl('worldLoreDetailTitle');
+            const authorEl = getEl('worldLoreDetailAuthor');
+            const descEl = getEl('worldLoreDetailDesc');
+            const bgEl = getEl('worldLoreDetailBg');
+            const cardsTitleEl = getEl('worldLoreCardsTitle');
+            const cardsGridEl = getEl('worldLoreCardsGrid');
+
+            titleEl.textContent = world.name;
+            
+            const representativeCard = allCards.find(c => c.id === world.representativeCardId);
+            if (representativeCard) {
+                authorEl.innerHTML = `代表カード: <span class="text-purple-300 font-semibold">${representativeCard.name}</span>`;
+            } else {
+                authorEl.textContent = '';
+            }
+
+            descEl.textContent = world.description || 'この世界の詳細な説明はまだありません...';
+
+            // Show background image
+            if (representativeCard?.imageUrl) {
+                bgEl.style.backgroundImage = `url(${representativeCard.imageUrl})`;
+                bgEl.classList.remove('hidden');
+            } else {
+                bgEl.classList.add('hidden');
+            }
+
+            // Show cards belonging to this world
+            const worldCards = allCards.filter(c => c.world === worldName);
+            cardsGridEl.innerHTML = '';
+            
+            if (worldCards.length > 0) {
+                cardsTitleEl.classList.remove('hidden');
+                cardsTitleEl.innerHTML = `所属カード <span class="text-sm font-normal text-gray-400">(${worldCards.length}枚)</span>`;
+                
+                worldCards.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(card => {
+                    const cardEl = createCardElement(card, 'library');
+                    cardEl.onclick = () => openShareDetailModal({ type: 'card', data: card });
+                    cardsGridEl.appendChild(cardEl);
+                });
+            } else {
+                cardsTitleEl.classList.add('hidden');
+                cardsGridEl.innerHTML = '<p class="text-gray-500 text-center py-4 col-span-full">この世界のカードはまだありません。</p>';
+            }
+
+            // Add edit button below title
+            const existingEditBtn = document.getElementById('worldDetailEditBtn');
+            if (existingEditBtn) existingEditBtn.remove();
+            
+            const editBtn = document.createElement('button');
+            editBtn.id = 'worldDetailEditBtn';
+            editBtn.className = 'bg-gray-600 hover:bg-gray-700 text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors';
+            editBtn.textContent = '編集';
+            editBtn.onclick = () => openEditWorldModal(worldName);
+            titleEl.parentElement.appendChild(editBtn);
         }
 
         function openEditWorldModal(worldName) {
@@ -3771,7 +3908,6 @@ window.renderUsageModal = function(type = 'manual') {
             // All users (or logged-in users) can edit, create cards, and delete decks now
             getEl('newCardBtn')?.classList.remove('hidden');
             getEl('deleteDeckBtn')?.classList.remove('hidden');
-            getEl('worldLoreBtn')?.classList.remove('hidden');
             getEl('actionModeEditBtn')?.classList.remove('hidden');
 
             // For cards currently displayed, we might need to re-render to hide edit/delete buttons
@@ -4515,7 +4651,7 @@ window.renderUsageModal = function(type = 'manual') {
                 const firstTab = document.querySelector('.manual-tab-btn');
                 if (firstTab) firstTab.click();
             };
-            getEl('worldLoreBtn').onclick = openWorldLoreModal;
+            
             getEl('consoleBtn').onclick = () => consoleModal.style.display = 'flex';
 
             // App Mode Switcher
@@ -4523,8 +4659,15 @@ window.renderUsageModal = function(type = 'manual') {
                 appMode = 'search';
                 localStorage.setItem('sw_appMode', 'search');
                 updateAppModeUI();
-                renderCardLibrary(); // 更新してクリックイベントを再割り当て
             };
+            const modeWorldBtn = getEl('modeWorldBtn');
+            if (modeWorldBtn) {
+                modeWorldBtn.onclick = () => {
+                    appMode = 'world';
+                    localStorage.setItem('sw_appMode', 'world');
+                    updateAppModeUI();
+                };
+            }
             getEl('modeDeckBtn').onclick = () => {
                 appMode = 'deck';
                 localStorage.setItem('sw_appMode', 'deck');
@@ -4552,6 +4695,15 @@ window.renderUsageModal = function(type = 'manual') {
                 mobileActiveTab = 'library';
                 updateAppModeUI();
             };
+            const mbWorldBtn = getEl('mobileTabWorldBtn');
+            if (mbWorldBtn) {
+                mbWorldBtn.onclick = () => {
+                    appMode = 'world';
+                    mobileActiveTab = 'world';
+                    localStorage.setItem('sw_appMode', 'world');
+                    updateAppModeUI();
+                };
+            }
 
             // Card Modal
             getEl('cancelCard').onclick = () => cardModal.style.display = 'none';
@@ -4618,7 +4770,7 @@ window.renderUsageModal = function(type = 'manual') {
             getEl('drawOneMoreBtn').onclick = drawOneMoreCard;
 
             // World Lore Modals
-            getEl('closeWorldLoreModal').onclick = () => worldLoreModal.style.display = 'none';
+            
             getEl('cancelEditWorld').onclick = () => editWorldModal.style.display = 'none';
             editWorldForm.onsubmit = saveWorldData;
 
