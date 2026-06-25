@@ -1078,6 +1078,10 @@
             
             <div id="announcementCreateSection" class="hidden mb-4 p-4 bg-gray-900/50 rounded-lg border border-gray-600 flex-shrink-0">
                 <input type="text" id="announcementTitleInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm text-white" placeholder="お知らせのタイトル">
+                <select id="announcementTypeInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm text-white">
+                    <option value="一般">一般のお知らせ</option>
+                    <option value="制限改定">⚠️ 制限改定</option>
+                </select>
                 <textarea id="announcementContentInput" class="w-full bg-gray-700 rounded-lg p-2 mb-2 text-sm text-white h-24" placeholder="お知らせの内容"></textarea>
                 <div class="flex justify-end gap-2">
                     <button id="cancelCreateAnnouncementBtn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm">キャンセル</button>
@@ -1105,7 +1109,387 @@
         </div>
     </div>
 
-    <script src="manual.js"></script>
+    <script>
+const manualData = [
+    {
+        id: "intro",
+        title: "1. アプリの概要",
+        icon: "🔰",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">スレッズワールドへようこそ！</h3>
+            <p class="mb-4 text-gray-300">本アプリは、オリジナルのカードを作成し、デッキを構築し、仲間たちとゲームの世界観を共有しながら遊ぶための「オリジナルカードゲーム・総合プラットフォーム」です。</p>
+            <p class="mb-6 text-gray-300">あなたが作り出したカードはデータベースに保存され、他のプレイヤーと共有されます。皆でカードプールを拡張しながら、最強のデッキを作り上げましょう。</p>
+            
+            <div class="bg-indigo-900/40 p-5 rounded-lg border border-indigo-700 mt-6 shadow-inner">
+                <h4 class="font-bold text-indigo-300 mb-3 text-lg">🔰 初めての方へ（クイックスタート）</h4>
+                <ol class="list-decimal list-inside space-y-3 text-gray-300">
+                    <li>まずは画面右上の<span class="bg-indigo-600 px-2 py-1 rounded text-white mx-1">新しいカードを追加</span>ボタンから、最初のカードを作成してみましょう！</li>
+                    <li>カードが増えてきたら、左側のパネルから<span class="bg-green-600 px-2 py-1 rounded text-white mx-1">新規作成</span>を押してデッキを組みます。</li>
+                    <li>デッキが完成したら、<span class="bg-yellow-600 px-2 py-1 rounded text-white mx-1">テストドロー</span>ボタンを押して、初期手札やドローの感覚を試してみましょう。</li>
+                    <li>右下のチャットパネルを開いて、作成したカードやデッキを送信（共有）し、他のプレイヤーに見てもらいましょう！</li>
+                </ol>
+            </div>
+        `
+    },
+    {
+        id: "deck_system",
+        title: "2. デッキ構築と分析",
+        icon: "📚",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">デッキの組み方</h3>
+            <p class="mb-6 text-gray-300">カードライブラリから使いたいカードを選んで、左側のデッキエディタに追加していきます。</p>
+
+            <h4 class="text-xl font-semibold text-yellow-400 mb-3 mt-8 border-b border-gray-700 pb-2">2つのデッキエリア</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+                    <h5 class="font-bold text-white mb-2">メインデッキ</h5>
+                    <p class="text-sm text-gray-300">ゲーム開始時にシャッフルして山札となる、通常のカードを入れる場所です。同じ名前の通常カードは4枚まで入れられます。</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+                    <h5 class="font-bold text-white mb-2">ストラクトデッキ</h5>
+                    <p class="text-sm text-gray-300">ストラクトカード（施設）など、ゲーム中いつでも確実に取り出せるカードを入れます。同名カードの枚数制限はありません。</p>
+                </div>
+            </div>
+
+            <h4 class="text-xl font-semibold text-sky-400 mb-3 mt-8 border-b border-gray-700 pb-2">アプリの便利機能</h4>
+            <ul class="list-disc list-inside space-y-4 text-gray-300">
+                <li><strong>自動保存:</strong> デッキの変更は常に裏側で自動保存されています。</li>
+                <li><strong>デッキの非公開:</strong> 詳細設定から「非公開」にすると、他のプレイヤーのデッキ一覧には表示されなくなります。</li>
+                <li><strong>テストドロー:</strong> 「テストドロー」ボタンを押すと、メインデッキをシャッフルして指定枚数のカードを引くシミュレーションができます。</li>
+                <li><strong>デッキ分析:</strong> 選択中のデッキの「平均コスト」「役割の分布」などをグラフやリストで自動計算します。</li>
+                <li><strong>画像として出力:</strong> デッキエディタ上部から、デッキリスト全体を1枚の画像としてダウンロードできます。</li>
+                <li><strong>変更履歴（タイムマシン）:</strong> デッキやカードの過去の変更履歴を確認できます。</li>
+            </ul>
+        `
+    },
+    {
+        id: "ui",
+        title: "3. 便利な表示機能",
+        icon: "🖥️",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">UIと表示モード</h3>
+            <p class="mb-6 text-gray-300">より快適にプレイ・閲覧するための各種機能をご紹介します。</p>
+
+            <h4 class="text-xl font-semibold text-white mb-3 mt-8 border-b border-gray-700 pb-2">画像のみモード（ギャラリーモード）</h4>
+            <p class="mb-4 text-gray-300">ヘッダーにある「画像のみ」のスイッチをONにすると、カードのテキスト部分が隠れ、イラストとコスト情報だけが大きく表示されるモードになります。</p>
+            <ul class="list-disc list-inside space-y-2 text-gray-300 ml-4 mb-6">
+                <li>デッキの全体像を俯瞰したいときや、配信画面に映すときに非常に便利です。</li>
+                <li>このモード中でも、制限カード・禁止カードには下部に小さく「制限/禁止」のバッジが表示されるため、ルール違反がないか一目で確認できます。</li>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-red-400 mb-3 mt-8 border-b border-gray-700 pb-2">禁止・制限バッジ</h4>
+            <p class="mb-4 text-gray-300">管理者が「強すぎる」と判断したカードには制限がかけられます。段階によって以下のバッジが表示されます。</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-800 p-3 rounded-lg border border-gray-600 flex items-center gap-3">
+                    <span class="bg-lime-600 text-white text-[10px] font-bold py-1 px-3 rounded-sm">仮制限</span>
+                    <span class="text-sm text-gray-300">デッキに3枚まで</span>
+                </div>
+                <div class="bg-gray-800 p-3 rounded-lg border border-gray-600 flex items-center gap-3">
+                    <span class="bg-orange-600 text-white text-[10px] font-bold py-1 px-3 rounded-sm">準制限</span>
+                    <span class="text-sm text-gray-300">デッキに2枚まで</span>
+                </div>
+                <div class="bg-gray-800 p-3 rounded-lg border border-gray-600 flex items-center gap-3">
+                    <span class="bg-yellow-600 text-white text-[10px] font-bold py-1 px-3 rounded-sm">制限</span>
+                    <span class="text-sm text-gray-300">デッキに1枚まで</span>
+                </div>
+                <div class="bg-gray-800 p-3 rounded-lg border border-gray-600 flex items-center gap-3">
+                    <span class="bg-red-600 text-white text-[10px] font-bold py-1 px-3 rounded-sm">禁止</span>
+                    <span class="text-sm text-gray-300">デッキ投入不可</span>
+                </div>
+            </div>
+
+            <h4 class="text-xl font-semibold text-emerald-400 mb-3 mt-8 border-b border-gray-700 pb-2">変更履歴機能（タイムマシン）</h4>
+            <p class="mb-4 text-gray-300">「誰がこのカードのステータスを変えたの？」「昨日のデッキの構成に戻したい」といった場合に役立つ機能です。</p>
+            <ul class="list-disc list-inside space-y-2 text-gray-300 ml-4 mb-6">
+                <li><strong>カードの履歴:</strong> カード編集画面の「変更履歴」ボタンから、過去50回分の保存履歴（誰が、いつ保存したか）を確認できます。</li>
+                <li><strong>デッキの履歴:</strong> デッキエディタの「履歴」ボタンから確認できます。（※デッキの履歴は、データ肥大化を防ぐため、前回の保存から30分以上経過した場合にのみ新しい履歴が残る仕組みになっています）</li>
+            </ul>
+        `
+    },
+    {
+        id: "chat_admin",
+        title: "4. チャットと管理者機能",
+        icon: "👑",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">チャット機能</h3>
+            <p class="mb-4 text-gray-300">画面右下のチャットアイコンをクリックするとチャットパネルが開きます。</p>
+            <ul class="list-disc list-inside space-y-2 text-gray-300 mb-8 ml-2">
+                <li><strong>共有:</strong> 各カードやデッキの「チャットで共有」ボタンから送信できます。</li>
+                <li><strong>ダイス:</strong> 「🎲」ボタンでランダムな出目を送信できます。</li>
+                <li><strong>リアクション・返信:</strong> メッセージへの絵文字リアクションやリプライが可能です。</li>
+            </ul>
+
+            <h3 class="text-2xl font-bold text-red-400 mb-4 border-b border-gray-700 pb-2">管理者向け機能</h3>
+            <p class="mb-4 text-gray-300">管理者権限を持つユーザーは以下の特権にアクセスできます。</p>
+            <ul class="list-disc list-inside space-y-4 text-gray-300 ml-2">
+                <li><strong>制限・禁止カードの指定:</strong> カード編集画面の最下部から、全ユーザーに適用される制限（1枚）や禁止（0枚）を指定できます。</li>
+                <li><strong>ユーザー権限の管理:</strong> ヘッダーの「管理パネル」から、他のユーザーを管理者に任命できます。</li>
+                <li><strong>お知らせの投稿:</strong> ヘッダーの「📢お知らせ」から、全ユーザー向けのメッセージを投稿できます。</li>
+                <li><strong>カード・デッキの削除:</strong> ルール違反のカードなどを強制削除できます。</li>
+            </ul>
+        `
+    }
+];
+
+const rulebookData = [
+    {
+        id: "rules",
+        title: "1. 基本ルールとフィールド",
+        icon: "⚔️",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">ゲームの流れと勝利条件</h3>
+            <p class="mb-6 text-gray-300">本ゲームは、ユニットをフィールドに展開し、相手の「コア」を破壊することを目的とした戦略ゲームです。</p>
+
+            <h4 class="text-xl font-semibold text-red-400 mb-3 mt-8 border-b border-gray-700 pb-2">勝利条件（コアカード）</h4>
+            <p class="mb-4 text-gray-300">コアカードは<strong>プレイヤー自身</strong>であり、これが攻撃され破壊されることで敗北します。</p>
+            <ul class="list-disc list-inside space-y-2 text-gray-300 ml-4 mb-6">
+                <li>基本的に第1行（それぞれのプレイヤーから見て一番手前）に置かれます。</li>
+                <li>1ターンにつきドローできる枚数や、初期資源などがこのカードによって決定されます。</li>
+                <li>特定のコアカードは追加のゲームルールを指定するものがあり、ゲーム性を大きく変える役割を持ちます。</li>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-cyan-400 mb-3 mt-8 border-b border-gray-700 pb-2">フィールドとユニットの行動</h4>
+            <p class="mb-4 text-gray-300">フィールドは両者合わせて<strong>4行</strong>で構成されており、各プレイヤーはそれぞれの手前側1行目にユニットを出撃させます。</p>
+            <p class="mb-4 text-gray-300">ユニットにはターンごとに行動が与えられ、<strong>「移動」</strong>または<strong>「攻撃」</strong>のいずれか一方を選んで実行します。これらの行動には共通の行動コストである<strong>アクトコスト</strong>を支払う必要があり、行動後ユニットは「レスト状態（行動済み）」になります。</p>
+
+            <div class="space-y-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+                    <h5 class="font-bold text-sky-300 mb-2">🏃 移動</h5>
+                    <p class="text-sm text-gray-300">周囲の他のマスに移動します。斜め移動も可能です。<br>ただし、前進する場合は「正面の行に敵ユニットが存在する場合」は前進できず、その敵ユニットをすべて破壊する必要があります。（後退や横移動は可能）</p>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-600">
+                    <h5 class="font-bold text-orange-300 mb-2">⚔️ 攻撃</h5>
+                    <p class="text-sm text-gray-300">正面の行に存在する敵ユニット、またはコアカードの中から任意の対象を選んで行います。<br>攻撃対象が非レスト状態の場合、反撃としてそのATK分のダメージを受けます。<br>※ユニットが3行目まで到達すると、相手のコアカード（プレイヤー本体）に対して直接攻撃を行うことができます。</p>
+                </div>
+            </div>
+            <p class="text-gray-400 text-sm">※[機動]などの能力でレストしなかった場合、続けて攻撃を行うこともできます。</p>
+        `
+    },
+    {
+        id: "cards",
+        title: "2. カードの種類",
+        icon: "🃏",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">カードタイプと役割</h3>
+            
+            <div class="space-y-6">
+                <div class="border-l-4 border-red-500 pl-4">
+                    <h4 class="text-lg font-bold text-white mb-1">ユニットカード</h4>
+                    <p class="text-sm text-gray-300">戦闘を行うこのゲームの主役です。プレイコスト支払って第1行に置かれます。ATK（攻撃力）、HP（体力）のステータスが存在し、ダメージを受けてHPが0以下になった瞬間破壊されて墓地へ送られます。行動時には「アクトコスト」を消費します。</p>
+                </div>
+
+                <div class="border-l-4 border-gray-500 pl-4">
+                    <h4 class="text-lg font-bold text-white mb-1">フォートカード</h4>
+                    <p class="text-sm text-gray-300">要塞、塹壕などです。タイプが異なるだけでほとんどユニットカードと同じ扱いであり、場に出せるし[不攻]を持っていない限り攻撃も反撃も行います。異なる点は、必ず<strong>[不動]（移動不可）</strong>を持っていることです。</p>
+                </div>
+
+                <div class="border-l-4 border-emerald-500 pl-4">
+                    <h4 class="text-lg font-bold text-white mb-1">ストラクトカード（施設）</h4>
+                    <p class="text-sm text-gray-300">資源を生産または変換する効果を持ちます。国家の経済を支える都市のようなものです。<br>
+                    メインデッキとは別の「ストラクトデッキ」に置かれており、自由に中を確認してプレイコストを支払い、専用のストラクトゾーン（マナゾーンのような場所）に出すことができます。<br>
+                    資源の生産以外にも、コスパは悪いが毎ターン繰り返し使えるドローや妨害効果を持つものもあります。</p>
+                </div>
+
+                <div class="border-l-4 border-yellow-500 pl-4">
+                    <h4 class="text-lg font-bold text-white mb-1">グランドカード</h4>
+                    <p class="text-sm text-gray-300">地形、気候などを表します。プレイヤーそれぞれで1枚ずつ出せる永続効果を持ったカードです。</p>
+                </div>
+
+                <div class="border-l-4 border-purple-500 pl-4">
+                    <h4 class="text-lg font-bold text-white mb-1">タクトカード</h4>
+                    <p class="text-sm text-gray-300">戦術、戦略、政策などを表します。基本的に使い切りで、その分強力な効果（莫大な資源獲得、ドロー、妨害など）を持ちます。以下の3種類があります。</p>
+                    <ul class="list-disc list-inside text-sm text-gray-400 mt-2 ml-2 space-y-1">
+                        <li><strong>通常:</strong> 普通のタクトカード。</li>
+                        <li><strong>速攻:</strong> 相手が何かをした瞬間に手札から出て発動します。例外的に相手ターンでも発動可能です。</li>
+                        <li><strong>永続:</strong> 出した瞬間から永続的に効果を発揮します（バフや繰り返し使えるドローソースなど）。</li>
+                    </ul>
+                </div>
+            </div>
+        `
+    },
+    {
+        id: "resources",
+        title: "3. 資源システム",
+        icon: "💎",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">7つの資源（リソース）</h3>
+            <p class="mb-6 text-gray-300">プレイヤーはカードに指定された資源を消費して、ユニットを出したり動かしたりします。</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div class="bg-gray-800 p-3 rounded border border-yellow-600">
+                    <span class="font-bold text-yellow-400">💰 資金</span>
+                    <p class="text-xs text-gray-300 mt-1">安定して供給され、ほぼ全てのデッキで使用されます。</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-orange-600">
+                    <span class="font-bold text-orange-400">👤 人的資源</span>
+                    <p class="text-xs text-gray-300 mt-1">安定して供給され、ほぼ全てのデッキで使用されます。</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-green-600">
+                    <span class="font-bold text-green-400">🌿 自然資源</span>
+                    <p class="text-xs text-gray-300 mt-1">時間はかかりますが低コストで安定供給。多数のユニットを展開するデッキに向きます。</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-gray-400">
+                    <span class="font-bold text-gray-300">⛏️ 鉱石資源</span>
+                    <p class="text-xs text-gray-300 mt-1">中程度のコスト。瞬間的な展開や中長期戦術に向きます。</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-red-600">
+                    <span class="font-bold text-red-400">🛢️ 燃料資源</span>
+                    <p class="text-xs text-gray-300 mt-1">低コストで安定して長期的に供給可能。強力なユニットを安定して展開するデッキに要求されます。</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-cyan-600">
+                    <span class="font-bold text-cyan-400">⚡ 電気資源</span>
+                    <p class="text-xs text-gray-300 mt-1">高コストですが安定して長期供給可能。強力なユニットを安定展開するデッキに向きます。</p>
+                </div>
+                <div class="bg-gray-800 p-3 rounded border border-purple-600 sm:col-span-2">
+                    <span class="font-bold text-purple-400">✨ 魔法資源</span>
+                    <p class="text-xs text-gray-300 mt-1">非常に希少。高コストかつ高火力のデッキで使用されます。</p>
+                </div>
+            </div>
+
+            <h4 class="text-xl font-semibold text-white mb-3 border-b border-gray-700 pb-2">コストの種類</h4>
+            <ul class="list-disc list-inside space-y-3 text-gray-300">
+                <li><strong>プレイコスト:</strong> 手札からそのカードを使用・召喚するために必要な資源です。</li>
+                <li><strong>アクトコスト:</strong> 場のユニットやフォートが、攻撃や移動を行う際に支払う追加コストです。</li>
+                <li><strong>選択コスト:</strong> 「人か金のどちらか1つ」のように、プレイヤーが支払う資源を選べる柔軟なコストです。</li>
+            </ul>
+        `
+    },
+    {
+        id: "keywords",
+        title: "4. キーワード効果",
+        icon: "✨",
+        content: `
+            <h3 class="text-2xl font-bold text-white mb-4">キーワード効果一覧</h3>
+            <p class="mb-4 text-gray-300">カードが持つ特殊な能力のリストです。</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-300">
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">装甲</strong><br>値だけ受けるダメージを軽減する。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">貫通</strong><br>値だけ相手の[装甲]を無視してダメージを与える。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">衝撃</strong><br>与ダメージ時：対象をレスト状態にする。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">帯電</strong><br>攻撃時：電(数はアクトコスト総量)を支払い、装甲を無視する。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">機動</strong><br>移動してもレストしない（ただし一度のみ）。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">連撃</strong><br>連続で〇回攻撃できる（何回攻撃しても攻撃後にレストする）。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">航空</strong><br>[航空]を持たず、かつ攻撃力が◯以下のユニットから反撃されず、攻撃されない。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">対空</strong><br>値だけ相手の[航空]を無視する。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">曲射</strong><br>〇列先に反撃を受けずに攻撃できる。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-yellow-400">伝説</strong><br>このカードはデッキに1枚しか入れられない。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-red-400">神話</strong><br>この効果を持つカードはデッキに1枚しか入れられない。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">警戒</strong><br>自分のターン終了時にレストが解除される。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">守護</strong><br>相手の[曲射]または[航空]のないユニットは、このユニットの両隣のユニットを攻撃できない。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">自爆</strong><br>このユニットを破壊：隣接するユニットに〇だけダメージを与える。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">奇襲</strong><br>敵の支配下でないなら第2列に出撃できる。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">不動</strong><br>移動不可。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">不攻</strong><br>攻撃不可。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">巨撃</strong><br>攻撃対象の横のユニットにもダメージを与える（反撃は受けない）。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">データリンク</strong><br>隣接するユニットの数だけ電気のアクトコストを軽減する。</div>
+                <div class="border-b border-gray-700 pb-2"><strong class="text-white">効果保護</strong><br>値以上の[効果貫通]を持たないカードの効果を受けない。</div>
+                <div class="border-b border-gray-700 pb-2 md:col-span-2"><strong class="text-purple-400">魔の代わりに[魂]で支払う</strong><br>魔法資源の代わりに魂で支払うことができる。魂で支払う時、墓地のカードをその数だけ除外する。</div>
+            </div>
+        `
+    }
+];
+
+window.renderUsageModal = function(type = 'manual') {
+    const modalContent = document.getElementById('usageModalContent');
+    if (!modalContent) return;
+
+    let sidebarHtml = '';
+    let bodyHtml = '';
+    
+    // 表示するデータソースとタイトルを切り替え
+    const dataObj = type === 'rulebook' ? rulebookData : manualData;
+    const modalTitle = type === 'rulebook' ? '📖 ルールブック (v1.0)' : '📖 アプリ使用方法';
+
+    dataObj.forEach((section, index) => {
+        const isActive = index === 0;
+        
+        // サイドバーボタン
+        sidebarHtml += `
+            <li>
+                <button 
+                    class="w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center gap-3 manual-tab-btn ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}"
+                    data-target="${section.id}"
+                >
+                    <span class="text-xl">${section.icon}</span>
+                    <span class="font-bold text-sm">${section.title}</span>
+                </button>
+            </li>
+        `;
+
+        // 本文コンテンツ
+        bodyHtml += `
+            <div id="manual-content-${section.id}" class="manual-section ${isActive ? 'block animate-fadeIn' : 'hidden'}">
+                ${section.content}
+            </div>
+        `;
+    });
+
+    const fullHtml = `
+        <div class="flex flex-col h-full bg-gray-800 rounded-lg shadow-2xl border border-gray-700 overflow-hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-5 border-b border-gray-700 bg-gray-850 flex-shrink-0">
+                <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+                    <span class="text-3xl">${type === 'rulebook' ? '⚔️' : '📖'}</span>${modalTitle}
+                </h2>
+                <button type="button" id="closeUsageModal" class="text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="flex flex-grow overflow-hidden min-h-0 bg-gray-900/30">
+                <!-- Sidebar Navigation -->
+                <div class="w-1/3 max-w-[280px] border-r border-gray-700 p-4 overflow-y-auto bg-gray-900/80 flex-shrink-0 shadow-[inset_-10px_0_15px_-10px_rgba(0,0,0,0.5)]">
+                    <ul class="space-y-2">
+                        ${sidebarHtml}
+                    </ul>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="w-2/3 flex-grow p-8 overflow-y-auto text-gray-300 leading-relaxed scroll-smooth relative" id="usageContentArea">
+                    ${bodyHtml}
+                </div>
+            </div>
+        </div>
+    `;
+
+    modalContent.innerHTML = fullHtml;
+
+    // イベントリスナーの登録
+    document.getElementById('closeUsageModal').onclick = () => {
+        document.getElementById('usageModal').style.display = 'none';
+    };
+
+    const tabBtns = document.querySelectorAll('.manual-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.onclick = (e) => {
+            // タブの見た目更新
+            tabBtns.forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+                b.classList.add('text-gray-400', 'hover:bg-gray-800', 'hover:text-gray-200');
+            });
+            e.currentTarget.classList.remove('text-gray-400', 'hover:bg-gray-800', 'hover:text-gray-200');
+            e.currentTarget.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+
+            // コンテンツの切り替え
+            const targetId = e.currentTarget.getAttribute('data-target');
+            document.querySelectorAll('.manual-section').forEach(sec => {
+                sec.classList.add('hidden');
+                sec.classList.remove('animate-fadeIn');
+            });
+            const targetSec = document.getElementById(`manual-content-${targetId}`);
+            if(targetSec) {
+                targetSec.classList.remove('hidden');
+                targetSec.classList.add('block', 'animate-fadeIn');
+            }
+            
+            // スクロールトップへ
+            document.getElementById('usageContentArea').scrollTop = 0;
+        };
+    });
+}
+
+</script>
     <script type="module">
         // Firebase SDK のインポート
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
