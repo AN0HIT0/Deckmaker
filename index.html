@@ -657,7 +657,8 @@
                                 </label>
                                 <div>
                                     <label for="sortBy" class="text-xs text-gray-400 block">並べ替え:</label>
-                                    <select id="sortBy" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm mt-1"></select>
+                                    <select id="sortBy" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm mt-1">
+                                        <option value="rating">総合評価が高い順</option></select>
                                 </div>
                             </div>
                         </div>
@@ -713,6 +714,10 @@
             <div class="h-full overflow-y-auto p-4">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-white">デッキ一覧</h2>
+                    <select id="deckSort" class="bg-gray-700 text-white border border-gray-600 rounded-lg px-4 py-2 w-32" onchange="renderDeckGallery()">
+                        <option value="newest">新しい順</option>
+                        <option value="rating">総合評価順</option>
+                    </select>
                 </div>
                 <div id="deckGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     <!-- デッキカードがここにレンダリングされる -->
@@ -780,13 +785,44 @@
                         <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
                             <!-- 5段階評価 UI -->
                             <div class="mb-4">
-                                <h3 class="text-sm font-semibold text-gray-300 mb-2">評価</h3>
-                                <div class="flex items-center gap-2">
-                                    <div id="deckDetailRatingStars" class="flex text-2xl text-gray-600 cursor-pointer">
-                                        <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                <div>
+                                    <h3 class="font-bold text-white text-sm">評価</h3>
+                                    <p class="text-[10px] text-gray-400 mt-1 mb-2">※星をクリックした項目だけが保存されます</p>
+                                </div>
+                                <div id="deckDetailRatingSection" class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex flex-col gap-2">
+                                    <!-- パワー -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 w-20">
+                                            <span class="text-xs font-bold text-yellow-400">パワー</span>
+                                            <span class="rating-val-power text-sm text-yellow-400 font-bold">-</span>
+                                        </div>
+                                        <div class="rating-stars-power flex text-xl cursor-pointer" data-type="power">
+                                            <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                        </div>
+                                        <span class="rating-count-power text-[10px] text-gray-500 w-8 text-right">0件</span>
                                     </div>
-                                    <span id="deckDetailAvgRating" class="text-sm text-yellow-400 font-bold ml-2">--</span>
-                                    <span id="deckDetailRatingCount" class="text-xs text-gray-400">(0件)</span>
+                                    <!-- 面白さ -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 w-20">
+                                            <span class="text-xs font-bold text-green-400">面白さ</span>
+                                            <span class="rating-val-fun text-sm text-green-400 font-bold">-</span>
+                                        </div>
+                                        <div class="rating-stars-fun flex text-xl cursor-pointer" data-type="fun">
+                                            <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                        </div>
+                                        <span class="rating-count-fun text-[10px] text-gray-500 w-8 text-right">0件</span>
+                                    </div>
+                                    <!-- ビジュアル -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 w-20">
+                                            <span class="text-xs font-bold text-pink-400">ビジュアル</span>
+                                            <span class="rating-val-visual text-sm text-pink-400 font-bold">-</span>
+                                        </div>
+                                        <div class="rating-stars-visual flex text-xl cursor-pointer" data-type="visual">
+                                            <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                        </div>
+                                        <span class="rating-count-visual text-[10px] text-gray-500 w-8 text-right">0件</span>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1623,6 +1659,7 @@ window.renderUsageModal = function(type = 'manual') {
         let allCards = [];
         let allDecks = [];
         let allWorlds = [];
+        let allRatings = [];
         let currentDeck = null; 
         let costChart = null;
         let typeDistributionChart = null;
@@ -1683,6 +1720,23 @@ window.renderUsageModal = function(type = 'manual') {
         }
 
         // --- モード切替のUI更新関数 ---
+        
+        function getAverageRating(targetId) {
+            const ratings = allRatings.filter(r => r.targetId === targetId);
+            if (ratings.length === 0) return 0;
+            let sum = 0;
+            let count = 0;
+            ratings.forEach(r => {
+                if (r.scores) {
+                    if (r.scores.power) { sum += r.scores.power; count++; }
+                    if (r.scores.fun) { sum += r.scores.fun; count++; }
+                    if (r.scores.visual) { sum += r.scores.visual; count++; }
+                } else if (r.score) {
+                    sum += r.score; count++;
+                }
+            });
+            return count === 0 ? 0 : sum / count;
+        }
         function updateAppModeUI() {
             const modeSearchBtn = getEl('modeSearchBtn');
             const modeWorldBtn = getEl('modeWorldBtn');
@@ -2106,6 +2160,20 @@ window.renderUsageModal = function(type = 'manual') {
                     showSyncStatus('success', 2000);
                 }
             });
+
+            // Ratings Listener
+            onSnapshot(collection(db, "ratings"), { includeMetadataChanges: true }, (snapshot) => {
+                allRatings = [];
+                snapshot.forEach(docSnap => {
+                    allRatings.push(docSnap.data());
+                });
+                refreshAllUI();
+                if (snapshot.metadata.hasPendingWrites) {
+                    showSyncStatus('syncing');
+                } else {
+                    showSyncStatus('success', 2000);
+                }
+            });
         }
         
         // --- フィルターとソートのオプション更新 ---
@@ -2154,7 +2222,7 @@ window.renderUsageModal = function(type = 'manual') {
                 popularTags.appendChild(tagEl);
             });
             
-            sortBy.innerHTML = `<option value="name_asc">カード名順</option><option value="attack_desc">攻撃力 (高い順)</option><option value="attack_asc">攻撃力 (低い順)</option><option value="defense_desc">体力 (高い順)</option><option value="defense_asc">体力 (低い順)</option><option value="total_cost_desc">プレイコスト総量 (高い順)</option><option value="total_cost_asc">プレイコスト総量 (低い順)</option>`;
+            sortBy.innerHTML = `<option value="name_asc">カード名順</option><option value="attack_desc">攻撃力 (高い順)</option><option value="attack_asc">攻撃力 (低い順)</option><option value="defense_desc">体力 (高い順)</option><option value="defense_asc">体力 (低い順)</option><option value="total_cost_desc">プレイコスト総量 (高い順)</option><option value="total_cost_asc">プレイコスト総量 (低い順)</option><option value="rating">総合評価順</option>`;
 
             // 選択状態を復元
             if (currentTag) tagFilter.value = currentTag;
@@ -2184,7 +2252,7 @@ window.renderUsageModal = function(type = 'manual') {
 
 
         // --- 評価・コメント機能 (Firebase) ---
-        async function loadRatingsAndComments(targetId, targetType, avgElId, countElId, starsContainerId, listElId) {
+        async function loadRatingsAndComments(targetId, targetType, avgElId, listElId) {
             const listEl = getEl(listElId);
             listEl.innerHTML = '<div class="text-center text-gray-500 text-sm mt-4">読み込み中...</div>';
             
@@ -2192,35 +2260,55 @@ window.renderUsageModal = function(type = 'manual') {
             try {
                 const qRatings = query(collection(db, "ratings"), where("targetId", "==", targetId));
                 const ratingsSnap = await getDocs(qRatings);
-                let totalScore = 0;
-                let count = 0;
-                let myRating = 0;
+                let totals = { power: 0, fun: 0, visual: 0 };
+                let counts = { power: 0, fun: 0, visual: 0 };
+                let myRatings = { power: 0, fun: 0, visual: 0 };
                 
                 ratingsSnap.forEach(doc => {
                     const data = doc.data();
-                    totalScore += data.score;
-                    count++;
+                    const scores = data.scores || { power: data.score || 0 };
+                    
+                    if (scores.power) { totals.power += scores.power; counts.power++; }
+                    if (scores.fun) { totals.fun += scores.fun; counts.fun++; }
+                    if (scores.visual) { totals.visual += scores.visual; counts.visual++; }
+                    
                     if (currentUser && data.authorUid === currentUser.uid) {
-                        myRating = data.score;
+                        myRatings.power = scores.power || 0;
+                        myRatings.fun = scores.fun || 0;
+                        myRatings.visual = scores.visual || 0;
                     }
                 });
                 
-                const avg = count > 0 ? (totalScore / count).toFixed(1) : '-';
-                getEl(avgElId).textContent = avg;
-                getEl(countElId).textContent = `${count} 件の評価`;
+                const avgPower = counts.power > 0 ? (totals.power / counts.power).toFixed(1) : '-';
+                const avgFun = counts.fun > 0 ? (totals.fun / counts.fun).toFixed(1) : '-';
+                const avgVisual = counts.visual > 0 ? (totals.visual / counts.visual).toFixed(1) : '-';
                 
-                // 自分の評価を星に反映
-                const stars = getEl(starsContainerId).querySelectorAll('span');
-                stars.forEach(star => {
-                    const val = parseInt(star.dataset.val);
-                    if (val <= myRating) {
-                        star.classList.add('text-yellow-400');
-                        star.classList.remove('text-gray-600');
-                    } else {
-                        star.classList.remove('text-yellow-400');
-                        star.classList.add('text-gray-600');
-                    }
-                });
+                const avgEl = getEl(avgElId);
+                if (avgEl) {
+                    avgEl.querySelector('.rating-val-power').textContent = avgPower;
+                    avgEl.querySelector('.rating-count-power').textContent = `${counts.power}件`;
+                    avgEl.querySelector('.rating-val-fun').textContent = avgFun;
+                    avgEl.querySelector('.rating-count-fun').textContent = `${counts.fun}件`;
+                    avgEl.querySelector('.rating-val-visual').textContent = avgVisual;
+                    avgEl.querySelector('.rating-count-visual').textContent = `${counts.visual}件`;
+                    
+                    // 星の更新
+                    const updateStars = (type, colorClass) => {
+                        const stars = avgEl.querySelectorAll(`.rating-stars-${type} span`);
+                        stars.forEach(star => {
+                            const val = parseInt(star.dataset.val);
+                            if (val <= myRatings[type]) {
+                                star.className = `transition-colors ${colorClass}`;
+                            } else {
+                                star.className = 'transition-colors text-gray-600 hover:text-gray-400';
+                            }
+                        });
+                    };
+                    
+                    updateStars('power', 'text-yellow-400 hover:text-yellow-300');
+                    updateStars('fun', 'text-green-400 hover:text-green-300');
+                    updateStars('visual', 'text-pink-400 hover:text-pink-300');
+                }
             } catch (e) {
                 console.error("評価読み込みエラー:", e);
             }
@@ -2259,20 +2347,33 @@ window.renderUsageModal = function(type = 'manual') {
             }
         }
         
-        async function submitRating(targetId, targetType, score, starsContainerId, onComplete) {
+        async function submitRating(targetId, targetType, type, score, onComplete) {
             if (!currentUser) {
                 showAlert('評価を送信するにはログインが必要です。');
                 return;
             }
             try {
                 const ratingId = `${targetId}_${currentUser.uid}`;
-                await setDoc(doc(db, "ratings", ratingId), {
+                const docRef = doc(db, "ratings", ratingId);
+                const docSnap = await getDoc(docRef);
+                
+                let data = {
                     targetId: targetId,
                     targetType: targetType,
                     authorUid: currentUser.uid,
-                    score: score,
                     updatedAt: serverTimestamp()
-                });
+                };
+                
+                if (docSnap.exists()) {
+                    const existing = docSnap.data();
+                    data.scores = existing.scores || { power: existing.score || 0 };
+                } else {
+                    data.scores = {};
+                }
+                
+                data.scores[type] = score;
+
+                await setDoc(docRef, data, { merge: true });
                 onComplete();
             } catch (e) {
                 console.error("評価送信エラー:", e);
@@ -2280,6 +2381,53 @@ window.renderUsageModal = function(type = 'manual') {
             }
         }
         
+        window.editComment = (commentId, currentText) => {
+            const box = document.getElementById(`comment-box-${commentId}`);
+            if (!box) return;
+            box.innerHTML = `
+                <div class="flex flex-col gap-2">
+                    <textarea id="edit-input-${commentId}" class="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500" rows="3"></textarea>
+                    <div class="flex justify-end gap-2">
+                        <button onclick="cancelEditComment('${commentId}', '${currentText}')" class="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-500">キャンセル</button>
+                        <button onclick="saveComment('${commentId}')" class="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-500">保存</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById(`edit-input-${commentId}`).value = currentText;
+        };
+
+        window.cancelEditComment = (commentId, currentText) => {
+            // Simply re-render to cancel
+            const listElId = activeDeckDetailId ? 'deckDetailCommentsList' : 'cardDetailCommentsList';
+            const targetId = activeDeckDetailId || document.getElementById('cardDetailCommentsList').dataset.targetId;
+            const targetType = activeDeckDetailId ? 'deck' : 'card';
+            const avgElId = activeDeckDetailId ? 'deckDetailRatingSection' : 'cardDetailRatingSection';
+            loadRatingsAndComments(targetId, targetType, avgElId, listElId);
+        };
+
+        window.saveComment = async (commentId) => {
+            const input = document.getElementById(`edit-input-${commentId}`);
+            const newText = input.value.trim();
+            if (!newText) return;
+            try {
+                input.disabled = true;
+                await updateDoc(doc(db, "comments", commentId), {
+                    text: newText,
+                    updatedAt: serverTimestamp()
+                });
+                // Re-render
+                const listElId = activeDeckDetailId ? 'deckDetailCommentsList' : 'cardDetailCommentsList';
+                const targetId = activeDeckDetailId || document.getElementById('cardDetailCommentsList').dataset.targetId;
+                const targetType = activeDeckDetailId ? 'deck' : 'card';
+                const avgElId = activeDeckDetailId ? 'deckDetailRatingSection' : 'cardDetailRatingSection';
+                loadRatingsAndComments(targetId, targetType, avgElId, listElId);
+            } catch (e) {
+                console.error("コメント更新エラー:", e);
+                showAlert('コメントの更新に失敗しました。');
+                input.disabled = false;
+            }
+        };
+
         async function submitComment(targetId, targetType, inputElId, onComplete) {
             if (!currentUser) {
                 showAlert('コメントを送信するにはログインが必要です。');
@@ -2399,13 +2547,17 @@ window.renderUsageModal = function(type = 'manual') {
             `;
 
             // Setup Ratings & Comments
-            const reloadRC = () => loadRatingsAndComments(deck.id, 'deck', 'deckDetailAvgRating', 'deckDetailRatingCount', 'deckDetailRatingStars', 'deckDetailCommentsList');
+            const reloadRC = () => loadRatingsAndComments(deck.id, 'deck', 'deckDetailRatingSection', 'deckDetailCommentsList');
             reloadRC();
             
-            const stars = getEl('deckDetailRatingStars').querySelectorAll('span');
-            stars.forEach(star => {
-                star.onclick = () => submitRating(deck.id, 'deck', parseInt(star.dataset.val), 'deckDetailRatingStars', reloadRC);
+            
+            ['power', 'fun', 'visual'].forEach(type => {
+                const stars = getEl('deckDetailRatingSection').querySelectorAll(`.rating-stars-${type} span`);
+                stars.forEach(star => {
+                    star.onclick = () => submitRating(deck.id, 'deck', type, parseInt(star.dataset.val), reloadRC);
+                });
             });
+
             
             const submitBtn = getEl('deckDetailCommentSubmit');
             submitBtn.onclick = () => submitComment(deck.id, 'deck', 'deckDetailCommentInput', reloadRC);
@@ -2436,11 +2588,19 @@ window.renderUsageModal = function(type = 'manual') {
             const grid = getEl('deckGalleryGrid');
             if (!grid) return;
 
-            const visibleDecks = allDecks.filter(deck => {
-                if (isAdmin) return true;
-                if (deck.author === (currentUser ? currentUser.uid : null)) return true;
-                return !deck.isPrivate;
+            const sortValue = document.getElementById('deckSort') ? document.getElementById('deckSort').value : 'newest';
+            let visibleDecks = allDecks.filter(deck => {
+                if (isAdmin) return true; // 管理者は全て見える
+                if (deck.author === (currentUser ? currentUser.uid : null)) return true; // 自分のデッキは見える
+                return !deck.isPrivate; // 他人のデッキは非公開なら見えない
             });
+            
+            // ソート
+            if (sortValue === 'rating') {
+                visibleDecks.sort((a, b) => getAverageRating(b.id) - getAverageRating(a.id));
+            } else {
+                visibleDecks.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+            }
 
             if (visibleDecks.length === 0) {
                 grid.innerHTML = '<p class="text-gray-500 text-center py-12 col-span-full">デッキがまだありません。</p>';
@@ -5118,20 +5278,20 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 const defaultImage = `https://placehold.co/400x560/2d3748/e2e8f0?text=${encodeURIComponent(card.name)}`;
                 const imageUrl = card.imageUrl || defaultImage;
 
-                const layoutClasses = 'flex flex-col md:flex-row gap-6 h-full';
+                const layoutClasses = 'flex flex-col md:flex-row gap-4 md:gap-6';
                 const imageContainerClasses = 'w-full md:w-1/2 flex-shrink-0 flex items-center justify-center';
-                const infoContainerClasses = 'w-full md:w-1/2 overflow-y-auto pr-2 pb-4';
+                const infoContainerClasses = 'w-full md:w-1/2 flex flex-col gap-3';
                 
-                // 画像自体を横向き（90度回転）にするスタイルを追加しつつ、レイアウトは左右分割に戻す
-                const imageStyle = isGrand 
-                    ? 'max-height: 35vh; max-width: 100%; object-fit: contain; transform: rotate(90deg);' 
-                    : 'max-height: 70vh; max-width: 100%; object-fit: contain;';
+                const imageClass = isGrand 
+                    ? 'w-full max-h-[40vh] md:max-h-[50vh] object-contain rounded-lg shadow-lg' 
+                    : 'w-full max-h-[45vh] md:max-h-[70vh] object-contain rounded-lg shadow-lg';
+                const imageStyle = isGrand ? 'transform: rotate(90deg);' : '';
 
                 bodyEl.innerHTML = `
-                    <div class="flex flex-col h-full gap-4">
+                    <div class="flex flex-col gap-6 pb-6">
                         <div class="${layoutClasses}">
                             <div class="${imageContainerClasses}">
-                                <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="rounded-lg shadow-lg" style="${imageStyle}">
+                                <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="${imageClass}" style="${imageStyle}">
                             </div>
                             <div class="${infoContainerClasses}">
                                 ${createCardTextDetailHtml(card)}
@@ -5139,25 +5299,49 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                         </div>
                         
                         <!-- 評価・コメントセクション -->
-                        <div class="mt-4 pt-4 border-t border-gray-700 flex flex-col md:flex-row gap-4 shrink-0" style="min-height: 250px;">
+                        <div class="pt-4 border-t border-gray-700 flex flex-col md:flex-row gap-4 shrink-0">
                             <!-- 評価 -->
                             <div class="w-full md:w-1/3 flex flex-col gap-2">
-                                <h3 class="font-bold text-white">評価</h3>
-                                <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex items-center justify-between">
-                                    <div class="text-center">
-                                        <div class="text-2xl font-bold text-yellow-400" id="cardDetailAvgRating">-</div>
-                                        <div class="text-[10px] text-gray-400" id="cardDetailRatingCount">0 件</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="flex gap-1 text-xl text-gray-600 cursor-pointer" id="cardDetailRatingStars">
-                                            <span data-val="1" class="hover:text-yellow-400 transition-colors">★</span>
-                                            <span data-val="2" class="hover:text-yellow-400 transition-colors">★</span>
-                                            <span data-val="3" class="hover:text-yellow-400 transition-colors">★</span>
-                                            <span data-val="4" class="hover:text-yellow-400 transition-colors">★</span>
-                                            <span data-val="5" class="hover:text-yellow-400 transition-colors">★</span>
+                                <div>
+                                    <h3 class="font-bold text-white">評価</h3><p class="text-[10px] text-gray-400 mt-1">※星をクリックした項目だけが保存されます</p>
+                                </div>
+                                
+                                <div id="cardDetailRatingSection" class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex flex-col gap-2">
+                                    <!-- パワー -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 w-20">
+                                            <span class="text-xs font-bold text-yellow-400">パワー</span>
+                                            <span class="rating-val-power text-sm text-yellow-400 font-bold">-</span>
                                         </div>
+                                        <div class="rating-stars-power flex text-xl cursor-pointer" data-type="power">
+                                            <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                        </div>
+                                        <span class="rating-count-power text-[10px] text-gray-500 w-8 text-right">0件</span>
+                                    </div>
+                                    <!-- 面白さ -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 w-20">
+                                            <span class="text-xs font-bold text-green-400">面白さ</span>
+                                            <span class="rating-val-fun text-sm text-green-400 font-bold">-</span>
+                                        </div>
+                                        <div class="rating-stars-fun flex text-xl cursor-pointer" data-type="fun">
+                                            <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                        </div>
+                                        <span class="rating-count-fun text-[10px] text-gray-500 w-8 text-right">0件</span>
+                                    </div>
+                                    <!-- ビジュアル -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 w-20">
+                                            <span class="text-xs font-bold text-pink-400">ビジュアル</span>
+                                            <span class="rating-val-visual text-sm text-pink-400 font-bold">-</span>
+                                        </div>
+                                        <div class="rating-stars-visual flex text-xl cursor-pointer" data-type="visual">
+                                            <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                        </div>
+                                        <span class="rating-count-visual text-[10px] text-gray-500 w-8 text-right">0件</span>
                                     </div>
                                 </div>
+
                             </div>
                             <!-- コメント -->
                             <div class="w-full md:w-2/3 flex flex-col gap-2 h-full">
@@ -5174,12 +5358,14 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 `;
                 
                 // Ratings and Comments bindings for Card
-                const reloadCardRC = () => loadRatingsAndComments(card.id, 'card', 'cardDetailAvgRating', 'cardDetailRatingCount', 'cardDetailRatingStars', 'cardDetailCommentsList');
+                const reloadCardRC = () => loadRatingsAndComments(card.id, 'card', 'cardDetailRatingSection', 'cardDetailCommentsList');
                 reloadCardRC();
                 
-                const cStars = getEl('cardDetailRatingStars').querySelectorAll('span');
-                cStars.forEach(star => {
-                    star.onclick = () => submitRating(card.id, 'card', parseInt(star.dataset.val), 'cardDetailRatingStars', reloadCardRC);
+                ['power', 'fun', 'visual'].forEach(type => {
+                    const stars = getEl('cardDetailRatingSection').querySelectorAll(`.rating-stars-${type} span`);
+                    stars.forEach(star => {
+                        star.onclick = () => submitRating(card.id, 'card', type, parseInt(star.dataset.val), reloadCardRC);
+                    });
                 });
                 
                 getEl('cardDetailCommentSubmit').onclick = () => submitComment(card.id, 'card', 'cardDetailCommentInput', reloadCardRC);
