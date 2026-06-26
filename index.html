@@ -541,6 +541,14 @@
 
                         <div class="flex-grow overflow-y-auto pr-2">
                             <!-- デッキセクション -->
+                            
+                            <!-- 代表カード (最大3枚) -->
+                            <div class="mb-4 pb-4 border-b border-gray-700">
+                                <h3 class="text-lg font-semibold text-emerald-400 mb-2">代表カード (最大3枚)</h3>
+                                <div id="representativeCardsArea" class="grid grid-cols-3 gap-2">
+                                    <!-- 代表カードスロット -->
+                                </div>
+                            </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-amber-400 mb-2">コア</h3>
                                 <div id="coreDeck" class="p-2 bg-gray-900/50 rounded-lg deck-section flex gap-4 items-start"></div>
@@ -700,7 +708,19 @@
             </div>
             
         
-            <!-- 世界観パネル -->
+            <!-- デッキ一覧パネル -->
+        <section id="deckListSection" class="hidden flex-grow w-full overflow-hidden">
+            <div class="h-full overflow-y-auto p-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-white">デッキ一覧</h2>
+                </div>
+                <div id="deckGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- デッキカードがここにレンダリングされる -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 世界観パネル -->
             <div id="worldLorePanel" class="w-full flex flex-col md:flex-row gap-4 min-h-0 hidden">
                 <!-- 左: 世界リスト -->
                 <div class="w-full md:w-1/3 bg-gray-800 rounded-lg shadow-xl p-4 flex flex-col min-h-0 border border-gray-700">
@@ -728,6 +748,64 @@
                     </div>
                 </div>
             </div>
+
+        <!-- デッキ詳細モーダル -->
+        <div id="deckDetailModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
+            <div class="bg-gray-800 rounded-xl p-4 sm:p-6 w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-600 shadow-2xl relative">
+                <!-- 閉じるボタン -->
+                <button id="closeDeckDetailModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <!-- ヘッダー -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 pb-4 border-b border-gray-700 shrink-0 gap-4">
+                    <h2 id="deckDetailModalTitle" class="text-2xl font-bold text-white pr-8"></h2>
+                    <div class="flex gap-2">
+                        <button id="deckDetailModalEditBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-4 rounded-lg transition-colors text-sm shadow hidden">編集する</button>
+                        <button id="deckDetailModalCopyBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-4 rounded-lg transition-colors text-sm shadow hidden">コピーして編集</button>
+                    </div>
+                </div>
+
+                <!-- コンテンツ本体（スクロール領域） -->
+                <div class="flex-grow overflow-y-auto pr-2 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 左カラム：デッキ内容（画像出力風） -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div id="deckDetailModalContent" class="space-y-6">
+                            <!-- JSで生成 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 右カラム：評価・コメント・その他情報 -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                            <!-- 5段階評価 UI -->
+                            <div class="mb-4">
+                                <h3 class="text-sm font-semibold text-gray-300 mb-2">評価</h3>
+                                <div class="flex items-center gap-2">
+                                    <div id="deckDetailRatingStars" class="flex text-2xl text-gray-600 cursor-pointer">
+                                        <span data-val="1">★</span><span data-val="2">★</span><span data-val="3">★</span><span data-val="4">★</span><span data-val="5">★</span>
+                                    </div>
+                                    <span id="deckDetailAvgRating" class="text-sm text-yellow-400 font-bold ml-2">--</span>
+                                    <span id="deckDetailRatingCount" class="text-xs text-gray-400">(0件)</span>
+                                </div>
+                            </div>
+                            
+                            <!-- コメントセクション -->
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-300 mb-2">コメント</h3>
+                                <div id="deckDetailCommentsList" class="space-y-3 mb-3 max-h-48 overflow-y-auto pr-2 text-sm">
+                                    <!-- コメントがここに表示されます -->
+                                </div>
+                                <div class="flex gap-2 w-full">
+                                    <input type="text" id="deckDetailCommentInput" placeholder="コメントを入力..." class="flex-grow min-w-0 bg-gray-700 text-white border border-gray-600 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                    <button id="deckDetailCommentSubmit" class="shrink-0 whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-sm transition-colors shadow">送信</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 </main>
     </div>
     
@@ -1548,7 +1626,7 @@ window.renderUsageModal = function(type = 'manual') {
         let currentDeck = null; 
         let costChart = null;
         let typeDistributionChart = null;
-        let appMode = localStorage.getItem('sw_appMode') || 'search'; // 'search', 'deck', or 'world'
+        let appMode = localStorage.getItem('sw_appMode') || 'search'; // 'search', 'deck', 'deckList', or 'world'
         let mobileActiveTab = 'library'; // 'deck' or 'library'
         let currentActionMode = 'normal'; // 'normal', 'edit', 'share', 'export', 'delete'
 
@@ -1989,6 +2067,7 @@ window.renderUsageModal = function(type = 'manual') {
                 }
             });
 
+
             // Decks Listener
             onSnapshot(collection(db, "decks"), { includeMetadataChanges: true }, (snapshot) => {
                 allDecks = [];
@@ -2089,7 +2168,482 @@ window.renderUsageModal = function(type = 'manual') {
             if (currentDeckWorld2) deckWorld2.value = currentDeckWorld2;
         }
         // --- 画像処理 ---
-        function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
+        
+        // --- デッキコピー ---
+        function copyDeckAsOwn() {
+            if (!currentDeck) return;
+            const copiedDeck = JSON.parse(JSON.stringify(currentDeck));
+            copiedDeck.id = `deck_${Date.now()}`;
+            copiedDeck.name = copiedDeck.name + ' (コピー)';
+            copiedDeck.author = currentUser ? currentUser.uid : null;
+            copiedDeck.isPrivate = false;
+            currentDeck = copiedDeck;
+            showDeckEditor();
+            showAlert('デッキをコピーしました。「保存」で自分のデッキとして保存できます。');
+        }
+
+
+        // --- 評価・コメント機能 (Firebase) ---
+        async function loadRatingsAndComments(targetId, targetType, avgElId, countElId, starsContainerId, listElId) {
+            const listEl = getEl(listElId);
+            listEl.innerHTML = '<div class="text-center text-gray-500 text-sm mt-4">読み込み中...</div>';
+            
+            // 評価 (Ratings) 読み込み
+            try {
+                const qRatings = query(collection(db, "ratings"), where("targetId", "==", targetId));
+                const ratingsSnap = await getDocs(qRatings);
+                let totalScore = 0;
+                let count = 0;
+                let myRating = 0;
+                
+                ratingsSnap.forEach(doc => {
+                    const data = doc.data();
+                    totalScore += data.score;
+                    count++;
+                    if (currentUser && data.authorUid === currentUser.uid) {
+                        myRating = data.score;
+                    }
+                });
+                
+                const avg = count > 0 ? (totalScore / count).toFixed(1) : '-';
+                getEl(avgElId).textContent = avg;
+                getEl(countElId).textContent = `${count} 件の評価`;
+                
+                // 自分の評価を星に反映
+                const stars = getEl(starsContainerId).querySelectorAll('span');
+                stars.forEach(star => {
+                    const val = parseInt(star.dataset.val);
+                    if (val <= myRating) {
+                        star.classList.add('text-yellow-400');
+                        star.classList.remove('text-gray-600');
+                    } else {
+                        star.classList.remove('text-yellow-400');
+                        star.classList.add('text-gray-600');
+                    }
+                });
+            } catch (e) {
+                console.error("評価読み込みエラー:", e);
+            }
+            
+            // コメント読み込み
+            try {
+                const qComments = query(collection(db, "comments"), where("targetId", "==", targetId));
+                const commentsSnap = await getDocs(qComments);
+                listEl.innerHTML = '';
+                
+                
+                let commentsList = [];
+                commentsSnap.forEach(doc => commentsList.push(doc.data()));
+                commentsList.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                
+                if (commentsList.length === 0) {
+                    listEl.innerHTML = '<div class="text-center text-gray-500 text-sm mt-4">まだコメントはありません。</div>';
+                } else {
+                    commentsList.forEach(data => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-gray-800 p-3 rounded-lg border border-gray-700 text-sm';
+                        const time = data.createdAt ? new Date(data.createdAt.toMillis()).toLocaleString() : '最近';
+                        div.innerHTML = `
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-blue-300">${data.authorName || '匿名'}</span>
+                                <span class="text-[10px] text-gray-500">${time}</span>
+                            </div>
+                            <p class="text-gray-300 break-words">${data.text}</p>
+                        `;
+                        listEl.appendChild(div);
+                    });
+                }
+            } catch (e) {
+                console.error("コメント読み込みエラー:", e);
+                listEl.innerHTML = '<div class="text-center text-red-500 text-sm mt-4">読み込みに失敗しました</div>';
+            }
+        }
+        
+        async function submitRating(targetId, targetType, score, starsContainerId, onComplete) {
+            if (!currentUser) {
+                showAlert('評価を送信するにはログインが必要です。');
+                return;
+            }
+            try {
+                const ratingId = `${targetId}_${currentUser.uid}`;
+                await setDoc(doc(db, "ratings", ratingId), {
+                    targetId: targetId,
+                    targetType: targetType,
+                    authorUid: currentUser.uid,
+                    score: score,
+                    updatedAt: serverTimestamp()
+                });
+                onComplete();
+            } catch (e) {
+                console.error("評価送信エラー:", e);
+                showAlert('評価の送信に失敗しました。');
+            }
+        }
+        
+        async function submitComment(targetId, targetType, inputElId, onComplete) {
+            if (!currentUser) {
+                showAlert('コメントを送信するにはログインが必要です。');
+                return;
+            }
+            const inputEl = getEl(inputElId);
+            const text = inputEl.value.trim();
+            if (!text) return;
+            
+            try {
+                inputEl.disabled = true;
+                await addDoc(collection(db, "comments"), {
+                    targetId: targetId,
+                    targetType: targetType,
+                    authorUid: currentUser.uid,
+                    authorName: currentUser.displayName || '匿名',
+                    text: text,
+                    createdAt: serverTimestamp()
+                });
+                inputEl.value = '';
+                onComplete();
+            } catch (e) {
+                console.error("コメント送信エラー:", e);
+                showAlert('コメントの送信に失敗しました。');
+            } finally {
+                inputEl.disabled = false;
+            }
+        }
+
+        // --- デッキ詳細モーダル ---
+        let activeDeckDetailId = null;
+        function openDeckDetailModal(deck) {
+            if (!deck) return;
+            activeDeckDetailId = deck.id;
+            
+            const modal = getEl('deckDetailModal');
+            getEl('deckDetailModalTitle').textContent = deck.name;
+            
+            const isOwnDeck = deck.author === (currentUser ? currentUser.uid : null);
+            getEl('deckDetailModalEditBtn').classList.toggle('hidden', !isOwnDeck);
+            getEl('deckDetailModalCopyBtn').classList.toggle('hidden', isOwnDeck);
+            
+            getEl('deckDetailModalEditBtn').onclick = () => {
+                closeDeckDetailModal();
+                loadDeckIntoEditor(deck.id);
+                appMode = 'deck'; updateAppModeUI();
+            };
+            getEl('deckDetailModalCopyBtn').onclick = () => {
+                closeDeckDetailModal();
+                currentDeck = JSON.parse(JSON.stringify(deck));
+                copyDeckAsOwn();
+                appMode = 'deck'; updateAppModeUI();
+            };
+            
+            // --- デッキの画像出力ライクなHTML生成 ---
+            const contentEl = getEl('deckDetailModalContent');
+            const worldsText = (deck.worlds || []).filter(Boolean).join(' / ') || '所属世界観なし';
+            
+            const coreCard = allCards.find(c => c.id === deck.coreCardId);
+            const mainDeckCards = (deck.mainDeckCardIds || []).map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            const structDeckCards = (deck.structDeckCardIds || []).map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            
+            // 簡易分析データ
+            let coreInfoHtml = '<div class="text-gray-500 text-sm">コアカード未設定</div>';
+            if (coreCard) {
+                const initialResources = Object.entries(coreCard.initialResources || {}).filter(([,v])=>v>0).map(([k,v])=>`${costTypes[k].label}${v}`).join(' ');
+                coreInfoHtml = `
+                    <div class="text-sm space-y-1">
+                        <div class="flex justify-between"><span>ライフ:</span> <span class="font-bold">${coreCard.life||0}</span></div>
+                        <div class="flex justify-between"><span>初期手札:</span> <span class="font-bold">${coreCard.initialHand||0}</span></div>
+                        <div class="flex justify-between"><span>初期資源:</span> <span class="font-bold">${initialResources||'なし'}</span></div>
+                    </div>
+                `;
+            }
+
+            const renderGrid = (cards) => {
+                if (!cards || cards.length === 0) return '<div class="text-gray-500 text-sm py-4">カードがありません</div>';
+                
+                const sortedCards = [...cards];
+                sortDeckCards(sortedCards);
+                
+                return '<div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 mt-2">' + 
+                    sortedCards.map(c => `
+                        <div class="relative group">
+                            <img src="${c.imageUrl || 'https://placehold.co/80x112/2d3748/4a5568?text=?'}" class="w-full rounded shadow object-cover border border-gray-700" title="${c.name}">
+                        </div>
+                    `).join('') + '</div>';
+            };
+
+            contentEl.innerHTML = `
+                <div class="mb-6">
+                    <p class="text-gray-400 text-sm mb-4">${deck.description || '説明なし'}</p>
+                    <div class="flex flex-wrap gap-2 text-xs font-bold mb-4">
+                        <span class="bg-purple-900/50 text-purple-300 px-2 py-1 rounded border border-purple-800">${worldsText}</span>
+                        <span class="bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700">メイン: ${mainDeckCards.length}枚</span>
+                        <span class="bg-gray-800 text-gray-300 px-2 py-1 rounded border border-gray-700">ストラクト: ${structDeckCards.length}枚</span>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="w-1/3 shrink-0">
+                            <h3 class="text-sm font-bold text-yellow-400 border-b border-gray-700 pb-1 mb-2">コア情報</h3>
+                            <div class="flex gap-4">
+                                <img src="${coreCard?.imageUrl || 'https://placehold.co/120x170/2d3748/4a5568?text=Core'}" class="w-20 rounded shadow object-cover cursor-pointer hover:scale-105 transition-transform" onclick="openCardShareFromId('${coreCard?.id}')">
+                                <div class="flex-grow">${coreInfoHtml}</div>
+                            </div>
+                        </div>
+                        <div class="w-2/3">
+                            <h3 class="text-sm font-bold text-blue-400 border-b border-gray-700 pb-1 mb-2">ストラクトデッキ</h3>
+                            ${renderGrid(structDeckCards)}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-purple-400 border-b border-gray-700 pb-1 mb-2">メインデッキ</h3>
+                    ${renderGrid(mainDeckCards)}
+                </div>
+            `;
+
+            // Setup Ratings & Comments
+            const reloadRC = () => loadRatingsAndComments(deck.id, 'deck', 'deckDetailAvgRating', 'deckDetailRatingCount', 'deckDetailRatingStars', 'deckDetailCommentsList');
+            reloadRC();
+            
+            const stars = getEl('deckDetailRatingStars').querySelectorAll('span');
+            stars.forEach(star => {
+                star.onclick = () => submitRating(deck.id, 'deck', parseInt(star.dataset.val), 'deckDetailRatingStars', reloadRC);
+            });
+            
+            const submitBtn = getEl('deckDetailCommentSubmit');
+            submitBtn.onclick = () => submitComment(deck.id, 'deck', 'deckDetailCommentInput', reloadRC);
+
+            getEl('closeDeckDetailModalBtn').onclick = closeDeckDetailModal;
+            
+            modal.classList.remove('hidden');
+            // Animate in
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.children[0].classList.remove('scale-95');
+                modal.children[0].classList.add('scale-100');
+            }, 10);
+        }
+        
+        function closeDeckDetailModal() {
+            const modal = getEl('deckDetailModal');
+            modal.classList.add('opacity-0');
+            modal.children[0].classList.remove('scale-100');
+            modal.children[0].classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                activeDeckDetailId = null;
+            }, 300);
+        }
+        // --- デッキ一覧ギャラリー描画 ---
+        function renderDeckGallery() {
+            const grid = getEl('deckGalleryGrid');
+            if (!grid) return;
+
+            const visibleDecks = allDecks.filter(deck => {
+                if (isAdmin) return true;
+                if (deck.author === (currentUser ? currentUser.uid : null)) return true;
+                return !deck.isPrivate;
+            });
+
+            if (visibleDecks.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 text-center py-12 col-span-full">デッキがまだありません。</p>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            visibleDecks.forEach(deck => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-emerald-400 transition-all hover:scale-[1.02] shadow-lg group';
+                
+                // 代表カードを取得（representativeCardIds > coreCardId > デッキ内最初のカード）
+                const repIds = deck.representativeCardIds || [];
+                const repCards = [];
+                
+                if (repIds.length > 0) {
+                    repIds.forEach(id => { const c = allCards.find(x => x.id === id); if(c) repCards.push(c); });
+                }
+                if (repCards.length === 0 && deck.coreCardId) {
+                    const coreCard = allCards.find(c => c.id === deck.coreCardId);
+                    if (coreCard) repCards.push(coreCard);
+                }
+                if (repCards.length === 0 && deck.mainDeckCardIds?.length > 0) {
+                    const uniqueIds = [...new Set(deck.mainDeckCardIds)].slice(0, 3);
+                    uniqueIds.forEach(id => { const c = allCards.find(x => x.id === id); if(c) repCards.push(c); });
+                }
+
+                // 代表カード画像エリア
+                const defaultImg = 'https://placehold.co/150x210/2d3748/4a5568?text=No+Image';
+                let cardsHTML = '';
+                
+                if (repCards.length === 0) {
+                    cardsHTML = `<div class="flex items-center justify-center h-48 bg-gray-900"><span class="text-gray-600">カードなし</span></div>`;
+                } else if (repCards.length === 1) {
+                    const img = repCards[0].imageUrl || defaultImg;
+                    cardsHTML = `<div class="flex justify-center items-end h-48 bg-gray-900 p-3">
+                        <img src="${img}" class="h-40 w-auto object-cover rounded-md shadow-lg" onerror="this.src='${defaultImg}'">
+                    </div>`;
+                } else if (repCards.length === 2) {
+                    cardsHTML = `<div class="flex justify-center items-end h-48 bg-gray-900 p-3 gap-2">
+                        ${repCards.map(c => `<img src="${c.imageUrl || defaultImg}" class="h-36 w-auto object-cover rounded-md shadow-lg" onerror="this.src='${defaultImg}'">`).join('')}
+                    </div>`;
+                } else {
+                    // 3枚: 遊戯王風に少し重ねて配置
+                    cardsHTML = `<div class="relative h-48 bg-gray-900 flex items-end justify-center p-2">
+                        <img src="${repCards[0]?.imageUrl || defaultImg}" class="absolute left-[10%] bottom-2 h-36 w-auto object-cover rounded-md shadow-lg transform -rotate-6 z-[1]" onerror="this.src='${defaultImg}'">
+                        <img src="${repCards[1]?.imageUrl || defaultImg}" class="absolute left-1/2 -translate-x-1/2 bottom-3 h-40 w-auto object-cover rounded-md shadow-xl z-[2]" onerror="this.src='${defaultImg}'">
+                        <img src="${repCards[2]?.imageUrl || defaultImg}" class="absolute right-[10%] bottom-2 h-36 w-auto object-cover rounded-md shadow-lg transform rotate-6 z-[1]" onerror="this.src='${defaultImg}'">
+                    </div>`;
+                }
+
+                const mainCount = (deck.mainDeckCardIds || []).length;
+                const structCount = (deck.structDeckCardIds || []).length;
+                const worldsText = (deck.worlds || []).filter(Boolean).join(' / ') || 'なし';
+                const isOwnDeck = deck.author === (currentUser ? currentUser.uid : null);
+
+                card.innerHTML = `
+                    ${cardsHTML}
+                    <div class="p-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h3 class="text-lg font-bold text-white truncate flex-grow">${deck.name}</h3>
+                            ${deck.isPrivate ? '<span class="text-[10px] bg-red-900 text-red-200 px-1.5 py-0.5 rounded flex-shrink-0">非公開</span>' : ''}
+                            ${isOwnDeck ? '<span class="text-[10px] bg-blue-900 text-blue-200 px-1.5 py-0.5 rounded flex-shrink-0">自分</span>' : ''}
+                        </div>
+                        <p class="text-sm text-gray-400 truncate mb-2">${deck.description || ''}</p>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>メイン: ${mainCount}枚 / ストラクト: ${structCount}枚</span>
+                        </div>
+                        <div class="text-xs text-purple-400 mt-1 truncate">世界: ${worldsText}</div>
+                    </div>
+                `;
+
+                card.onclick = () => {
+                    openDeckDetailModal(deck);
+                };
+
+                grid.appendChild(card);
+            });
+        }
+        
+        // --- 代表カード管理 ---
+        function renderRepresentativeCards() {
+            const area = getEl('representativeCardsArea');
+            if (!area || !currentDeck) return;
+            area.innerHTML = '';
+            
+            const repIds = currentDeck.representativeCardIds || [];
+            const isOwnDeck = !currentDeck.author || (currentUser && currentDeck.author === currentUser.uid) || isAdmin;
+            
+            for (let i = 0; i < 3; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'relative bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-600 h-24 flex items-center justify-center overflow-hidden';
+                
+                if (repIds[i]) {
+                    const card = allCards.find(c => c.id === repIds[i]);
+                    if (card) {
+                        const img = card.imageUrl || 'https://placehold.co/80x112/2d3748/4a5568?text=?';
+                        slot.className = 'relative bg-gray-700 rounded-lg border-2 border-emerald-600 h-24 flex items-center justify-center overflow-hidden';
+                        slot.innerHTML = `
+                            <img src="${img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/80x112/2d3748/4a5568?text=?'">
+                            <div class="absolute bottom-0 left-0 right-0 bg-black/70 text-[9px] text-center text-white py-0.5 truncate px-1">${card.name}</div>
+                        `;
+                        if (isOwnDeck) {
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'absolute top-0 right-0 bg-red-600 text-white text-[10px] w-4 h-4 rounded-bl flex items-center justify-center z-10';
+                            removeBtn.innerHTML = '×';
+                            removeBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                currentDeck.representativeCardIds.splice(i, 1);
+                                renderRepresentativeCards();
+                                triggerAutoSave();
+                            };
+                            slot.appendChild(removeBtn);
+                        }
+                    }
+                } else {
+                    if (isOwnDeck) {
+                        slot.innerHTML = '<span class="text-gray-500 text-xs">+</span>';
+                        slot.classList.add('cursor-pointer', 'hover:border-emerald-400');
+                        slot.onclick = () => openRepCardPicker(i);
+                    } else {
+                        slot.innerHTML = '<span class="text-gray-600 text-xs">-</span>';
+                    }
+                }
+                area.appendChild(slot);
+            }
+        }
+        
+        function openRepCardPicker(slotIndex) {
+            const existing = getEl('repCardPickerModal');
+            if (existing) existing.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'repCardPickerModal';
+            modal.className = 'fixed inset-0 z-[1000] flex items-center justify-center modal-backdrop';
+            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+            
+            const inner = document.createElement('div');
+            inner.className = 'bg-gray-800 rounded-xl p-6 w-full max-w-2xl max-h-[70vh] flex flex-col border border-gray-600 shadow-2xl';
+            inner.innerHTML = '<h3 class="text-lg font-bold text-emerald-400 mb-2 shrink-0">デッキ内のカードから代表カードを選択</h3>';
+            
+            // Collect unique cards in the deck
+            const deckCardIds = new Set([
+                currentDeck.coreCardId,
+                ...(currentDeck.mainDeckCardIds || []),
+                ...(currentDeck.structDeckCardIds || [])
+            ].filter(Boolean));
+            
+            const deckCardsList = Array.from(deckCardIds).map(id => allCards.find(c => c.id === id)).filter(Boolean);
+            
+            if (deckCardsList.length === 0) {
+                inner.innerHTML += '<p class="text-gray-400 text-sm mt-4">デッキにカードがありません。先にカードを追加してください。</p>';
+            } else {
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.placeholder = 'デッキ内を検索...';
+                searchInput.className = 'w-full p-2 bg-gray-900 text-white border border-gray-600 rounded-lg mb-4 text-sm shrink-0';
+                inner.appendChild(searchInput);
+                
+                const gridContainer = document.createElement('div');
+                gridContainer.className = 'flex-grow overflow-y-auto pr-2';
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3';
+                gridContainer.appendChild(grid);
+                inner.appendChild(gridContainer);
+                
+                const renderPickerCards = (filter) => {
+                    grid.innerHTML = '';
+                    const filtered = filter ? deckCardsList.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())) : deckCardsList;
+                    
+                    if (filtered.length === 0) {
+                        grid.innerHTML = '<p class="text-gray-500 text-sm col-span-full">見つかりませんでした。</p>';
+                        return;
+                    }
+                    
+                    filtered.forEach(c => {
+                        const img = c.imageUrl || 'https://placehold.co/80x112/2d3748/4a5568?text=?';
+                        const el = document.createElement('div');
+                        el.className = 'cursor-pointer rounded-lg overflow-hidden border-2 border-transparent hover:border-emerald-400 transition-colors bg-gray-900 relative group';
+                        el.innerHTML = `<img src="${img}" class="w-full aspect-[2/3] object-cover" onerror="this.src='https://placehold.co/80x112/2d3748/4a5568?text=?'"><div class="absolute bottom-0 left-0 right-0 bg-black/80 text-[10px] text-center text-white truncate py-1 px-1">${c.name}</div>`;
+                        el.onclick = () => {
+                            if (!currentDeck.representativeCardIds) currentDeck.representativeCardIds = [];
+                            currentDeck.representativeCardIds[slotIndex] = c.id;
+                            for (let i = 0; i < 3; i++) {
+                                if (!currentDeck.representativeCardIds[i]) currentDeck.representativeCardIds[i] = null;
+                            }
+                            renderRepresentativeCards();
+                            if (typeof triggerAutoSave === 'function') triggerAutoSave();
+                            modal.remove();
+                        };
+                        grid.appendChild(el);
+                    });
+                };
+                
+                searchInput.oninput = () => renderPickerCards(searchInput.value);
+                renderPickerCards('');
+            }
+            
+            modal.appendChild(inner);
+            document.body.appendChild(modal);
+        }
+        
+function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = e => {
@@ -2521,6 +3075,7 @@ window.renderUsageModal = function(type = 'manual') {
             };
             
             const coreCard = allCards.find(c => c.id === currentDeck.coreCardId);
+            renderRepresentativeCards();
             createCoreCardDisplay(coreCard);
             renderSection(mainDeckEl, currentDeck.mainDeckCardIds, 'main');
             renderSection(structDeckEl, currentDeck.structDeckCardIds, 'struct');
@@ -2983,7 +3538,7 @@ window.renderUsageModal = function(type = 'manual') {
             }
         }
         function createNewDeck() {
-            currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, mainDeckCardIds: [], structDeckCardIds: [], isPrivate: false };
+            currentDeck = { id: `deck_${Date.now()}`, name: '新規デッキ', description: '', worlds: [], coreCardId: null, representativeCardIds: [], mainDeckCardIds: [], structDeckCardIds: [], isPrivate: false, author: currentUser ? currentUser.uid : null };
             logToConsole("新規デッキの作成を開始します。");
             showDeckEditor();
         }
@@ -3004,6 +3559,26 @@ window.renderUsageModal = function(type = 'manual') {
             deckWorld2.value = currentDeck.worlds?.[1] || '';
             getEl('deckIsPrivateCheckbox').checked = currentDeck.isPrivate || false;
             
+            // 他人のデッキは編集不可
+            const isOwnDeck = !currentDeck.author || (currentUser && currentDeck.author === currentUser.uid) || isAdmin;
+            const readonlyEls = [deckNameInput, deckDescriptionInput, deckWorld1, deckWorld2, getEl('deckIsPrivateCheckbox')];
+            readonlyEls.forEach(el => { if(el) el.disabled = !isOwnDeck; });
+            const editBtns = [getEl('saveDeckBtn'), getEl('deleteDeckBtn')];
+            editBtns.forEach(btn => { if(btn) btn.classList.toggle('hidden', !isOwnDeck); });
+            
+            // コピーボタンの表示切替
+            let copyBtn = getEl('copyDeckBtn');
+            if (!copyBtn) {
+                copyBtn = document.createElement('button');
+                copyBtn.id = 'copyDeckBtn';
+                copyBtn.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg transition-colors text-sm';
+                copyBtn.textContent = 'コピーして編集';
+                const saveBtnParent = getEl('saveDeckBtn')?.parentElement;
+                if (saveBtnParent) saveBtnParent.appendChild(copyBtn);
+            }
+            copyBtn.classList.toggle('hidden', isOwnDeck);
+            copyBtn.onclick = () => copyDeckAsOwn();
+            
             const histBtn = getEl('viewDeckHistoryBtn');
             if (currentDeck.id.startsWith('deck_')) {
                 histBtn.classList.add('hidden');
@@ -3023,6 +3598,9 @@ window.renderUsageModal = function(type = 'manual') {
                 return;
             }
             updateCurrentDeckFromUI();
+            if (!currentDeck.author && currentUser) {
+                currentDeck.author = currentUser.uid;
+            }
             
             const btn = getEl('saveDeckBtn');
             if (btn) btn.textContent = '保存中...';
@@ -3104,8 +3682,7 @@ window.renderUsageModal = function(type = 'manual') {
                     if (deckCounts.mythicCount > 0 && cardCountInDeck < 1) { await showAlert(`神話カードはデッキに1種類までです。`); return; }
                     if (cardCountInDeck >= 1) { await showAlert(`神話カード「${card.name}」は1枚までです。`); return; }
                 } else if (card.rarity === '伝説') {
-                    if (deckCounts.legendaryCount >= 4 && cardCountInDeck < 1) { await showAlert('伝説カードは合計4種類までです。'); return; } 
-                    if (cardCountInDeck >= 1) { await showAlert(`伝説カード「${card.name}」は1枚までです。`); return; } 
+                                        if (cardCountInDeck >= 1) { await showAlert(`伝説カード「${card.name}」は1枚までです。`); return; } 
                 }
                 
                 let customLimit = card.limit !== undefined ? card.limit : (card.type === 'ストラクト' ? Infinity : 4);
@@ -4520,6 +5097,13 @@ window.renderUsageModal = function(type = 'manual') {
             return detailHtml;
         }
 
+        window.openCardShareFromId = (cardId) => {
+            const card = allCards.find(c => c.id === cardId);
+            if (card) {
+                openShareDetailModal({ type: 'card', data: card });
+            }
+        };
+
         function openShareDetailModal(item) {
             const modal = getEl('shareDetailModal');
             const titleEl = getEl('shareDetailTitle');
@@ -4544,15 +5128,62 @@ window.renderUsageModal = function(type = 'manual') {
                     : 'max-height: 70vh; max-width: 100%; object-fit: contain;';
 
                 bodyEl.innerHTML = `
-                    <div class="${layoutClasses}">
-                        <div class="${imageContainerClasses}">
-                            <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="rounded-lg shadow-lg" style="${imageStyle}">
+                    <div class="flex flex-col h-full gap-4">
+                        <div class="${layoutClasses}">
+                            <div class="${imageContainerClasses}">
+                                <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${card.name}" class="rounded-lg shadow-lg" style="${imageStyle}">
+                            </div>
+                            <div class="${infoContainerClasses}">
+                                ${createCardTextDetailHtml(card)}
+                            </div>
                         </div>
-                        <div class="${infoContainerClasses}">
-                            ${createCardTextDetailHtml(card)}
+                        
+                        <!-- 評価・コメントセクション -->
+                        <div class="mt-4 pt-4 border-t border-gray-700 flex flex-col md:flex-row gap-4 shrink-0" style="min-height: 250px;">
+                            <!-- 評価 -->
+                            <div class="w-full md:w-1/3 flex flex-col gap-2">
+                                <h3 class="font-bold text-white">評価</h3>
+                                <div class="bg-gray-800 p-3 rounded-lg border border-gray-700 flex items-center justify-between">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-yellow-400" id="cardDetailAvgRating">-</div>
+                                        <div class="text-[10px] text-gray-400" id="cardDetailRatingCount">0 件</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="flex gap-1 text-xl text-gray-600 cursor-pointer" id="cardDetailRatingStars">
+                                            <span data-val="1" class="hover:text-yellow-400 transition-colors">★</span>
+                                            <span data-val="2" class="hover:text-yellow-400 transition-colors">★</span>
+                                            <span data-val="3" class="hover:text-yellow-400 transition-colors">★</span>
+                                            <span data-val="4" class="hover:text-yellow-400 transition-colors">★</span>
+                                            <span data-val="5" class="hover:text-yellow-400 transition-colors">★</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- コメント -->
+                            <div class="w-full md:w-2/3 flex flex-col gap-2 h-full">
+                                <h3 class="font-bold text-white">コメント</h3>
+                                <div id="cardDetailCommentsList" class="flex-grow overflow-y-auto bg-gray-800 rounded-lg p-2 space-y-2 border border-gray-700 text-xs min-h-[120px]">
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <input type="text" id="cardDetailCommentInput" class="flex-grow bg-gray-900 text-white border border-gray-600 rounded px-2 py-1 text-sm" placeholder="コメント...">
+                                    <button id="cardDetailCommentSubmit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-bold text-sm shrink-0">送信</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
+                
+                // Ratings and Comments bindings for Card
+                const reloadCardRC = () => loadRatingsAndComments(card.id, 'card', 'cardDetailAvgRating', 'cardDetailRatingCount', 'cardDetailRatingStars', 'cardDetailCommentsList');
+                reloadCardRC();
+                
+                const cStars = getEl('cardDetailRatingStars').querySelectorAll('span');
+                cStars.forEach(star => {
+                    star.onclick = () => submitRating(card.id, 'card', parseInt(star.dataset.val), 'cardDetailRatingStars', reloadCardRC);
+                });
+                
+                getEl('cardDetailCommentSubmit').onclick = () => submitComment(card.id, 'card', 'cardDetailCommentInput', reloadCardRC);
+
 
             } else if (item.type === 'deck' && item.data) {
                 titleEl.textContent = `デッキ詳細: ${item.data.name}`;
@@ -4674,6 +5305,16 @@ window.renderUsageModal = function(type = 'manual') {
                 updateAppModeUI();
                 renderCardLibrary(); // 更新してクリックイベントを再割り当て
             };
+
+            const modeDeckListBtnRef = getEl('modeDeckListBtn');
+            if (modeDeckListBtnRef) {
+                modeDeckListBtnRef.onclick = () => {
+                    appMode = 'deckList';
+                    localStorage.setItem('sw_appMode', 'deckList');
+                    updateAppModeUI();
+                    renderDeckGallery();
+                };
+            }
 
             // Action Mode Switcher
             const setActionMode = (mode) => {
