@@ -402,6 +402,9 @@
             transform: translateX(-50%);
             z-index: 10;
             margin: 0 !important;
+            white-space: nowrap;
+            font-size: 8px !important;
+            padding: 1px 4px !important;
         }
         .image-only-mode .card-content-wrapper > .relative {
             height: 100%;
@@ -414,6 +417,57 @@
             object-fit: cover;
             border-radius: 0.5rem;
             margin: 0;
+        }
+        /* 制限改定カードの斜線枠線スタイル (高コントラスト・非明滅警告枠) - 画像のみ表示モード対応 */
+        .limit-border-0, .limit-border-1, .limit-border-2, .limit-border-3 {
+            position: relative !important;
+        }
+        
+        .limit-border-0::before, .limit-border-1::before, .limit-border-2::before, .limit-border-3::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 6px solid transparent;
+            border-radius: 0.5rem;
+            pointer-events: none;
+            z-index: 20;
+            /* マスクを使って中央をくり抜き、枠線部分にのみ斜線背景を描画 */
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        /* 禁止カード: 赤/黒の極太警告斜線 & 画像は強めのモノクロ・減光 */
+        .limit-border-0::before {
+            background: repeating-linear-gradient(45deg, #dc2626, #dc2626 10px, #000 10px, #000 20px) border-box;
+        }
+        .limit-border-0::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 25%, transparent 25%, transparent 50%, rgba(220, 38, 38, 0.12) 50%, rgba(220, 38, 38, 0.12) 75%, transparent 75%, transparent);
+            background-size: 30px 30px;
+            pointer-events: none;
+            border-radius: 0.5rem;
+            z-index: 10;
+        }
+        .limit-border-0 img {
+            filter: grayscale(90%) contrast(110%) brightness(75%);
+        }
+
+        /* 制限カード: 黄/黒の警告斜線 */
+        .limit-border-1::before {
+            background: repeating-linear-gradient(45deg, #eab308, #eab308 10px, #000 10px, #000 20px) border-box;
+        }
+
+        /* 準制限カード: 橙/黒の警告斜線 */
+        .limit-border-2::before {
+            background: repeating-linear-gradient(45deg, #f97316, #f97316 10px, #000 10px, #000 20px) border-box;
+        }
+
+        /* 仮制限カード: 黄緑/黒の警告斜線 */
+        .limit-border-3::before {
+            background: repeating-linear-gradient(45deg, #84cc16, #84cc16 10px, #000 10px, #000 20px) border-box;
         }
     </style>
 </head>
@@ -636,47 +690,14 @@
                     <h2 class="text-xl font-bold mb-2 border-b border-gray-700 pb-2">カードライブラリ</h2>
                      
                     <!-- Filter Section -->
-                    <div class="mb-4 space-y-3">
-                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                            <select id="worldFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                            <select id="typeFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                            <select id="rarityFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                            <select id="tagFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                            <select id="resourceFilter" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></select>
-                            <input type="number" id="totalCostFilter" placeholder="総コスト" class="p-2 w-24 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" min="0">
+                    <div class="mb-4 bg-gray-800/80 p-4 rounded-xl border border-gray-700 shadow-lg space-y-4 relative">
+                        <!-- 検索キーワード -->
+                        <div class="relative mb-2">
+                            <input type="text" id="cardSearch" placeholder="キーワードで検索..." class="w-full pl-10 pr-3 py-2.5 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" oninput="filterState.keyword=this.value;renderCardLibrary()">
+                            <span class="absolute left-3 top-3 text-gray-400">🔍</span>
+                            <span id="filterResultCount" class="absolute right-3 top-3 text-xs text-gray-500 font-bold"></span>
                         </div>
-                        <div class="flex justify-between items-center gap-4">
-                            <div class="flex-grow">
-                                <label class="text-xs text-gray-400">よく使われるタグ:</label>
-                                <div id="popularTags" class="flex flex-wrap gap-2 mt-1"></div>
-                            </div>
-                            <div class="flex-shrink-0 flex items-end gap-3">
-                                <label class="flex items-center space-x-2 cursor-pointer mb-1">
-                                    <input type="checkbox" id="imageOnlyToggle" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500" checked>
-                                    <span class="text-xs text-gray-300">画像のみ</span>
-                                </label>
-                                <div>
-                                    <label for="sortBy" class="text-xs text-gray-400 block">並べ替え:</label>
-                                    <select id="sortBy" class="p-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm mt-1">
-                                        <option value="rating">総合評価が高い順</option></select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- アクションモード トグルスイッチ -->
-                        <div id="actionModeContainer" class="mb-3 sticky top-0 z-30 bg-gray-800/95 backdrop-blur-sm py-2 shadow-md -mx-4 px-4 border-b border-gray-700">
-                            <label class="text-xs text-gray-400 block mb-1">カードタップ時の動作:</label>
-                            <div class="flex space-x-1">
-                                <button id="actionModeNormalBtn" class="flex-1 py-1.5 px-1 bg-indigo-600 text-white rounded text-xs font-bold border border-indigo-500 shadow-inner transition-colors">通常</button>
-                                <button id="actionModeEditBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">編集</button>
-                                <button id="actionModeShareBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">共有</button>
-                                <button id="actionModeExportBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">出力</button>
-                                <button id="actionModeDeleteBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-red-400 rounded text-xs font-medium hover:bg-red-900/50 border border-gray-600 transition-colors">削除</button>
-                            </div>
-                        </div>
-
-                        <input type="text" id="cardSearch" placeholder="キーワードで検索..." class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <div id="searchOptions" class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-300 pt-1">
+                        <div id="searchOptions" class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-300 pt-2 border-t border-gray-700/50 mt-2">
                             <label class="flex items-center space-x-2 cursor-pointer">
                                 <input type="checkbox" name="searchField" value="name" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500" checked>
                                 <span>カード名</span>
@@ -701,6 +722,123 @@
                                 <input type="checkbox" name="searchField" value="flavor" class="form-checkbox bg-gray-600 border-gray-500 rounded text-indigo-500 focus:ring-indigo-500">
                                 <span>フレーバー</span>
                             </label>
+                            <button id="keywordMatchModeBtn" class="ml-auto text-[10px] bg-indigo-900 px-2 py-0.5 rounded text-indigo-300 border border-indigo-700 hover:bg-indigo-800 transition-colors font-bold" data-mode="AND">スペース区切り: AND</button>
+                        </div>
+
+                        <!-- フィルター展開ボタン -->
+                        <button id="toggleFiltersBtn" class="flex items-center justify-center w-full py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition-colors border border-gray-600 font-bold">
+                            <span id="toggleFiltersIcon" class="mr-2">🔽</span> <span id="toggleFiltersText">詳細フィルターを表示</span>
+                        </button>
+
+                        <!-- フィルター詳細 (初期非表示) -->
+                        <div id="advancedFilters" class="hidden space-y-4 pt-2">
+                            <!-- カード種類 (Type) -->
+                            <div>
+                                <label class="text-xs text-gray-400 block mb-1">カード種類 (複数選択=OR):</label>
+                                <div id="filterTypeChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- タクト種別 (Tact SubType) - 初期非表示 -->
+                            <div id="filterTactSubTypeContainer" class="hidden border-l-2 border-indigo-500 pl-2 ml-1">
+                                <label class="text-xs text-indigo-300 block mb-1">タクト種別 (複数選択=OR):</label>
+                                <div id="filterTactSubTypeChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- レアリティ (Rarity) -->
+                            <div>
+                                <label class="text-xs text-gray-400 block mb-1">レアリティ (複数選択=OR):</label>
+                                <div id="filterRarityChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- 世界観 (World) -->
+                            <div>
+                                <label class="text-xs text-gray-400 block mb-1">世界観 (複数選択=OR):</label>
+                                <div id="filterWorldChips" class="flex flex-wrap gap-2 max-h-24 overflow-y-auto custom-scrollbar pr-2"></div>
+                            </div>
+
+                            <!-- 制限改定 (Limit) -->
+                            <div class="border-t border-gray-700 pt-3">
+                                <label class="text-xs text-gray-400 block mb-1">制限区分 (複数選択=OR):</label>
+                                <div id="filterLimitChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- プレイコストに必要な資源 (Play Cost Resources) -->
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="text-xs text-gray-400 block">プレイに必要な資源:</label>
+                                    <button id="playResourceMatchModeBtn" class="text-[10px] bg-indigo-900 px-2 py-0.5 rounded text-indigo-300 border border-indigo-700 hover:bg-indigo-800 transition-colors font-bold" data-mode="AND">すべて含む (AND)</button>
+                                </div>
+                                <div id="filterPlayResourceChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- アクトコストに必要な資源 (Act Cost Resources) -->
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="text-xs text-gray-400 block">アクトに必要な資源 (ユニット・フォート等):</label>
+                                    <button id="actResourceMatchModeBtn" class="text-[10px] bg-indigo-900 px-2 py-0.5 rounded text-indigo-300 border border-indigo-700 hover:bg-indigo-800 transition-colors font-bold" data-mode="AND">すべて含む (AND)</button>
+                                </div>
+                                <div id="filterActResourceChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- 役割 (Roles) -->
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="text-xs text-gray-400 block">役割 (Role):</label>
+                                    <button id="roleMatchModeBtn" class="text-[10px] bg-indigo-900 px-2 py-0.5 rounded text-indigo-300 border border-indigo-700 hover:bg-indigo-800 transition-colors font-bold" data-mode="AND">すべて含む (AND)</button>
+                                </div>
+                                <div id="filterRoleChips" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- タグ (Tags) -->
+                            <div class="border-t border-gray-700 pt-3">
+                                <div class="flex justify-between items-end mb-1">
+                                    <label class="text-xs text-gray-400 block">タグ (Tag):</label>
+                                    <button id="tagMatchModeBtn" class="text-[10px] bg-indigo-900 px-2 py-0.5 rounded text-indigo-300 border border-indigo-700 hover:bg-indigo-800 transition-colors font-bold" data-mode="AND">すべて含む (AND)</button>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-[10px] text-gray-500">人気のタグ:</label>
+                                    <div id="popularTags" class="flex flex-wrap gap-1 mt-1"></div>
+                                </div>
+                                <div id="filterTagChips" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar pr-2 p-2 bg-gray-900/50 rounded border border-gray-700"></div>
+                            </div>
+
+                            <!-- 総コスト・並べ替えなど -->
+                            <div class="border-t border-gray-700 pt-3 flex flex-wrap items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs text-gray-400">総コスト:</label>
+                                    <input type="number" id="totalCostFilter" placeholder="指定なし" class="p-1.5 w-20 bg-gray-900 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm text-center" min="0">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label for="sortBy" class="text-xs text-gray-400 block">並べ替え:</label>
+                                    <select id="sortBy" class="p-1.5 bg-gray-900 border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm">
+                                        <option value="rating">総合評価が高い順</option>
+                                        <option value="name_asc">カード名順</option>
+                                        <option value="attack_desc">攻撃力 (高い順)</option>
+                                        <option value="attack_asc">攻撃力 (低い順)</option>
+                                        <option value="defense_desc">体力 (高い順)</option>
+                                        <option value="defense_asc">体力 (低い順)</option>
+                                        <option value="total_cost_desc">プレイコスト総量 (高い順)</option>
+                                        <option value="total_cost_asc">プレイコスト総量 (低い順)</option>
+                                    </select>
+                                </div>
+                                <label class="flex items-center space-x-2 cursor-pointer ml-auto">
+                                    <input type="checkbox" id="imageOnlyToggle" class="form-checkbox bg-gray-900 border-gray-600 rounded text-indigo-500 focus:ring-indigo-500" checked>
+                                    <span class="text-xs text-gray-300">画像のみ表示</span>
+                                </label>
+                                <button id="resetFiltersBtn" class="px-3 py-1.5 bg-red-900/50 text-red-300 border border-red-700 rounded text-xs hover:bg-red-800/50 transition-colors">リセット</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- アクションモード トグルスイッチ -->
+                    <div id="actionModeContainer" class="mb-3 sticky top-0 z-30 bg-gray-800/95 backdrop-blur-sm py-2 shadow-md -mx-4 px-4 border-b border-gray-700">
+                        <label class="text-xs text-gray-400 block mb-1">カードタップ時の動作:</label>
+                        <div class="flex space-x-1">
+                            <button id="actionModeNormalBtn" class="flex-1 py-1.5 px-1 bg-indigo-600 text-white rounded text-xs font-bold border border-indigo-500 shadow-inner transition-colors">通常</button>
+                            <button id="actionModeEditBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">編集</button>
+                            <button id="actionModeShareBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">共有</button>
+                            <button id="actionModeExportBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-gray-300 rounded text-xs font-medium hover:bg-gray-600 border border-gray-600 transition-colors">出力</button>
+                            <button id="actionModeDeleteBtn" class="flex-1 py-1.5 px-1 bg-gray-700 text-red-400 rounded text-xs font-medium hover:bg-red-900/50 border border-gray-600 transition-colors">削除</button>
                         </div>
                     </div>
                     
@@ -1043,14 +1181,25 @@
                     </div>
                 </div>
 
-                <!-- ボタン -->
-                <div class="md:col-span-2 mt-4 flex justify-between space-x-4">
-                    <button type="button" id="viewCardHistoryBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors hidden">変更履歴</button>
-                    <div class="flex space-x-4">
-                        <button type="button" id="cancelCard" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">キャンセル</button>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                <!-- 関連カード (Related Cards Selection) -->
+                    <div id="relatedCardsSelectContainer" class="md:col-span-2 border-t border-gray-700 pt-4 mt-2">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-gray-300">関連カード (複数選択)</label>
+                            <input type="text" id="relatedCardsSearch" placeholder="カード名で絞り込み..." class="p-1.5 text-xs bg-gray-750 border border-gray-600 rounded w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div id="relatedCardsCheckboxes" class="max-h-36 overflow-y-auto p-2 bg-gray-900/50 rounded-lg border border-gray-600 grid grid-cols-1 md:grid-cols-2 gap-1 text-sm custom-scrollbar">
+                            <!-- JSで全カードをチェックボックス一覧として動的生成 -->
+                        </div>
                     </div>
-                </div>
+
+                    <!-- ボタン -->
+                    <div class="md:col-span-2 mt-4 flex justify-between space-x-4">
+                        <button type="button" id="viewCardHistoryBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors hidden">変更履歴</button>
+                        <div class="flex space-x-4">
+                            <button type="button" id="cancelCard" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">キャンセル</button>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">保存</button>
+                        </div>
+                    </div>
             </form>
         </div>
     </div>
@@ -1917,15 +2066,31 @@ window.renderUsageModal = function(type = 'manual') {
         const cardSearch = getEl('cardSearch');
         const imagePreview = getEl('imagePreview');
         const cardImageDataBase64 = getEl('cardImageDataBase64');
-        const worldFilter = getEl('worldFilter');
-        const typeFilter = getEl('typeFilter');
-        const rarityFilter = getEl('rarityFilter');
-        const tagFilter = getEl('tagFilter');
-        const resourceFilter = getEl('resourceFilter');
         const totalCostFilter = getEl('totalCostFilter');
         const sortBy = getEl('sortBy');
         const imageOnlyToggle = getEl('imageOnlyToggle');
         const popularTags = getEl('popularTags');
+
+        const filterState = {
+            keyword: '',
+            types: new Set(),
+            tactSubTypes: new Set(),
+            rarities: new Set(),
+            worlds: new Set(),
+            tags: new Set(),
+            playResources: new Set(),
+            actResources: new Set(),
+            limits: new Set(),
+            roles: new Set(),
+            tagMode: 'AND',
+            playResourceMode: 'AND',
+            actResourceMode: 'AND',
+            roleMode: 'AND',
+            keywordMode: 'AND',
+            totalCost: null,
+            sortBy: 'rating',
+            imageOnly: true
+        };
         const costCurveCanvas = getEl('costCurveCanvas');
         const typeDistributionCanvas = getEl('typeDistributionCanvas');
         const cardTypeSelect = getEl('cardType');
@@ -2177,63 +2342,168 @@ window.renderUsageModal = function(type = 'manual') {
         }
         
         // --- フィルターとソートのオプション更新 ---
+                function renderChips(containerId, options, activeSet, onChange) {
+            const container = getEl(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                const isActive = activeSet.has(opt.value);
+                btn.type = 'button';
+                btn.className = `px-3 py-1 rounded-full text-xs font-semibold transition-all border ${isActive ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'}`;
+                btn.textContent = opt.label;
+                btn.onclick = () => {
+                    if (isActive) activeSet.delete(opt.value);
+                    else activeSet.add(opt.value);
+                    onChange();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function setupMatchModeBtn(btnId, stateKey, onChange) {
+            const btn = getEl(btnId);
+            if (!btn) return;
+            const isKeyword = stateKey === 'keywordMode';
+            const andText = isKeyword ? 'スペース区切り: AND' : 'すべて含む (AND)';
+            const orText = isKeyword ? 'スペース区切り: OR' : 'いずれかを含む (OR)';
+            btn.textContent = filterState[stateKey] === 'AND' ? andText : orText;
+            btn.dataset.mode = filterState[stateKey];
+
+            btn.onclick = () => {
+                const current = filterState[stateKey];
+                filterState[stateKey] = current === 'AND' ? 'OR' : 'AND';
+                btn.textContent = filterState[stateKey] === 'AND' ? andText : orText;
+                btn.dataset.mode = filterState[stateKey];
+                onChange();
+            };
+        }
+
+        function updateFilterVisibility() {
+            const tactContainer = getEl('filterTactSubTypeContainer');
+            if (tactContainer) {
+                if (filterState.types.size === 0 || filterState.types.has('タクト')) {
+                    tactContainer.classList.remove('hidden');
+                } else {
+                    tactContainer.classList.add('hidden');
+                    filterState.tactSubTypes.clear(); // Reset if hidden
+                }
+            }
+        }
+
         function updateAndRenderFilters() {
-            // 現在の選択状態を保存
-            const currentTag = tagFilter.value;
-            const currentWorld = worldFilter.value;
-            const currentType = typeFilter.value;
-            const currentRarity = rarityFilter.value;
-            const currentResource = resourceFilter.value;
-            const currentTotalCost = totalCostFilter.value;
-            const currentSort = sortBy.value;
+            // デッキの世界観選択も更新
             const currentDeckWorld1 = deckWorld1.value;
             const currentDeckWorld2 = deckWorld2.value;
 
+            // カードからデータを集計
             const tagCounts = {};
+            const roleCounts = {};
             const worlds = new Set([NEUTRAL_WORLD_NAME]);
             allCards.forEach(card => {
                 (card.tags || []).forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+                (card.roles || []).forEach(role => { roleCounts[role] = (roleCounts[role] || 0) + 1; });
                 if (card.world) worlds.add(card.world);
             });
 
-            const sortedUniqueTags = Object.keys(tagCounts).sort();
-            tagFilter.innerHTML = `<option value="">すべてのタグ</option>` + sortedUniqueTags.map(t => `<option value="${t}">${t} (${tagCounts[t]})</option>`).join('');
-            
+            // 世界選択 (デッキ構築用)
             const sortedWorlds = [...worlds].sort();
             const worldOptions = sortedWorlds.map(w => `<option value="${w}">${w}</option>`).join('');
             deckWorld1.innerHTML = `<option value="">世界1を選択</option>` + worldOptions;
             deckWorld2.innerHTML = `<option value="">世界2を選択</option>` + worldOptions;
-            worldFilter.innerHTML = `<option value="">すべての世界</option>` + worldOptions;
-            
-            typeFilter.innerHTML = `<option value="">すべてのタイプ</option><option value="コア">コア</option><option value="ユニット">ユニット</option><option value="タクト">タクト</option><option value="グランド">グランド</option><option value="ストラクト">ストラクト</option><option value="フォート">フォート</option>`;
-            rarityFilter.innerHTML = `<option value="">すべてのレアリティ</option><option value="通常">通常</option><option value="伝説">伝説</option><option value="神話">神話</option>`;
-            
-            let resourceOptionsHTML = `<option value="">すべての資源(固定コスト)</option>`;
-            Object.keys(costTypes).forEach(key => resourceOptionsHTML += `<option value="${key}">${costTypes[key].label} を含む</option>`);
-            resourceFilter.innerHTML = resourceOptionsHTML;
-
-            const popularSortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
-            popularTags.innerHTML = '';
-            popularSortedTags.slice(0, 10).forEach(([tag]) => {
-                const tagEl = document.createElement('span');
-                tagEl.className = 'tag-pill bg-gray-600 text-xs font-semibold px-2 py-1 rounded-full';
-                tagEl.textContent = tag;
-                tagEl.onclick = () => { tagFilter.value = tag; renderCardLibrary(); };
-                popularTags.appendChild(tagEl);
-            });
-            
-            sortBy.innerHTML = `<option value="name_asc">カード名順</option><option value="attack_desc">攻撃力 (高い順)</option><option value="attack_asc">攻撃力 (低い順)</option><option value="defense_desc">体力 (高い順)</option><option value="defense_asc">体力 (低い順)</option><option value="total_cost_desc">プレイコスト総量 (高い順)</option><option value="total_cost_asc">プレイコスト総量 (低い順)</option><option value="rating">総合評価順</option>`;
-
-            // 選択状態を復元
-            if (currentTag) tagFilter.value = currentTag;
-            if (currentWorld) worldFilter.value = currentWorld;
-            if (currentType) typeFilter.value = currentType;
-            if (currentRarity) rarityFilter.value = currentRarity;
-            if (currentResource) resourceFilter.value = currentResource;
-            if (currentTotalCost) totalCostFilter.value = currentTotalCost;
-            if (currentSort) sortBy.value = currentSort;
             if (currentDeckWorld1) deckWorld1.value = currentDeckWorld1;
             if (currentDeckWorld2) deckWorld2.value = currentDeckWorld2;
+
+            // --- チップレンダリング ---
+            const refreshAll = () => { 
+                updateFilterVisibility(); 
+                updateAndRenderFilters(); 
+                renderCardLibrary(); 
+            };
+
+            // カード種類チップ
+            const typeOptions = [
+                { value: 'コア', label: 'コア' },
+                { value: 'ユニット', label: 'ユニット' },
+                { value: 'タクト', label: 'タクト' },
+                { value: 'グランド', label: 'グランド' },
+                { value: 'ストラクト', label: 'ストラクト' },
+                { value: 'フォート', label: 'フォート' },
+            ];
+            renderChips('filterTypeChips', typeOptions, filterState.types, refreshAll);
+
+            // タクト種別チップ
+            const tactOptions = [
+                { value: '通常', label: '通常' },
+                { value: '永続', label: '永続' },
+                { value: '速攻', label: '速攻' },
+            ];
+            renderChips('filterTactSubTypeChips', tactOptions, filterState.tactSubTypes, refreshAll);
+            updateFilterVisibility();
+
+            // レアリティチップ
+            const rarityOptions = [
+                { value: '通常', label: '通常' },
+                { value: '伝説', label: '伝説' },
+                { value: '神話', label: '神話' },
+            ];
+            renderChips('filterRarityChips', rarityOptions, filterState.rarities, refreshAll);
+
+            // 世界観チップ
+            const worldChipOptions = sortedWorlds.map(w => ({ value: w, label: w }));
+            renderChips('filterWorldChips', worldChipOptions, filterState.worlds, refreshAll);
+
+            // 制限改定チップ
+            const limitOptions = [
+                { value: '0', label: '禁止：デッキに入れられません' },
+                { value: '1', label: '制限：デッキに1枚まで' },
+                { value: '2', label: '準制限：デッキに2枚まで' },
+                { value: '3', label: '仮制限：デッキに3枚まで' },
+                { value: '4', label: '制限なし' },
+            ];
+            renderChips('filterLimitChips', limitOptions, filterState.limits, refreshAll);
+
+            // 資源コストチップ (プレイ・アクト分割)
+            const resourceOptions = Object.entries(costTypes).map(([key, ct]) => ({ value: key, label: ct.label }));
+            renderChips('filterPlayResourceChips', resourceOptions, filterState.playResources, refreshAll);
+            renderChips('filterActResourceChips', resourceOptions, filterState.actResources, refreshAll);
+
+            // 役割 (Role) チップ
+            const sortedRoles = Object.keys(roleCounts).sort();
+            const roleOptions = sortedRoles.map(r => ({ value: r, label: `${r} (${roleCounts[r]})` }));
+            renderChips('filterRoleChips', roleOptions, filterState.roles, refreshAll);
+
+            // タグチップ
+            const sortedUniqueTags = Object.keys(tagCounts).sort();
+            const tagOptions = sortedUniqueTags.map(t => ({ value: t, label: `${t} (${tagCounts[t]})` }));
+            renderChips('filterTagChips', tagOptions, filterState.tags, refreshAll);
+
+            // 人気タグ
+            const popularTagsEl = getEl('popularTags');
+            if (popularTagsEl) {
+                const popularSortedTags = Object.entries(tagCounts).sort(([,a],[,b]) => b-a);
+                popularTagsEl.innerHTML = '';
+                popularSortedTags.slice(0, 10).forEach(([tag]) => {
+                    const tagEl = document.createElement('span');
+                    const isActive = filterState.tags.has(tag);
+                    tagEl.className = `cursor-pointer text-[10px] px-2 py-0.5 rounded-full font-semibold transition-all ${isActive ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`;
+                    tagEl.textContent = tag;
+                    tagEl.onclick = () => {
+                        if (filterState.tags.has(tag)) filterState.tags.delete(tag);
+                        else filterState.tags.add(tag);
+                        updateAndRenderFilters();
+                        renderCardLibrary();
+                    };
+                    popularTagsEl.appendChild(tagEl);
+                });
+            }
+
+            // AND/ORモードボタンのセットアップ
+            setupMatchModeBtn('tagMatchModeBtn', 'tagMode', refreshAll);
+            setupMatchModeBtn('playResourceMatchModeBtn', 'playResourceMode', refreshAll);
+            setupMatchModeBtn('actResourceMatchModeBtn', 'actResourceMode', refreshAll);
+            setupMatchModeBtn('roleMatchModeBtn', 'roleMode', refreshAll);
+            setupMatchModeBtn('keywordMatchModeBtn', 'keywordMode', refreshAll);
         }
         // --- 画像処理 ---
         
@@ -2921,17 +3191,17 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             let limitBadgeHTML = '';
             let borderClass = '';
             if (card.limit === 0) {
-                borderClass = 'border-4 border-red-600 rounded-lg box-border';
-                limitBadgeHTML = `<div class="mt-1 text-center bg-red-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-red-800 limit-badge">禁止</div>`;
+                borderClass = 'limit-border-0';
+                limitBadgeHTML = `<div class="mt-1 text-center bg-red-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-red-800 limit-badge" title="禁止：デッキに入れられません">禁止：デッキに入れられません</div>`;
             } else if (card.limit === 1) {
-                borderClass = 'border-4 border-yellow-500 rounded-lg box-border';
-                limitBadgeHTML = `<div class="mt-1 text-center bg-yellow-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-yellow-800 limit-badge">制限</div>`;
+                borderClass = 'limit-border-1';
+                limitBadgeHTML = `<div class="mt-1 text-center bg-yellow-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-yellow-800 limit-badge" title="制限：デッキに1枚まで">制限：デッキに1枚まで</div>`;
             } else if (card.limit === 2) {
-                borderClass = 'border-4 border-orange-500 rounded-lg box-border';
-                limitBadgeHTML = `<div class="mt-1 text-center bg-orange-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-orange-800 limit-badge">準制限</div>`;
+                borderClass = 'limit-border-2';
+                limitBadgeHTML = `<div class="mt-1 text-center bg-orange-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-orange-800 limit-badge" title="準制限：デッキに2枚まで">準制限：デッキに2枚まで</div>`;
             } else if (card.limit === 3) {
-                borderClass = 'border-4 border-lime-500 rounded-lg box-border';
-                limitBadgeHTML = `<div class="mt-1 text-center bg-lime-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-lime-800 limit-badge">仮制限</div>`;
+                borderClass = 'limit-border-3';
+                limitBadgeHTML = `<div class="mt-1 text-center bg-lime-600 text-white text-[10px] font-bold py-0.5 px-2 rounded-sm border border-lime-800 limit-badge" title="仮制限：デッキに3枚まで">仮制限：デッキに3枚まで</div>`;
             }
 
             cardInner.className += ' ' + borderClass;
@@ -3120,7 +3390,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 infoHTML += `<div><strong class="text-gray-400">初期資源:</strong> `;
                 const resourceStrings = Object.entries(card.initialResources)
                     .filter(([, val]) => val > 0)
-                    .map(([key, val]) => `<span style="color:${costTypes[key].colorHex}; font-weight: bold;">${costTypes[key].label} ${val}</span>`);
+                    .map(([key, val]) => `<span style="color:${costTypes[key]?.colorHex || '#ffffff'}; font-weight: bold;">${costTypes[key]?.label || key} ${val}</span>`);
                 infoHTML += resourceStrings.join(', ') + `</div>`;
             }
             infoEl.innerHTML = infoHTML;
@@ -3130,15 +3400,9 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
 
         function renderCardLibrary() {
             cardLibrary.innerHTML = '';
-            const searchValue = cardSearch.value.toLowerCase();
+            const searchValue = (filterState.keyword || '').toLowerCase();
+            const searchOptions = document.querySelectorAll('#searchOptions input[name="searchField"]');
             const checkedFields = [...searchOptions].filter(cb => cb.checked).map(cb => cb.value);
-            const worldValue = worldFilter.value;
-            const typeValue = typeFilter.value;
-            const rarityValue = rarityFilter.value;
-            const tagValue = tagFilter.value;
-            const resourceValue = resourceFilter.value;
-            const totalCostValue = totalCostFilter.value;
-            const sortValue = sortBy.value;
 
             const getTotalPlayCost = card => {
                 const fixedCost = Object.values(card.costs?.play || {}).reduce((s, v) => s + v, 0);
@@ -3151,22 +3415,122 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 return fixedCost + choiceCost;
             };
 
-            const filterFn = c => 
-                (!worldValue || c.world === worldValue) &&
-                (!typeValue || c.type === typeValue) &&
-                (!rarityValue || c.rarity === rarityValue) &&
-                (!tagValue || (c.tags && c.tags.includes(tagValue))) &&
-                (!resourceValue || (c.costs?.play && c.costs.play[resourceValue] > 0)) &&
-                (!totalCostValue || getTotalPlayCost(c) === parseInt(totalCostValue)) &&
-                (!searchValue || checkedFields.some(field => {
-                    const fieldValue = c[field];
-                    if (Array.isArray(fieldValue)) {
-                        return fieldValue.join(',').toLowerCase().includes(searchValue);
-                    }
-                    return (fieldValue?.toString() || '').toLowerCase().includes(searchValue);
-                }));
+            const filterFn = c => {
+                // カード種類 (OR)
+                if (filterState.types.size > 0 && !filterState.types.has(c.type)) return false;
 
+                // タクト種別 (OR) - タクトカードのみ対象
+                if (filterState.tactSubTypes.size > 0) {
+                    if (c.type === 'タクト') {
+                        if (!filterState.tactSubTypes.has(c.tactSubType || '通常')) return false;
+                    }
+                    // タクト以外のカードで、タクト種別のみ指定されている場合はフィルタしない
+                }
+
+                // レアリティ (OR)
+                if (filterState.rarities.size > 0 && !filterState.rarities.has(c.rarity || '通常')) return false;
+
+                // 世界観 (OR)
+                if (filterState.worlds.size > 0 && !filterState.worlds.has(c.world)) return false;
+
+                // 制限区分 (OR)
+                if (filterState.limits.size > 0) {
+                    const cardLimit = (c.limit !== undefined) ? String(c.limit) : '4';
+                    if (!filterState.limits.has(cardLimit)) return false;
+                }
+
+                // Helper to check if card has a play resource (fixed or choice)
+                const hasPlayResource = (card, res) => {
+                    if (card.costs?.play?.[res] > 0) return true;
+                    if (card.costs?.choice) {
+                        return card.costs.choice.some(choice => 
+                            choice.options && choice.options.some(opt => opt.type === res && opt.amount > 0)
+                        );
+                    }
+                    return false;
+                };
+
+                // Helper to check if card has an act resource (fixed or choice)
+                const hasActResource = (card, res) => {
+                    if (card.costs?.act?.[res] > 0) return true;
+                    if (card.costs?.choiceAct) {
+                        return card.costs.choiceAct.some(choice => 
+                            choice.options && choice.options.some(opt => opt.type === res && opt.amount > 0)
+                        );
+                    }
+                    return false;
+                };
+
+                // プレイコストに必要な資源 (AND/OR)
+                if (filterState.playResources.size > 0) {
+                    const selected = [...filterState.playResources];
+                    const matchFn = filterState.playResourceMode === 'AND'
+                        ? selected.every(r => hasPlayResource(c, r))
+                        : selected.some(r => hasPlayResource(c, r));
+                    if (!matchFn) return false;
+                }
+
+                // アクトコストに必要な資源 (AND/OR)
+                if (filterState.actResources.size > 0) {
+                    const selected = [...filterState.actResources];
+                    const matchFn = filterState.actResourceMode === 'AND'
+                        ? selected.every(r => hasActResource(c, r))
+                        : selected.some(r => hasActResource(c, r));
+                    if (!matchFn) return false;
+                }
+
+                // 役割 (AND/OR)
+                if (filterState.roles.size > 0) {
+                    const selectedRoles = [...filterState.roles];
+                    const cardRoles = c.roles || [];
+                    const matchFn = filterState.roleMode === 'AND'
+                        ? selectedRoles.every(r => cardRoles.includes(r))
+                        : selectedRoles.some(r => cardRoles.includes(r));
+                    if (!matchFn) return false;
+                }
+
+                // タグ (AND/OR)
+                if (filterState.tags.size > 0) {
+                    const selectedTags = [...filterState.tags];
+                    const cardTags = c.tags || [];
+                    const matchFn = filterState.tagMode === 'AND'
+                        ? selectedTags.every(t => cardTags.includes(t))
+                        : selectedTags.some(t => cardTags.includes(t));
+                    if (!matchFn) return false;
+                }
+
+                // 総コスト
+                if (filterState.totalCost && getTotalPlayCost(c) !== parseInt(filterState.totalCost)) return false;
+
+                // キーワード検索
+                if (searchValue) {
+                    const keywords = searchValue.split(/\s+/).filter(Boolean);
+                    if (keywords.length > 0) {
+                        const matchKeyword = kw => checkedFields.some(field => {
+                            const fieldValue = c[field];
+                            if (Array.isArray(fieldValue)) {
+                                return fieldValue.join(',').toLowerCase().includes(kw);
+                            }
+                            return (fieldValue?.toString() || '').toLowerCase().includes(kw);
+                        });
+                        const kwMode = filterState.keywordMode || 'AND';
+                        const isMatch = kwMode === 'AND'
+                            ? keywords.every(matchKeyword)
+                            : keywords.some(matchKeyword);
+                        if (!isMatch) return false;
+                    }
+                }
+
+                return true;
+            };
+
+            const sortValue = filterState.sortBy || 'rating';
             const sortFns = {
+                'rating': (a, b) => {
+                    const rA = typeof getAverageRating === 'function' ? getAverageRating(a.id) : 0;
+                    const rB = typeof getAverageRating === 'function' ? getAverageRating(b.id) : 0;
+                    return rB - rA;
+                },
                 'attack_desc': (a, b) => (b.attack || -1) - (a.attack || -1),
                 'attack_asc': (a, b) => (a.attack || -1) - (b.attack || -1),
                 'defense_desc': (a, b) => (b.defense || -1) - (a.defense || -1),
@@ -3177,6 +3541,11 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             };
 
             const sortedCards = allCards.filter(filterFn).sort(sortFns[sortValue] || sortFns['name_asc']);
+            
+            // 結果件数表示
+            const countEl = getEl('filterResultCount');
+            if (countEl) countEl.textContent = `${sortedCards.length}/${allCards.length}枚`;
+
             sortedCards.forEach(card => {
                 const el = createCardElement(card, 'library');
                 const defaultAction = appMode === 'search' 
@@ -3187,7 +3556,6 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             });
         }
 
-        // --- デッキ描画 ---
         function renderDeckList() {
             const visibleDecks = allDecks.filter(deck => {
                 if (isAdmin) return true; // 管理者は全て見える
@@ -3360,7 +3728,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             }
             resourceSummary.innerHTML = Object.entries(totalCosts).filter(([,val]) => val > 0).map(([key, val]) => {
                 const percentage = (val / grandTotal * 100).toFixed(1);
-                return `<div><div class="flex items-center justify-between text-sm mb-1"><span class="font-semibold" style="color: ${costTypes[key].colorHex}">${costTypes[key].label}</span><span class="text-gray-300">${val} (${percentage}%)</span></div><div class="w-full bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full" style="width: ${percentage}%; background-color: ${costTypes[key].colorHex};"></div></div></div>`;
+                return `<div><div class="flex items-center justify-between text-sm mb-1"><span class="font-semibold" style="color: ${costTypes[key]?.colorHex || '#ffffff'}">${costTypes[key]?.label || key}</span><span class="text-gray-300">${val} (${percentage}%)</span></div><div class="w-full bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full" style="width: ${percentage}%; background-color: ${costTypes[key]?.colorHex || '#ffffff'};"></div></div></div>`;
             }).join('');
         }
         
@@ -3436,7 +3804,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
 
                 html += `
                     <div class="grid grid-cols-12 items-center gap-2 text-sm">
-                        <div class="col-span-1 font-bold text-center" style="color: ${costTypes[key].colorHex};">${costTypes[key].label}</div>
+                        <div class="col-span-1 font-bold text-center" style="color: ${costTypes[key]?.colorHex || '#ffffff'};">${costTypes[key]?.label || key}</div>
                         <div class="col-span-9">
                             <div class="flex justify-between text-xs text-gray-300">
                                 <span>生産</span>
@@ -3466,7 +3834,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
         function createChoiceCostInputRow(data = [{}, {}]) {
             const row = document.createElement('div');
             row.className = 'flex items-center gap-2';
-            const resourceOptions = Object.keys(costTypes).map(key => `<option value="${key}">${costTypes[key].label}</option>`).join('');
+            const resourceOptions = Object.keys(costTypes).map(key => `<option value="${key}">${costTypes[key]?.label || key}</option>`).join('');
             row.innerHTML = `
                 <input type="number" placeholder="数" class="p-2 text-center bg-gray-700 rounded-lg w-16 choice-cost-amount1" min="1" value="${data[0]?.amount || ''}">
                 <select class="p-2 bg-gray-700 rounded-lg flex-1 choice-cost-type1">${resourceOptions}</select>
@@ -3493,6 +3861,38 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             return row;
         }
 
+        function renderRelatedCardsSelector(selectedIds = []) {
+            const container = getEl('relatedCardsCheckboxes');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const currentEditingId = getEl('cardId').value;
+            const availableCards = allCards.filter(c => c.id !== currentEditingId);
+            
+            availableCards.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
+            availableCards.forEach(card => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-2 p-1.5 hover:bg-gray-800 rounded cursor-pointer transition-colors';
+                label.dataset.cardName = card.name.toLowerCase();
+                
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.name = 'relatedCard';
+                cb.value = card.id;
+                cb.className = 'form-checkbox bg-gray-750 border-gray-600 rounded text-indigo-500 focus:ring-indigo-500';
+                if (selectedIds.includes(card.id)) cb.checked = true;
+                
+                const span = document.createElement('span');
+                span.textContent = `${card.name} (${card.type})`;
+                span.className = 'text-gray-300 text-xs';
+                
+                label.appendChild(cb);
+                label.appendChild(span);
+                container.appendChild(label);
+            });
+        }
+
         // --- カード操作 ---
         function openCardModal(card = null) {
             cardForm.reset();
@@ -3503,6 +3903,9 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             imagePreview.src = ''; 
             imagePreview.style.display = 'none'; 
             cardImageDataBase64.value = '';
+            
+            const searchInput = getEl('relatedCardsSearch');
+            if (searchInput) searchInput.value = '';
 
             if (card) {
                 getEl('cardId').value = card.id;
@@ -3562,6 +3965,10 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             } else {
                 getEl('cardLimit').classList.add('hidden');
             }
+            
+            // 関連カードセレクターを描画
+            renderRelatedCardsSelector(card ? (card.relatedCardIds || []) : []);
+            
             cardTypeSelect.dispatchEvent(new Event('change'));
             cardModal.style.display = 'flex';
         }
@@ -3608,7 +4015,8 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 imageUrl: cardImageDataBase64.value,
                 description: getEl('cardDescription').value, flavorText: getEl('cardFlavorText').value,
                 costs: { play: {}, act: {}, choice: playChoiceResult.costs, choiceAct: actChoiceResult.costs },
-                generates: {}
+                generates: {},
+                relatedCardIds: [...document.querySelectorAll('#relatedCardsCheckboxes input[name="relatedCard"]:checked')].map(cb => cb.value)
             };
 
             if (cardType !== 'コア') {
@@ -4151,7 +4559,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             const allCurrentWorldNames = new Set(allCards.map(c => c.world).filter(Boolean));
             allWorlds = allWorlds.filter(world => allCurrentWorldNames.has(world.name));
 
-            allWorlds.sort((a, b) => a.name.localeCompare(b.name));
+            allWorlds.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         }
 
         
@@ -4423,7 +4831,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 if(coreCard) {
                     const initialResources = Object.entries(coreCard.initialResources || {})
                         .filter(([, val]) => val > 0)
-                        .map(([key, val]) => `${costTypes[key].label} ${val}`)
+                        .map(([key, val]) => `${costTypes[key]?.label || key} ${val}`)
                         .join(', ');
 
                     coreInfoHtml = `
@@ -5161,7 +5569,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 
                 const fixedCostEntries = Object.entries(fixedCosts).filter(([, val]) => val > 0);
                 if (fixedCostEntries.length > 0) {
-                    html += fixedCostEntries.map(([key, value]) => `<span style="color:${costTypes[key].colorHex}; font-weight: bold;">${value}</span>`).join(' ');
+                    html += fixedCostEntries.map(([key, value]) => `<span style="color:${costTypes[key]?.colorHex || '#ffffff'}; font-weight: bold;">${value}</span>`).join(' ');
                 }
 
                 if (choiceCosts.length > 0) {
@@ -5175,7 +5583,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                         } else {
                             return '';
                         }
-                        return `<span style="color:${costTypes[c1.type].colorHex};">${c1.amount}</span>/<span style="color:${costTypes[c2.type].colorHex};">${c2.amount}</span>`;
+                        return `<span style="color:${costTypes[c1.type]?.colorHex || '#ffffff'};">${c1.amount}</span>/<span style="color:${costTypes[c2.type]?.colorHex || '#ffffff'};">${c2.amount}</span>`;
                     }).filter(Boolean).join(' / ');
                 }
                 return html || 'なし';
@@ -5298,6 +5706,12 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                             </div>
                         </div>
                         
+                        <!-- 関連カードセクション -->
+                        <div id="cardDetailRelatedSection" class="pt-4 border-t border-gray-700 hidden">
+                            <h3 class="font-bold text-white mb-3">関連カード</h3>
+                            <div id="cardDetailRelatedGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"></div>
+                        </div>
+
                         <!-- 評価・コメントセクション -->
                         <div class="pt-4 border-t border-gray-700 flex flex-col md:flex-row gap-4 shrink-0">
                             <!-- 評価 -->
@@ -5369,6 +5783,40 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 });
                 
                 getEl('cardDetailCommentSubmit').onclick = () => submitComment(card.id, 'card', 'cardDetailCommentInput', reloadCardRC);
+
+                // 関連カード描画処理
+                const relatedSection = getEl('cardDetailRelatedSection');
+                const relatedGrid = getEl('cardDetailRelatedGrid');
+                if (relatedSection && relatedGrid) {
+                    const relatedIds = card.relatedCardIds || [];
+                    const validRelatedCards = relatedIds.map(id => allCards.find(c => c.id === id)).filter(Boolean);
+                    
+                    if (validRelatedCards.length > 0) {
+                        relatedSection.classList.remove('hidden');
+                        relatedGrid.innerHTML = '';
+                        validRelatedCards.forEach(rc => {
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'cursor-pointer group flex flex-col items-center p-2 bg-gray-900/40 hover:bg-gray-800 rounded border border-gray-700 transition-colors text-center';
+                            
+                            const defaultImage = `https://placehold.co/200x280/2d3748/e2e8f0?text=${encodeURIComponent(rc.name)}`;
+                            const imageUrl = rc.imageUrl || defaultImage;
+                            
+                            wrapper.innerHTML = `
+                                <div class="relative w-full aspect-[200/280] overflow-hidden rounded mb-1 bg-gray-950">
+                                    <img src="${imageUrl}" onerror="this.onerror=null;this.src='${defaultImage}';" alt="${rc.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-200 truncate w-full px-1">${rc.name}</span>
+                                <span class="text-[8px] text-gray-400">${rc.type}</span>
+                            `;
+                            wrapper.onclick = () => {
+                                openShareDetailModal({ type: 'card', data: rc });
+                            };
+                            relatedGrid.appendChild(wrapper);
+                        });
+                    } else {
+                        relatedSection.classList.add('hidden');
+                    }
+                }
 
 
             } else if (item.type === 'deck' && item.data) {
@@ -5469,6 +5917,22 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 if (firstTab) firstTab.click();
             };
             
+            const relatedSearchInput = getEl('relatedCardsSearch');
+            if (relatedSearchInput) {
+                relatedSearchInput.oninput = (e) => {
+                    const val = e.target.value.toLowerCase();
+                    const items = document.querySelectorAll('#relatedCardsCheckboxes label');
+                    items.forEach(item => {
+                        const name = item.dataset.cardName || '';
+                        if (name.includes(val)) {
+                            item.classList.remove('hidden');
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+                };
+            }
+
             getEl('consoleBtn').onclick = () => consoleModal.style.display = 'flex';
 
             // App Mode Switcher
@@ -5476,6 +5940,7 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
                 appMode = 'search';
                 localStorage.setItem('sw_appMode', 'search');
                 updateAppModeUI();
+                renderCardLibrary();
             };
             const modeWorldBtn = getEl('modeWorldBtn');
             if (modeWorldBtn) {
@@ -5579,8 +6044,65 @@ function resizeAndCompressImage(file, maxWidth, maxHeight, quality) {
             };
 
             // Library Filters
-            [cardSearch, worldFilter, typeFilter, rarityFilter, tagFilter, resourceFilter, totalCostFilter, sortBy].forEach(el => el.oninput = renderCardLibrary);
-            searchOptions.forEach(checkbox => checkbox.onchange = renderCardLibrary);
+            const toggleFiltersBtn = getEl('toggleFiltersBtn');
+            const advancedFilters = getEl('advancedFilters');
+            if (toggleFiltersBtn && advancedFilters) {
+                toggleFiltersBtn.onclick = () => {
+                    advancedFilters.classList.toggle('hidden');
+                    const isHidden = advancedFilters.classList.contains('hidden');
+                    getEl('toggleFiltersIcon').textContent = isHidden ? '🔽' : '🔼';
+                    getEl('toggleFiltersText').textContent = isHidden ? '詳細フィルターを表示' : '詳細フィルターを隠す';
+                };
+            }
+
+            const resetFiltersBtn = getEl('resetFiltersBtn');
+            if (resetFiltersBtn) {
+                resetFiltersBtn.onclick = () => {
+                    filterState.keyword = '';
+                    filterState.types.clear();
+                    filterState.tactSubTypes.clear();
+                    filterState.rarities.clear();
+                    filterState.worlds.clear();
+                    filterState.tags.clear();
+                    filterState.playResources.clear();
+                    filterState.actResources.clear();
+                    filterState.limits.clear();
+                    filterState.roles.clear();
+                    filterState.tagMode = 'AND';
+                    filterState.playResourceMode = 'AND';
+                    filterState.actResourceMode = 'AND';
+                    filterState.roleMode = 'AND';
+                    filterState.keywordMode = 'AND';
+                    filterState.totalCost = null;
+                    if(cardSearch) cardSearch.value = '';
+                    if(totalCostFilter) totalCostFilter.value = '';
+                    updateAndRenderFilters();
+                    renderCardLibrary();
+                };
+            }
+
+            const cardSearchInput = getEl('cardSearch');
+            if(cardSearchInput) {
+                cardSearchInput.oninput = (e) => {
+                    filterState.keyword = e.target.value;
+                    renderCardLibrary();
+                };
+            }
+            const searchOptionsCheckboxes = document.querySelectorAll('#searchOptions input[name="searchField"]');
+            searchOptionsCheckboxes.forEach(checkbox => checkbox.onchange = renderCardLibrary);
+
+            if(totalCostFilter) {
+                totalCostFilter.oninput = (e) => {
+                    filterState.totalCost = e.target.value;
+                    renderCardLibrary();
+                };
+            }
+            if(sortBy) {
+                sortBy.oninput = (e) => {
+                    filterState.sortBy = e.target.value;
+                    renderCardLibrary();
+                };
+            }
 
             imageOnlyToggle.addEventListener('change', (e) => {
                 if (e.target.checked) {
